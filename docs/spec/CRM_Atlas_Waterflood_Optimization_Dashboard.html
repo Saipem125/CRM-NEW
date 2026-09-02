@@ -1,0 +1,2633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Atlas — Capacitance-Resistance Modeling for Waterflood Optimization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<style>
+:root{
+  --bg:#0B121C;
+  --bg-2:#0F1826;
+  --panel:#131E2E;
+  --panel-2:#17253A;
+  --panel-3:#1C2C44;
+  --border:#25344B;
+  --border-soft:#1C293C;
+  --text:#E8E6DC;
+  --text-dim:#93A0B4;
+  --text-faint:#5E6C82;
+  --water:#4C9BD4;
+  --water-dim:#2E5C7C;
+  --oil:#E0973F;
+  --oil-dim:#8A5F2A;
+  --accent:#5CC2AE;
+  --accent-dim:#2E6459;
+  --danger:#D2685A;
+  --good:#7DB88A;
+  --radius-s:3px;
+  --radius-m:6px;
+  --sans:'IBM Plex Sans', -apple-system, sans-serif;
+  --display:'Space Grotesk', var(--sans);
+  --mono:'IBM Plex Mono', ui-monospace, monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--accent-dim);color:#fff;}
+a{color:var(--water);}
+
+/* ---------- layout shell ---------- */
+.app{
+  display:grid;
+  grid-template-columns:272px 1fr;
+  min-height:100vh;
+}
+.sidebar{
+  background:var(--bg-2);
+  border-right:1px solid var(--border-soft);
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+  padding:22px 14px 40px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:4px 10px 20px;
+  border-bottom:1px solid var(--border-soft);
+  margin-bottom:16px;
+}
+.brand-mark{
+  width:34px;height:34px;flex:none;
+  border-radius:7px;
+  background:
+    radial-gradient(circle at 32% 30%, var(--oil), transparent 55%),
+    radial-gradient(circle at 68% 70%, var(--water), transparent 55%),
+    var(--panel-3);
+  border:1px solid var(--border);
+  position:relative;
+}
+.brand-mark svg{position:absolute;inset:0;}
+.brand-text{display:flex;flex-direction:column;}
+.brand-text .t1{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:0.2px;}
+.brand-text .t2{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);letter-spacing:0.4px;}
+
+.nav-group{margin-bottom:4px;}
+.nav-group-label{
+  font-family:var(--mono);
+  font-size:10.5px;
+  color:var(--text-faint);
+  letter-spacing:1px;
+  padding:14px 10px 6px;
+}
+.nav-item{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  width:100%;
+  text-align:left;
+  padding:9px 10px;
+  border-radius:var(--radius-m);
+  background:none;
+  border:1px solid transparent;
+  color:var(--text-dim);
+  font-family:var(--sans);
+  font-size:13.3px;
+  cursor:pointer;
+  transition:background .15s ease, color .15s ease, border-color .15s ease;
+  line-height:1.35;
+}
+.nav-item:hover{background:var(--panel);color:var(--text);}
+.nav-item.active{background:var(--panel-2);color:var(--text);border-color:var(--border);}
+.nav-item .dot{
+  width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none;
+  background:var(--text-faint);
+}
+.nav-item.active .dot{background:var(--accent);}
+.nav-item .nlabel small{display:block;color:var(--text-faint);font-size:11px;font-family:var(--mono);margin-top:1px;}
+
+/* ---------- main content ---------- */
+.content{padding:0;min-width:0;}
+.topbar{
+  padding:26px 40px 18px;
+  border-bottom:1px solid var(--border-soft);
+  background:linear-gradient(180deg, var(--bg-2), var(--bg));
+  position:sticky;
+  top:0;
+  z-index:5;
+}
+.eyebrow-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;}
+.badge{
+  font-family:var(--mono);
+  font-size:11px;
+  padding:3px 8px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  white-space:nowrap;
+}
+.badge.b-water{color:var(--water);border-color:var(--water-dim);}
+.badge.b-oil{color:var(--oil);border-color:var(--oil-dim);}
+.badge.b-accent{color:var(--accent);border-color:var(--accent-dim);}
+h1.page-title{
+  font-family:var(--display);
+  font-size:28px;
+  font-weight:700;
+  margin:0 0 6px;
+  letter-spacing:0.1px;
+}
+p.page-sub{
+  color:var(--text-dim);
+  max-width:850px;
+  margin:0;
+  font-size:14.5px;
+}
+.refs-line{
+  margin-top:10px;
+  font-family:var(--mono);
+  font-size:11.3px;
+  color:var(--text-faint);
+}
+
+.tab-panel{display:none;padding:30px 40px 70px;}
+.tab-panel.active{display:block;}
+
+.grid-2{display:grid;grid-template-columns:1.05fr 1fr;gap:22px;}
+.grid-2.reverse{grid-template-columns:1fr 1.05fr;}
+@media (max-width:1080px){.grid-2,.grid-2.reverse{grid-template-columns:1fr;}}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--border-soft);
+  border-radius:var(--radius-m);
+  padding:20px 22px;
+}
+.card + .card{margin-top:18px;}
+.card h3{
+  font-family:var(--display);
+  font-size:15px;
+  font-weight:600;
+  margin:0 0 12px;
+  display:flex;align-items:center;gap:8px;
+}
+.card h3 .num{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--text-faint);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:1px 6px;
+}
+.section-title{
+  font-family:var(--display);
+  font-weight:600;
+  font-size:13px;
+  color:var(--text-dim);
+  letter-spacing:0.3px;
+  margin:26px 0 12px;
+  display:flex;align-items:center;gap:10px;
+}
+.section-title::after{content:"";flex:1;height:1px;background:var(--border-soft);}
+
+.eq-box{
+  background:var(--bg-2);
+  border:1px solid var(--border-soft);
+  border-radius:var(--radius-m);
+  padding:16px 18px;
+  overflow-x:auto;
+  margin:10px 0;
+}
+.eq-caption{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:8px;}
+
+.schematic-wrap{background:var(--bg-2);border:1px solid var(--border-soft);border-radius:var(--radius-m);padding:14px;}
+.schematic-wrap svg{display:block;width:100%;height:auto;}
+
+.dash{
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-m);
+  padding:18px 20px;
+}
+.dash-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+.dash-head h4{margin:0;font-family:var(--display);font-size:14px;}
+.dash-head .hint{font-size:11.5px;color:var(--text-faint);font-family:var(--mono);}
+
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;margin-bottom:14px;}
+.controls.single{grid-template-columns:1fr;}
+.ctrl label{
+  display:flex;justify-content:space-between;
+  font-size:12px;color:var(--text-dim);margin-bottom:5px;
+  font-family:var(--mono);
+}
+.ctrl label b{color:var(--text);font-weight:600;}
+.ctrl input[type=range]{
+  width:100%;accent-color:var(--accent);
+  height:4px;
+}
+.ctrl select{
+  width:100%;background:var(--bg-2);color:var(--text);border:1px solid var(--border);
+  border-radius:4px;padding:6px 8px;font-family:var(--mono);font-size:12px;
+}
+.chart-wrap{background:var(--bg-2);border:1px solid var(--border-soft);border-radius:var(--radius-m);padding:12px;}
+canvas{display:block;width:100%;}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--text-dim);}
+.legend span{display:inline-flex;align-items:center;gap:6px;}
+.legend i{width:11px;height:3px;border-radius:2px;display:inline-block;}
+
+.readout-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.readout{
+  background:var(--bg-2);border:1px solid var(--border-soft);border-radius:var(--radius-m);
+  padding:8px 12px;flex:1;min-width:120px;
+}
+.readout .k{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
+.readout .v{font-family:var(--mono);font-size:16px;font-weight:600;margin-top:2px;}
+.readout .v.water{color:var(--water);}
+.readout .v.oil{color:var(--oil);}
+.readout .v.accent{color:var(--accent);}
+.readout .v.danger{color:var(--danger);}
+.readout .v.good{color:var(--good);}
+
+table.info-table{width:100%;border-collapse:collapse;font-size:13px;}
+table.info-table th{
+  text-align:left;font-family:var(--mono);font-size:11px;color:var(--text-faint);
+  padding:6px 10px 8px 0;border-bottom:1px solid var(--border-soft);font-weight:500;
+}
+table.info-table td{padding:9px 10px 9px 0;border-bottom:1px solid var(--border-soft);vertical-align:top;color:var(--text-dim);}
+table.info-table td.lbl{color:var(--text);font-weight:500;white-space:nowrap;}
+table.info-table tr:last-child td{border-bottom:none;}
+
+.two-col-list{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
+@media (max-width:700px){.two-col-list{grid-template-columns:1fr;}}
+ul.plain{margin:0;padding:0;list-style:none;}
+ul.plain li{position:relative;padding-left:16px;margin-bottom:8px;font-size:13.3px;color:var(--text-dim);}
+ul.plain li::before{content:"—";position:absolute;left:0;color:var(--text-faint);}
+ul.good li::before{content:"+";color:var(--good);}
+ul.bad li::before{content:"–";color:var(--danger);}
+
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.pill{
+  font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:20px;
+  border:1px solid var(--border);color:var(--text-dim);
+}
+.katex-display{margin:0 !important;}
+.katex{font-size:1.05em !important;color:var(--text);}
+
+.family-tree{width:100%;}
+.timeline{display:flex;flex-direction:column;gap:0;position:relative;margin-top:10px;}
+.tl-item{display:grid;grid-template-columns:96px 20px 1fr;gap:0;position:relative;min-height:64px;}
+.tl-year{font-family:var(--mono);font-size:12.5px;color:var(--text-faint);padding-top:2px;}
+.tl-line{display:flex;flex-direction:column;align-items:center;}
+.tl-dot{width:11px;height:11px;border-radius:50%;background:var(--panel-3);border:2px solid var(--accent);margin-top:3px;flex:none;}
+.tl-rule{width:1px;flex:1;background:var(--border);}
+.tl-item:last-child .tl-rule{display:none;}
+.tl-body{padding:0 0 26px;}
+.tl-body h5{margin:0 0 4px;font-family:var(--display);font-size:14px;}
+.tl-body p{margin:0;color:var(--text-dim);font-size:13px;max-width:640px;}
+.tl-body .tl-tag{font-family:var(--mono);font-size:10.5px;color:var(--accent);}
+
+.compare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:14px;}
+.mini-card{
+  border:1px solid var(--border-soft);background:var(--bg-2);border-radius:var(--radius-m);
+  padding:14px;cursor:pointer;transition:border-color .15s ease, transform .15s ease;
+}
+.mini-card:hover{border-color:var(--accent-dim);transform:translateY(-2px);}
+.mini-card .mc-name{font-family:var(--display);font-weight:600;font-size:14px;margin-bottom:4px;}
+.mini-card .mc-desc{font-size:12px;color:var(--text-dim);margin-bottom:10px;min-height:48px;}
+.mini-card .mc-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--text-faint);}
+
+.flow-guide{display:flex;flex-direction:column;gap:0;}
+.fg-row{display:flex;align-items:stretch;gap:10px;margin-bottom:10px;}
+.fg-q{
+  flex:1;background:var(--bg-2);border:1px solid var(--border-soft);border-radius:var(--radius-m);
+  padding:12px 14px;display:flex;align-items:center;font-size:13px;color:var(--text-dim);
+}
+.fg-q b{color:var(--text);margin-right:6px;}
+.fg-arrow{display:flex;align-items:center;color:var(--text-faint);font-family:var(--mono);font-size:12px;padding:0 4px;}
+
+footer.attr{
+  padding:26px 40px 60px;color:var(--text-faint);font-size:12px;font-family:var(--mono);
+  border-top:1px solid var(--border-soft);margin-top:10px;
+}
+
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;}
+  .sidebar{
+    position:relative;
+    height:56px;
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:center;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding:0 12px;
+    gap:4px;
+    -webkit-overflow-scrolling:touch;
+    white-space:nowrap;
+  }
+  .brand{display:none;}
+  .nav-group{display:contents;}
+  .nav-group-label{display:none;}
+  .nav-item{flex:none;white-space:nowrap;padding:8px 12px;display:inline-block;width:auto;}
+  .nav-item .dot{display:none;}
+  .nav-item .nlabel small{display:none;}
+  .nav-item .nlabel{white-space:nowrap;}
+  .topbar{padding:20px 20px 14px;}
+  .tab-panel{padding:20px 20px 50px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-mark"><svg viewBox="0 0 34 34"><path d="M9 24 L9 14 Q9 9 14 9" stroke="#4C9BD4" stroke-width="2" fill="none" opacity="0.9"/><path d="M25 10 L25 20 Q25 25 20 25" stroke="#E0973F" stroke-width="2" fill="none" opacity="0.9"/></svg></div>
+    <div class="brand-text">
+      <span class="t1">CRM Atlas</span>
+      <span class="t2">WATERFLOOD MODELING</span>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <button class="nav-item active" data-tab="overview"><span class="dot"></span><span class="nlabel">Overview<small>Family tree &amp; selection guide</small></span></button>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">FOUNDATIONS · 2003–2006</div>
+    <button class="nav-item" data-tab="mlr"><span class="dot"></span><span class="nlabel">MLR / BMLR<small>Albertoni &amp; Lake</small></span></button>
+    <button class="nav-item" data-tab="bcm"><span class="dot"></span><span class="nlabel">Capacitance Model<small>Yousef et al. · BCM / UCM</small></span></button>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">CORE CRM FAMILY · 2007–2010</div>
+    <button class="nav-item" data-tab="crmt"><span class="dot"></span><span class="nlabel">CRMT<small>Tank / field control volume</small></span></button>
+    <button class="nav-item" data-tab="crmp"><span class="dot"></span><span class="nlabel">CRMP<small>Producer control volume</small></span></button>
+    <button class="nav-item" data-tab="crmip"><span class="dot"></span><span class="nlabel">CRMIP<small>Injector–producer pair</small></span></button>
+    <button class="nav-item" data-tab="mpi"><span class="dot"></span><span class="nlabel">MPI<small>Multiwell Productivity Index</small></span></button>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">PHYSICS EXTENSIONS · 2009–2024</div>
+    <button class="nav-item" data-tab="twophase"><span class="dot"></span><span class="nlabel">Two-Phase Coupled CRM<small>Cao, Luo &amp; Lake</small></span></button>
+    <button class="nav-item" data-tab="aquifer"><span class="dot"></span><span class="nlabel">CRM–Aquifer<small>CRMPA / CRMPAF / CRMPAQ</small></span></button>
+    <button class="nav-item" data-tab="crossflow"><span class="dot"></span><span class="nlabel">Productivity &amp; Crossflow<small>Olenchikov &amp; Posvyanskii</small></span></button>
+    <button class="nav-item" data-tab="diffusivity"><span class="dot"></span><span class="nlabel">Diffusivity &amp; Interference<small>Filters / injector–injector</small></span></button>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">MODERN &amp; APPLIED · 2017–2024</div>
+    <button class="nav-item" data-tab="ml"><span class="dot"></span><span class="nlabel">ML-Enhanced CRM<small>RNN · PINN · SINDy</small></span></button>
+    <button class="nav-item" data-tab="fieldops"><span class="dot"></span><span class="nlabel">Field Deployment<small>Workflow &amp; reallocation optimizer</small></span></button>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<main class="content">
+  <div class="topbar" id="topbar">
+    <div class="eyebrow-row" id="topbar-badges"></div>
+    <h1 class="page-title" id="topbar-title">Overview</h1>
+    <p class="page-sub" id="topbar-sub">Loading…</p>
+    <div class="refs-line" id="topbar-refs"></div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: OVERVIEW -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel active" id="tab-overview">
+    <div class="card">
+      <h3><span class="num">§0</span>What a capacitance-resistance model is</h3>
+      <p style="color:var(--text-dim);max-width:820px;margin-top:0;">
+        A capacitance-resistance model (CRM) treats a waterflooded reservoir the way an electrical engineer treats an
+        RC network: injection rates are input signals, production rates are the output response, interwell
+        transmissibility behaves like a resistor, and reservoir/fluid compressibility behaves like a capacitor that
+        delays and smooths the response. Every variant on this page is built from the same governing idea — an
+        overall material balance on a control volume, combined with a linear productivity relationship — the
+        variants differ only in <em style="color:var(--text);font-style:normal;">which control volume</em> is chosen and
+        <em style="color:var(--text);font-style:normal;">what physics is layered on top</em>.
+      </p>
+      <div class="eq-box">
+        <div class="eq" data-tex="c_t V_p \dfrac{dp}{dt} = i(t) - q(t) \qquad\qquad q = J\,(\bar p - p_{wf})"></div>
+      </div>
+      <p class="eq-caption">Base material balance + linear inflow relation → the single differential equation every CRM variant on this page reduces to.</p>
+    </div>
+
+    <div class="section-title">Evolution of the CRM family</div>
+    <div class="card">
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+    <div class="section-title">All twelve implementable methodologies</div>
+    <div class="compare-grid" id="compare-grid"></div>
+
+    <div class="section-title">Which one should you actually run?</div>
+    <div class="card">
+      <p style="margin-top:0;color:var(--text-dim);">Answer four questions about your dataset and objective — each row narrows the field.</p>
+      <div class="flow-guide" id="flow-guide"></div>
+    </div>
+  </section>
+
+  <!-- Additional tab panels injected by JS-authored static HTML below -->
+    <!-- ===================================================================== -->
+  <!-- TAB: MLR / BMLR -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-mlr">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>Control volume &amp; governing equation</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          The reservoir is treated as a black box that converts injection signals into a production response, with
+          no explicit storage term. <b style="color:var(--text);">MLR</b> (multivariate linear regression) is used
+          when the field is unbalanced (total injection ≠ total production); <b style="color:var(--text);">BMLR</b>
+          (balanced MLR) constrains each injector's weights to sum to one, appropriate for a pressure-maintained,
+          volume-balanced flood.
+        </p>
+        <div class="schematic-wrap" id="svg-mlr"></div>
+        <div class="eq-box">
+          <div class="eq" data-tex="\hat q_j(t)=\beta_{0j}+\sum_{i=1}^{I}\beta_{ij}\,i_i(t) \quad\text{(MLR)} \qquad\qquad \hat q_j(t)=\sum_{i=1}^{I}\lambda_{ij}\,i_i(t),\;\; \sum_{i} \lambda_{ij} \le 1 \quad\text{(BMLR)}"></div>
+        </div>
+        <p class="eq-caption">λ<sub>ij</sub> / β<sub>ij</sub> — steady-state weighting coefficient between injector i and producer j, found by least-squares regression on rate history.</p>
+        <div class="section-title" style="margin-top:20px;">Diffusivity filter (time lag)</div>
+        <p style="color:var(--text-dim);">
+          Because Eq. above has no dynamics, Albertoni &amp; Lake convolve injection with a discrete impulse-response
+          filter derived from the transient diffusivity solution, so a rate change at the injector arrives attenuated
+          and delayed at the producer:
+        </p>
+        <div class="eq-box">
+          <div class="eq" data-tex="i^{c}_{ij}(t)=\sum_{n=0}^{11}\delta_{ij}(n)\,i_i(t-n) \qquad \Delta p \propto E_i\!\left(-\dfrac{d\,r^2}{t}\right)"></div>
+        </div>
+      </div>
+
+      <div class="dash">
+        <div class="dash-head"><h4>Connectivity solver — 5 injectors × 4 producers</h4><span class="hint">drag distances → watch weights redistribute</span></div>
+        <div class="controls" id="mlr-controls"></div>
+        <div class="schematic-wrap" id="mlr-map"></div>
+        <div class="readout-row" id="mlr-readouts"></div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px;">
+      <div class="card">
+        <h3><span class="num">§2</span>Overdetermination governs reliability</h3>
+        <p style="color:var(--text-dim);margin-top:0;">Weighting coefficients only become trustworthy once the regression is comfortably overdetermined:</p>
+        <div class="eq-box"><div class="eq" data-tex="O_d=\dfrac{M}{I+1} \qquad\qquad \text{use } O_d>6 \text{ for a symmetric, low-noise field}"></div></div>
+        <div class="chart-wrap"><canvas id="chart-mlr-od" height="200"></canvas></div>
+        <div class="legend"><span><i style="background:var(--danger)"></i>asymmetry coefficient A</span></div>
+      </div>
+      <div class="card">
+        <h3><span class="num">§3</span>When to use it</h3>
+        <table class="info-table">
+          <tr><td class="lbl">Inputs</td><td>Injection &amp; production rates only (no BHP, no geology)</td></tr>
+          <tr><td class="lbl">Output</td><td>Static well-to-well connectivity map + total-rate prediction</td></tr>
+          <tr><td class="lbl">Best for</td><td>First-pass screening of a new waterflood, sealing-fault detection</td></tr>
+          <tr><td class="lbl">Data need</td><td>M ≥ 6·(I+1) rate observations per producer</td></tr>
+        </table>
+        <div class="two-col-list" style="margin-top:14px;">
+          <ul class="plain good"><li>Spreadsheet-simple, closed-form, no iteration needed</li><li>Excellent at finding barriers (coefficients → 0)</li></ul>
+          <ul class="plain bad"><li>No time dynamics without ad-hoc filtering</li><li>Ignores BHP changes and compressibility</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: BCM / UCM (Capacitance Model) -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-bcm">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>Adding capacitance to the resistor model</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          Yousef et al. replace the ad-hoc diffusivity filter with an explicit compressibility term, giving each
+          injector–producer connection two physically meaningful parameters instead of one: a <b style="color:var(--text);">weight</b>
+          τ<sub>ij</sub> for connectivity and a <b style="color:var(--text);">time constant</b> for storage.
+        </p>
+        <div class="schematic-wrap" id="svg-bcm"></div>
+        <div class="eq-box">
+          <div class="eq" data-tex="\underbrace{c_tV_p}_{\text{capacitance}}\dfrac{dp}{dt}=i(t)-q(t), \qquad \tau=\dfrac{c_tV_p}{J}"></div>
+        </div>
+        <div class="eq-box">
+          <div class="eq" data-tex="q(t)=q(t_0)e^{-(t-t_0)/\tau}+e^{-t/\tau}\!\!\int_{t_0}^{t}\!\! e^{\xi/\tau}\tfrac{1}{\tau}\,i(\xi)\,d\xi \;-\; e^{-t/\tau}\!\!\int_{t_0}^{t}\!\! e^{\xi/\tau} J\,\dfrac{dp_{wf}}{d\xi}\,d\xi"></div>
+        </div>
+        <p class="eq-caption">Three additive terms: primary-depletion decay, injection response (the "capacitance" term), and a producer BHP-change term.</p>
+        <p style="color:var(--text-dim);">
+          <b style="color:var(--text);">BCM</b> (balanced) imposes Σᵢ λᵢⱼ ≈ 1 via a Lagrange-multiplier constraint on a
+          pressure-maintained flood; <b style="color:var(--text);">UCM</b> (unbalanced) adds a free constant q₀ⱼ for
+          open boundaries or a field that is not volume-balanced.
+        </p>
+      </div>
+
+      <div class="dash">
+        <div class="dash-head"><h4>Step-response of a single injector–producer pair</h4><span class="hint">watch how τ reshapes the same injection pulse</span></div>
+        <div class="controls" id="bcm-controls"></div>
+        <div class="chart-wrap"><canvas id="chart-bcm" height="230"></canvas></div>
+        <div class="legend">
+          <span><i style="background:var(--water)"></i>injection i(t)</span>
+          <span><i style="background:var(--oil)"></i>production q(t)</span>
+        </div>
+        <div class="readout-row" id="bcm-readouts"></div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px;">
+      <div class="card">
+        <h3><span class="num">§2</span>τ is a real reservoir property</h3>
+        <p style="color:var(--text-dim);margin-top:0;">Validated on synthetic fields: the recovered pore volume backed out from τ, c<sub>t</sub> and J converges to the true static pore volume once τ exceeds the sampling interval, and τ scales inversely with permeability.</p>
+        <div class="chart-wrap"><canvas id="chart-bcm-tau" height="190"></canvas></div>
+        <div class="legend"><span><i style="background:var(--accent)"></i>τ vs. 1/k (illustrative)</span></div>
+      </div>
+      <div class="card">
+        <h3><span class="num">§3</span>When to use it</h3>
+        <table class="info-table">
+          <tr><td class="lbl">Inputs</td><td>Rates + optional producer BHP</td></tr>
+          <tr><td class="lbl">Output</td><td>λ (connectivity) and τ (dissipation) per well pair</td></tr>
+          <tr><td class="lbl">Best for</td><td>Fields with shut-ins, remnant primary production, or available BHP</td></tr>
+          <tr><td class="lbl">Data need</td><td>Rich, fluctuating injection signal; ≥ 2–3× the number of parameters in rate points</td></tr>
+        </table>
+        <div class="two-col-list" style="margin-top:14px;">
+          <ul class="plain good"><li>Physically interpretable τ (= c<sub>t</sub>V<sub>p</sub>/J)</li><li>Handles shut-ins &amp; BHP variation natively</li></ul>
+          <ul class="plain bad"><li>Nonlinear optimization required (τ inside exponential)</li><li>Non-unique solutions on weak/flat signals</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: CRMT -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-crmt">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>Whole-field tank</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          Every injector and every producer is lumped into one super-injector and one super-producer. This is
+          the coarsest, fastest member of the Sayarpour et al. (2009) analytical-solution trio (CRMT / CRMP / CRMIP),
+          and the recommended starting point before drilling into per-well detail.
+        </p>
+        <div class="schematic-wrap" id="svg-crmt"></div>
+        <div class="eq-box">
+          <div class="eq" data-tex="q_F(t_n)=q_F(t_{n-1})\,e^{-\Delta t_n/\tau_F} \;+\; I_F^{(n)}\Big(1-e^{-\Delta t_n/\tau_F}\Big)"></div>
+        </div>
+        <p class="eq-caption">Only two fitting parameters exist for the entire field: q<sub>F</sub>(t₀) and the field time constant τ<sub>F</sub>.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-head"><h4>Field-level history match</h4><span class="hint">two parameters, one curve</span></div>
+        <div class="controls" id="crmt-controls"></div>
+        <div class="chart-wrap"><canvas id="chart-crmt" height="230"></canvas></div>
+        <div class="legend"><span><i style="background:var(--water)"></i>field injection</span><span><i style="background:var(--oil)"></i>field production (model)</span></div>
+        <div class="readout-row" id="crmt-readouts"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3><span class="num">§2</span>Parameter count across the trio</h3>
+      <div class="chart-wrap"><canvas id="chart-param-count" height="200"></canvas></div>
+      <p class="eq-caption">CRMT needs 2 parameters total; CRMP needs N<sub>p</sub>(N<sub>i</sub>+3); CRMIP needs 4·N<sub>i</sub>·N<sub>p</sub> — move the sliders below to see how fast CRMIP outgrows a typical dataset.</p>
+      <div class="controls" style="margin-top:10px;">
+        <div class="ctrl"><label>Injectors N<sub>i</sub> <b id="pc-ni-v">8</b></label><input type="range" id="pc-ni" min="2" max="30" value="8"></div>
+        <div class="ctrl"><label>Producers N<sub>p</sub> <b id="pc-np-v">6</b></label><input type="range" id="pc-np" min="2" max="30" value="6"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: CRMP -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-crmp">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>One tank per producer</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          The control volume is now the drainage volume of a single producer, fed by every injector that reaches it.
+          One time constant τ<sub>j</sub> is shared by all injectors feeding producer j; each injector gets its own
+          steady-state allocation fraction f<sub>ij</sub>.
+        </p>
+        <div class="schematic-wrap" id="svg-crmp"></div>
+        <div class="eq-box">
+          <div class="eq" data-tex="\dfrac{dq_j}{dt}+\dfrac{1}{\tau_j}q_j(t)=\dfrac{1}{\tau_j}\sum_{i=1}^{N_i}f_{ij}\,i_i(t)-J_j\dfrac{dp_{wf,j}}{dt}, \qquad \sum_{i=1}^{N_i}f_{ij}\le 1"></div>
+        </div>
+        <p class="eq-caption">This is the most widely deployed CRM variant in field practice — enough granularity per well without CRMIP's parameter explosion.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-head"><h4>4 injectors → 1 producer drainage tank</h4><span class="hint">reallocate f<sub>ij</sub>, watch q<sub>j</sub>(t) respond</span></div>
+        <div class="controls" id="crmp-controls"></div>
+        <div class="chart-wrap"><canvas id="chart-crmp" height="230"></canvas></div>
+        <div class="legend" id="crmp-legend"></div>
+        <div class="readout-row" id="crmp-readouts"></div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px;">
+      <div class="card">
+        <h3><span class="num">§2</span>Oil-cut coupling (fractional flow)</h3>
+        <p style="color:var(--text-dim);margin-top:0;">CRM predicts total liquid; a power-law WOR–versus–cumulative-water-injected relationship then splits it into oil and water for mature, high-water-cut floods:</p>
+        <div class="eq-box"><div class="eq" data-tex="f_o(t)=\dfrac{1}{1+\alpha\,CWI(t)^{\beta}}"></div></div>
+        <div class="chart-wrap"><canvas id="chart-crmp-oilcut" height="190"></canvas></div>
+        <div class="controls single" style="margin-top:10px;">
+          <div class="ctrl"><label>β (WOR curvature) <b id="oc-beta-v">1.8</b></label><input type="range" id="oc-beta" min="0.8" max="3.5" step="0.1" value="1.8"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="num">§3</span>When to use it</h3>
+        <table class="info-table">
+          <tr><td class="lbl">Inputs</td><td>Rates (+ optional BHP), per-producer</td></tr>
+          <tr><td class="lbl">Output</td><td>f<sub>ij</sub> allocation map, τ<sub>j</sub>, J<sub>j</sub>, oil-cut parameters</td></tr>
+          <tr><td class="lbl">Best for</td><td>Standard pattern-flood history matching &amp; injection reallocation studies</td></tr>
+          <tr><td class="lbl">Data need</td><td>≥ 4·N<sub>p</sub>(N<sub>i</sub>+3) rate points (rule of thumb)</td></tr>
+        </table>
+        <div class="two-col-list" style="margin-top:14px;">
+          <ul class="plain good"><li>Sweet spot of granularity vs. parameter count</li><li>Directly usable in oil-reallocation optimizers</li></ul>
+          <ul class="plain bad"><li>One shared τ per producer can blur mixed near/far injectors</li><li>Still assumes constant PI over the history window</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: CRMIP -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-crmip">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>One tank per injector–producer pair</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          The finest-grained member of the trio: every injector–producer pair gets its own drainage volume, its
+          own time constant τ<sub>ij</sub>, and its own allocation f<sub>ij</sub>. Producer rate is simply the sum
+          of all pair contributions.
+        </p>
+        <div class="schematic-wrap" id="svg-crmip"></div>
+        <div class="eq-box">
+          <div class="eq" data-tex="\dfrac{dq_{ij}}{dt}+\dfrac{1}{\tau_{ij}}q_{ij}(t)=\dfrac{1}{\tau_{ij}}f_{ij}\,i_i(t)-J_{ij}\dfrac{dp_{wf,j}}{dt}, \qquad q_j(t)=\sum_{i=1}^{N_i}q_{ij}(t)"></div>
+        </div>
+        <p class="eq-caption">4·N<sub>i</sub>·N<sub>p</sub> parameters — the highest resolution, and the highest data appetite.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-head"><h4>Connectivity heat-map — τ<sub>ij</sub> per pair</h4><span class="hint">3 injectors × 3 producers</span></div>
+        <div class="controls" id="crmip-controls"></div>
+        <div class="schematic-wrap" id="crmip-heatmap"></div>
+        <div class="chart-wrap" style="margin-top:12px;"><canvas id="chart-crmip" height="200"></canvas></div>
+        <div class="legend" id="crmip-legend"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3><span class="num">§2</span>CRMT vs CRMP vs CRMIP — same field, three resolutions</h3>
+      <div class="chart-wrap"><canvas id="chart-trio-compare" height="220"></canvas></div>
+      <div class="legend"><span><i style="background:var(--water)"></i>true synthetic response</span><span><i style="background:#8B96A8"></i>CRMT</span><span><i style="background:var(--oil)"></i>CRMP</span><span><i style="background:var(--accent)"></i>CRMIP</span></div>
+      <p class="eq-caption">CRMIP tracks fast/slow streaks that a single shared τ<sub>j</sub> in CRMP necessarily averages away.</p>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: MPI -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-mpi">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>A geometric alternative — no production history required</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          The Multiwell Productivity Index generalizes the single-well pseudosteady-state PI to an n×n matrix that
+          couples every well's drawdown to every well's rate, using only well locations, geometry and rock
+          properties. Kaviani &amp; Valkó (2010) extend it to injector/producer systems, letting you estimate
+          connectivity <em style="font-style:normal;color:var(--text);">before</em> any dynamic production data exists.
+        </p>
+        <div class="schematic-wrap" id="svg-mpi"></div>
+        <div class="eq-box">
+          <div class="eq" data-tex="\vec d = \dfrac{\alpha_1\mu B}{2\pi k h}\big([A]+[\Delta_s]\big)\,\vec q \qquad\Longrightarrow\qquad \vec q=[J]\,\vec d,\;\;[J]=\dfrac{2\pi k h}{\alpha_1\mu B}\big([A]+[\Delta_s]\big)^{-1}"></div>
+        </div>
+        <p class="eq-caption">[A] is the influence matrix built from line-source solutions in a closed rectangular reservoir; [J] is the MPI matrix itself.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-head"><h4>Geometric influence map</h4><span class="hint">drag well spacing &amp; skin — no rate data used</span></div>
+        <div class="controls" id="mpi-controls"></div>
+        <div class="schematic-wrap" id="mpi-map"></div>
+        <div class="readout-row" id="mpi-readouts"></div>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-top:20px;">
+      <div class="card">
+        <h3><span class="num">§2</span>Influence decays with distance and skin</h3>
+        <div class="chart-wrap"><canvas id="chart-mpi-decay" height="200"></canvas></div>
+        <p class="eq-caption">Illustrative influence ∝ 1/r trend used for the interactive map (the full solution sums an infinite hyperbolic series over image wells).</p>
+      </div>
+      <div class="card">
+        <h3><span class="num">§3</span>When to use it</h3>
+        <table class="info-table">
+          <tr><td class="lbl">Inputs</td><td>Well coordinates, k, h, φ, fluid PVT, skin — no rate history needed</td></tr>
+          <tr><td class="lbl">Output</td><td>n×n productivity-index matrix; decline exponent; limiting pressure</td></tr>
+          <tr><td class="lbl">Best for</td><td>Pre-drill planning, sanity-checking CRM weights against geometry</td></tr>
+          <tr><td class="lbl">Data need</td><td>None dynamic — geometry &amp; static properties only</td></tr>
+        </table>
+        <div class="two-col-list" style="margin-top:14px;">
+          <ul class="plain good"><li>Works before first production data exists</li><li>Analytical — no history-match convergence issues</li></ul>
+          <ul class="plain bad"><li>Assumes a homogeneous, isotropic reservoir</li><li>Ignores real heterogeneity that CRM would pick up from data</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: TWO-PHASE COUPLED CRM -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-twophase">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>Letting τ breathe with saturation</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          Standard CRM assumes constant total mobility, which only holds once a flood is mature (high water cut).
+          Cao, Luo &amp; Lake (2014) couple a total-fluid balance with an oil balance so that τ itself evolves with
+          the changing total mobility λ<sub>t</sub>(S<sub>w</sub>) — extending CRM validity back to early-time,
+          low-water-cut floods.
+        </p>
+        <div class="schematic-wrap" id="svg-twophase"></div>
+        <div class="eq-box">
+          <div class="eq" data-tex="V_b\!\left(S_w c_t+\phi\dfrac{dS_w}{dp}\right)\!\dfrac{dp}{dt} \!=\! i(t)-q(t), \qquad \tau(t)=\dfrac{c_tV_p}{J\,\lambda_t\big(S_w(t)\big)/\lambda_{t,ref}}"></div>
+        </div>
+        <p class="eq-caption">The pressure and saturation equations are solved together at every step; the fractional flow curve replaces the empirical power-law oil-cut model used in mature-flood CRM.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-head"><h4>Fractional flow curve → time-varying τ</h4><span class="hint">Corey exponents shape mobility, mobility reshapes τ</span></div>
+        <div class="controls" id="tp-controls"></div>
+        <div class="chart-wrap"><canvas id="chart-tp-fw" height="190"></canvas></div>
+        <div class="legend"><span><i style="background:var(--water)"></i>f<sub>w</sub>(S<sub>w</sub>)</span></div>
+        <div class="chart-wrap" style="margin-top:12px;"><canvas id="chart-tp-tau" height="170"></canvas></div>
+        <div class="legend"><span><i style="background:var(--accent)"></i>τ(t) as flood matures</span></div>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-top:20px;">
+      <div class="card">
+        <h3><span class="num">§2</span>Oil-rate prediction across flood maturity</h3>
+        <div class="chart-wrap"><canvas id="chart-tp-oil" height="200"></canvas></div>
+        <div class="legend"><span><i style="background:#8B96A8"></i>constant-τ CRM</span><span><i style="background:var(--oil)"></i>coupled two-phase CRM</span></div>
+        <p class="eq-caption">The constant-τ assumption systematically mis-tracks oil rate while water cut is still climbing; the coupled model self-corrects.</p>
+      </div>
+      <div class="card">
+        <h3><span class="num">§3</span>When to use it</h3>
+        <table class="info-table">
+          <tr><td class="lbl">Inputs</td><td>Rates + relative-permeability / fractional-flow curve (Corey or lab-derived)</td></tr>
+          <tr><td class="lbl">Output</td><td>Time-resolved τ(t), oil &amp; water rates across the entire flood life</td></tr>
+          <tr><td class="lbl">Best for</td><td>Immature floods, early-life waterflood forecasting, gas floods</td></tr>
+          <tr><td class="lbl">Data need</td><td>Same as CRMP + a fractional-flow relationship</td></tr>
+        </table>
+        <div class="two-col-list" style="margin-top:14px;">
+          <ul class="plain good"><li>Valid from first water injection, not just mature flood</li><li>Physically consistent oil/water split (no power-law fitting)</li></ul>
+          <ul class="plain bad"><li>Needs a fractional-flow / rel-perm input CRM otherwise avoids</li><li>More nonlinear, heavier history-match</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: CRM-AQUIFER -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-aquifer">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>Coupling a Fetkovich aquifer tank to CRMP</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          CRMPA (Parra, Samaniego-V. &amp; Lake, 2024) and CRMPAQ (Koroglu et al., 2024) attach a finite Fetkovich
+          aquifer tank to the producer-based CRM, so natural water influx is calculated instead of being lumped
+          into fictitious "pseudo-injectors." Reservoir pore volume and water influx are solved for
+          <em style="font-style:normal;color:var(--text);">simultaneously</em>, using only production data — no
+          shut-in buildup tests required.
+        </p>
+        <div class="schematic-wrap" id="svg-aquifer"></div>
+        <div class="eq-box">
+          <div class="eq" data-tex="\dot W_e = J_{aq}\big(\bar p_{aq}-\bar p_r\big), \qquad \dfrac{d\bar p_{aq}}{dt}=-\dfrac{\dot W_e}{c_tV_{p,aq}}, \qquad c_tV_{p,r}\dfrac{d\bar p_r}{dt}=\dot W_e+i(t)-q(t)"></div>
+        </div>
+        <p class="eq-caption">CRMPAF further couples a Koval fractional-flow model to split total rate into oil/water once aquifer water breaks through at a well.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-head"><h4>Reservoir tank + finite aquifer — coupled ODE</h4><span class="hint">integrated live in the browser, explicit Euler</span></div>
+        <div class="controls" id="aq-controls"></div>
+        <div class="chart-wrap"><canvas id="chart-aq" height="230"></canvas></div>
+        <div class="legend">
+          <span><i style="background:var(--water)"></i>reservoir pressure p̄<sub>r</sub></span>
+          <span><i style="background:var(--accent)"></i>aquifer pressure p̄<sub>aq</sub></span>
+          <span><i style="background:var(--oil)"></i>production q(t)</span>
+        </div>
+        <div class="readout-row" id="aq-readouts"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3><span class="num">§2</span>When to use it</h3>
+      <div class="two-col-list">
+        <div>
+          <table class="info-table">
+            <tr><td class="lbl">Inputs</td><td>Rates + estimated aquifer PV / PI (Fetkovich-style)</td></tr>
+            <tr><td class="lbl">Output</td><td>Reservoir PV, water influx rate, PI, heterogeneity factor</td></tr>
+            <tr><td class="lbl">Best for</td><td>Undersaturated reservoirs with partial natural water drive</td></tr>
+          </table>
+        </div>
+        <div>
+          <ul class="plain good"><li>No shut-in buildup tests required</li><li>Distinguishes reservoir PV from aquifer PV dynamically</li></ul>
+          <ul class="plain bad"><li>Restricted to partial (declining-pressure) water drives</li><li>Extra parameters (aquifer PV, J<sub>aq</sub>) add non-uniqueness risk</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: PRODUCTIVITY COEFFICIENTS & CROSSFLOW -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-crossflow">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>Stop re-fitting connectivity every time a well is choked back</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          Olenchikov &amp; Posvyanskii (2019) note that classical f<sub>ij</sub> allocation fractions are tuned to a
+          particular operating regime and drift badly once wells are shut in, choked, or converted — exactly the
+          regime waterflood optimization needs to explore. Their fix: replace allocation weights with
+          <b style="color:var(--text);">productivity coefficients</b> and add explicit crossflow terms between
+          neighboring drainage volumes and the aquifer, driven by pressure difference rather than current rate.
+        </p>
+        <div class="schematic-wrap" id="svg-crossflow"></div>
+        <div class="eq-box">
+          <div class="eq" data-tex="c_tV_{p,k}\dfrac{d\bar p_k}{dt}= i_k(t)-q_k(t) \;+\; \sum_{m\ne k} X_{km}\big(\bar p_m-\bar p_k\big)"></div>
+        </div>
+        <p class="eq-caption">X<sub>km</sub> — crossflow transmissibility between drainage volumes k and m (or the aquifer); this term is exactly zero in classical CRMP/CRMIP.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-head"><h4>Three-tank network with adjustable crossflow</h4><span class="hint">turn crossflow off to reproduce classic CRM behaviour</span></div>
+        <div class="controls" id="cf-controls"></div>
+        <div class="chart-wrap"><canvas id="chart-cf" height="230"></canvas></div>
+        <div class="legend" id="cf-legend"></div>
+        <div class="readout-row" id="cf-readouts"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3><span class="num">§2</span>When to use it</h3>
+      <div class="two-col-list">
+        <table class="info-table">
+          <tr><td class="lbl">Inputs</td><td>Rates + a topology of which drainage volumes / aquifer can exchange fluid</td></tr>
+          <tr><td class="lbl">Output</td><td>Productivity coefficients robust to changing well operating modes</td></tr>
+          <tr><td class="lbl">Best for</td><td>Active waterflood-optimization campaigns with frequent rate changes</td></tr>
+        </table>
+        <div>
+          <ul class="plain good"><li>Forecasts stay reliable through operating-mode changes</li><li>Represents aquifer &amp; compartment crossflow explicitly, not as noise</li></ul>
+          <ul class="plain bad"><li>Requires assuming a crossflow topology up front</li><li>More parameters than classical CRMP for the same well count</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: DIFFUSIVITY FILTERS & INTERWELL INTERFERENCE -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-diffusivity">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>The transient solution behind every filter/time-constant</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          Every "attenuation and delay" mechanism on this page — Albertoni &amp; Lake's diffusivity filter, the CRM
+          time constant, and Leng et al.'s (2023) injector-to-injector interference model — traces back to the same
+          transient line-source solution of the diffusivity equation, evaluated exactly here with the exponential
+          integral E₁.
+        </p>
+        <div class="schematic-wrap" id="svg-diffusivity"></div>
+        <div class="eq-box">
+          <div class="eq" data-tex="\Delta p(r,t) = C_1\,E_i\!\left(-\dfrac{d\,r^2}{t}\right), \qquad d=\dfrac{1}{\eta}=\dfrac{\phi\mu c_t}{k} \quad\text{(dissipation)}"></div>
+        </div>
+        <p class="eq-caption">Leng et al. apply the identical diffusion kernel between pairs of <em style="font-style:normal;">injectors</em> to forecast interference and dominant flow directions using only injection data.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-head"><h4>Exact E₁-based interference kernel</h4><span class="hint">computed with the Abramowitz–Stegun rational approximation</span></div>
+        <div class="controls" id="diff-controls"></div>
+        <div class="chart-wrap"><canvas id="chart-diff" height="220"></canvas></div>
+        <div class="legend" id="diff-legend"></div>
+        <div class="readout-row" id="diff-readouts"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3><span class="num">§2</span>When to use it</h3>
+      <div class="two-col-list">
+        <table class="info-table">
+          <tr><td class="lbl">Inputs</td><td>Injector (and/or producer) rates + BHP; well coordinates for d, r</td></tr>
+          <tr><td class="lbl">Output</td><td>Time-dependent interference kernel; dominant transmissibility direction</td></tr>
+          <tr><td class="lbl">Best for</td><td>Injector-only fields (e.g. disposal/UIC wells) with no paired producer to regress against</td></tr>
+        </table>
+        <div>
+          <ul class="plain good"><li>Works with injection data alone — no material-balance pairing needed</li><li>Grounded in an exact transient solution, not a curve-fit shape</li></ul>
+          <ul class="plain bad"><li>Homogeneous-medium assumption embedded in the kernel</li><li>Still a qualitative screening tool, not a full simulator replacement</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: ML-ENHANCED CRM -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-ml">
+    <div class="grid-2">
+      <div class="card">
+        <h3><span class="num">§1</span>CRM as a physics prior, not a replacement</h3>
+        <p style="color:var(--text-dim);margin-top:0;">
+          Recent work (SPE-218258, and RNN/CRM comparisons such as arXiv:2109.08779) keeps the CRM ODE as a
+          regularizer and lets a data-driven layer absorb whatever CRM's linear-productivity, constant-mobility
+          assumptions miss: rate-dependent skin, non-Darcy effects, choke changes, workovers. Three hybrid patterns
+          recur in the literature:
+        </p>
+        <div class="schematic-wrap" id="svg-ml"></div>
+        <table class="info-table" style="margin-top:14px;">
+          <tr><td class="lbl">RNN / LSTM</td><td>Learns the injection→production map end-to-end from history; CRM used only as a benchmark or as an input feature.</td></tr>
+          <tr><td class="lbl">PINN</td><td>Neural network output is penalized by the CRM ODE residual, so predictions stay physically consistent even where data is sparse.</td></tr>
+          <tr><td class="lbl">SINDy</td><td>Sparse regression discovers a compact ODE (often recovering the CRM form itself, or a mildly nonlinear variant) directly from rate data.</td></tr>
+        </table>
+      </div>
+      <div class="dash">
+        <div class="dash-head"><h4>Conceptual comparison — physics-only vs. physics + residual correction</h4><span class="hint">illustrative synthetic example, not a trained model</span></div>
+        <div class="controls" id="ml-controls"></div>
+        <div class="chart-wrap"><canvas id="chart-ml" height="230"></canvas></div>
+        <div class="legend">
+          <span><i style="background:#8B96A8"></i>noisy "true" production</span>
+          <span><i style="background:var(--water)"></i>CRM-only fit</span>
+          <span><i style="background:var(--accent)"></i>physics-informed correction</span>
+        </div>
+        <div class="readout-row" id="ml-readouts"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3><span class="num">§2</span>When to reach for it</h3>
+      <div class="two-col-list">
+        <table class="info-table">
+          <tr><td class="lbl">Inputs</td><td>Same as CRM, but benefits from longer, richer histories and side data (workover logs, choke settings)</td></tr>
+          <tr><td class="lbl">Output</td><td>Production forecast with reduced systematic bias vs. plain CRM</td></tr>
+          <tr><td class="lbl">Best for</td><td>Long-producing, well-instrumented assets where classical CRM's fit visibly drifts over time</td></tr>
+        </table>
+        <div>
+          <ul class="plain good"><li>Captures effects CRM's linear assumptions structurally miss</li><li>PINN/SINDy variants stay far more interpretable than a black-box RNN</li></ul>
+          <ul class="plain bad"><li>Needs more history and more careful validation than plain CRM</li><li>Pure RNNs sacrifice the physical interpretability that makes CRM valuable</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB: FIELD DEPLOYMENT & OPTIMIZATION -->
+  <!-- ===================================================================== -->
+  <section class="tab-panel" id="tab-fieldops">
+    <div class="card">
+      <h3><span class="num">§1</span>A repeatable field workflow</h3>
+      <p style="color:var(--text-dim);margin-top:0;max-width:820px;">
+        Drawn from field deployments across 100+ well assets (Shell India's practical-considerations study, Frontender's
+        diagnosis-and-optimization workflow, and Petronas' inverted nine-spot pattern balancing): CRM earns its keep only
+        when wrapped in disciplined data QC and a verification step before any reallocation decision is trusted.
+      </p>
+      <div class="schematic-wrap" id="svg-workflow" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px;">
+      <div class="card">
+        <h3><span class="num">§2</span>Known failure modes &amp; mitigations</h3>
+        <table class="info-table">
+          <tr><td class="lbl">Poor history match</td><td>Noisy rates, unmodelled aquifer support, workovers → smooth data, add pseudo-injectors, or switch to CRM-Aquifer</td></tr>
+          <tr><td class="lbl">Non-unique parameters</td><td>Weak/flat injection signal, collinear injectors → segment by time/space domain, use blind-test verification</td></tr>
+          <tr><td class="lbl">Runtime blow-up</td><td>100s of wells × CRMIP parameter count → sector the reservoir, cluster wells, or drop to CRMP/CRMT</td></tr>
+          <tr><td class="lbl">Drifting allocations</td><td>Frequent choke/rate changes invalidate f<sub>ij</sub> → use productivity-coefficient / crossflow formulation</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3><span class="num">§3</span>Reported field results</h3>
+        <div class="chart-wrap"><canvas id="chart-fieldresults" height="210"></canvas></div>
+        <p class="eq-caption">Reported oil-production gains from CRM-guided injection reallocation across the case studies reviewed (illustrative summary of published figures).</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h3><span class="num">§4</span>Interactive injection-reallocation optimizer</h3>
+      <p style="color:var(--text-dim);margin-top:0;">
+        Fixes a calibrated 4×4 f<sub>ij</sub> connectivity matrix and lets you cap total field injection; the optimizer
+        shifts water from low oil-marginal-value injectors to high-value ones (subject to per-well capacity) exactly as
+        described in the CRMP field case studies.
+      </p>
+      <div class="grid-2">
+        <div class="dash">
+          <div class="dash-head"><h4>Injector capacities</h4><span class="hint">bbl/d</span></div>
+          <div class="controls" id="opt-controls"></div>
+          <div class="readout-row" id="opt-readouts"></div>
+        </div>
+        <div class="dash">
+          <div class="dash-head"><h4>Base vs. optimized allocation</h4><span class="hint">maximize Σ oil-weighted production</span></div>
+          <div class="chart-wrap"><canvas id="chart-opt" height="230"></canvas></div>
+          <div class="legend"><span><i style="background:#8B96A8"></i>current (proportional)</span><span><i style="background:var(--good)"></i>optimized</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <footer class="attr">
+    CRM Atlas — synthesized from Albertoni &amp; Lake (2003), Yousef et al. (2006), Sayarpour et al. (2009), Valkó et al. (2000),
+    Kaviani &amp; Valkó (2010), Cao, Luo &amp; Lake (2014), Weber et al. (2009), Izgec &amp; Kabir (2010), Parra, Samaniego-V. &amp; Lake (2024),
+    Koroglu et al. (2024), Olenchikov &amp; Posvyanskii (2019), Kansao et al. (2017), Simha, Ujjwal &amp; Modi (2021), Wan Khairul Anuar et al. (2024),
+    Holanda et al. (2018), Liu, Wu &amp; Ling (2019), Leng et al. (2023), and machine-learning CRM hybrids (SPE-218258, arXiv:2109.08779). All
+    simulations run client-side from the closed-form / ODE formulations described in each tab — no data leaves the browser.
+  </footer>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+/* =====================================================================
+   CRM ATLAS — core engine
+   ===================================================================== */
+(function(){
+"use strict";
+
+/* ---------------- small DOM helpers ---------------- */
+function $(sel,root){return (root||document).querySelector(sel);}
+function $all(sel,root){return Array.from((root||document).querySelectorAll(sel));}
+function el(tag,attrs,children){
+  const e=document.createElement(tag);
+  if(attrs) for(const k in attrs){
+    if(k==='html') e.innerHTML=attrs[k];
+    else if(k==='style') e.setAttribute('style',attrs[k]);
+    else e.setAttribute(k,attrs[k]);
+  }
+  (children||[]).forEach(c=>{
+    if(c instanceof Node) e.appendChild(c);
+    else e.appendChild(document.createTextNode(String(c)));
+  });
+  return e;
+}
+const COLORS = {
+  water:'#4C9BD4', oil:'#E0973F', accent:'#5CC2AE', danger:'#D2685A', good:'#7DB88A',
+  grid:'#25344B', axis:'#5E6C82', muted:'#8B96A8', text:'#E8E6DD'
+};
+
+/* ---------------- exponential integral E1(x), x>0 (Abramowitz & Stegun 5.1.53 / 5.1.56) ---------------- */
+function expInt1(x){
+  if(x<=0) return Infinity;
+  if(x<=1){
+    const a0=-0.57721566,a1=0.99999193,a2=-0.24991055,a3=0.05519968,a4=-0.00976004,a5=0.00107857;
+    return -Math.log(x)+a0+x*(a1+x*(a2+x*(a3+x*(a4+x*a5))));
+  } else {
+    const num=(((x+8.5733287401)*x+18.059016973)*x+8.6347608925)*x+0.2677737343;
+    const den=(((x+9.5733223454)*x+25.6329561486)*x+21.0996530827)*x+3.9584969228;
+    return (Math.exp(-x)/x)*(num/den);
+  }
+}
+// Ei(-x) = -E1(x) for x>0
+function Ei_neg(x){ return -expInt1(x); }
+
+/* ---------------- generic line-chart renderer (canvas) ---------------- */
+function drawLineChart(canvas, series, opts){
+  opts = opts||{};
+  const dpr = window.devicePixelRatio||1;
+  const cssW = canvas.clientWidth || canvas.parentElement.clientWidth || 600;
+  const cssH = parseInt(canvas.getAttribute('height')||'220',10);
+  canvas.width = cssW*dpr; canvas.height=cssH*dpr;
+  canvas.style.height = cssH+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  const padL = opts.padL!==undefined?opts.padL:44;
+  const padR = opts.padR!==undefined?opts.padR:opts.dual?44:14;
+  const padT = 14, padB = 26;
+  const plotW = cssW-padL-padR, plotH = cssH-padT-padB;
+
+  let allX=[], allY=[], allY2=[];
+  series.forEach(s=>{ (s.data||[]).forEach(p=>{allX.push(p.x); (s.axis===2?allY2:allY).push(p.y);}); });
+  if(allY.length===0) allY=[0,1];
+  let xmin=opts.xmin!==undefined?opts.xmin:Math.min(...allX);
+  let xmax=opts.xmax!==undefined?opts.xmax:Math.max(...allX);
+  let ymin=opts.ymin!==undefined?opts.ymin:Math.min(0,Math.min(...allY));
+  let ymax=opts.ymax!==undefined?opts.ymax:Math.max(...allY)*1.12;
+  if(ymax===ymin) ymax=ymin+1;
+  let y2min=opts.y2min, y2max=opts.y2max;
+  if(allY2.length){
+    y2min = y2min!==undefined?y2min:Math.min(0,Math.min(...allY2));
+    y2max = y2max!==undefined?y2max:Math.max(...allY2)*1.12;
+  }
+
+  function X(x){ return padL + (x-xmin)/(xmax-xmin||1)*plotW; }
+  function Y(y){ return padT + plotH - (y-ymin)/(ymax-ymin||1)*plotH; }
+  function Y2(y){ return padT + plotH - (y-y2min)/((y2max-y2min)||1)*plotH; }
+
+  // gridlines
+  ctx.strokeStyle=COLORS.grid; ctx.lineWidth=1; ctx.font='10.5px "IBM Plex Mono",monospace';
+  ctx.fillStyle=COLORS.axis;
+  const nY = 4;
+  for(let i=0;i<=nY;i++){
+    const yy = ymin + (ymax-ymin)*i/nY;
+    const py = Y(yy);
+    ctx.beginPath(); ctx.moveTo(padL,py); ctx.lineTo(padL+plotW,py); ctx.stroke();
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(fmtNum(yy,opts.yfmt), padL-8, py);
+  }
+  const nX = opts.nx||5;
+  for(let i=0;i<=nX;i++){
+    const xx = xmin + (xmax-xmin)*i/nX;
+    const px = X(xx);
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(fmtNum(xx,opts.xfmt), px, padT+plotH+7);
+  }
+  // axis line
+  ctx.strokeStyle=COLORS.axis;
+  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+plotH); ctx.lineTo(padL+plotW,padT+plotH); ctx.stroke();
+
+  // series
+  series.forEach(s=>{
+    const yfn = s.axis===2?Y2:Y;
+    const data = s.data||[];
+    if(s.style==='bar'){
+      const bw = Math.max(2, plotW/Math.max(1,data.length)*0.55);
+      ctx.fillStyle=s.color;
+      data.forEach(p=>{
+        const px=X(p.x), py=yfn(p.y), zy=yfn(0);
+        ctx.fillRect(px-bw/2, Math.min(py,zy), bw, Math.abs(zy-py));
+      });
+      return;
+    }
+    ctx.beginPath();
+    ctx.strokeStyle=s.color; ctx.lineWidth=s.width||2;
+    if(s.dash) ctx.setLineDash(s.dash); else ctx.setLineDash([]);
+    data.forEach((p,idx)=>{
+      const px=X(p.x), py=yfn(p.y);
+      if(idx===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if(s.fill){
+      ctx.lineTo(X(data[data.length-1].x), yfn(0));
+      ctx.lineTo(X(data[0].x), yfn(0));
+      ctx.closePath();
+      ctx.fillStyle=s.fillColor||s.color+'22';
+      ctx.fill();
+    }
+    if(s.points){
+      ctx.fillStyle=s.color;
+      data.forEach(p=>{ ctx.beginPath(); ctx.arc(X(p.x),yfn(p.y),2.4,0,7); ctx.fill(); });
+    }
+  });
+}
+function fmtNum(v,fmt){
+  if(fmt==='int') return Math.round(v).toString();
+  if(Math.abs(v)>=1000) return (v/1000).toFixed(1)+'k';
+  if(Math.abs(v)<10 && v!==0) return v.toFixed(2);
+  return Math.round(v*10)/10+'';
+}
+
+/* ---------------- KaTeX auto-render of .eq elements ---------------- */
+function renderMath(root){
+  $all('.eq',root||document).forEach(node=>{
+    const tex = node.getAttribute('data-tex');
+    if(tex && !node.dataset.rendered){
+      try{
+        katex.render(tex, node, {throwOnError:false, displayMode:true});
+        node.dataset.rendered='1';
+      }catch(e){ node.textContent = tex; }
+    }
+  });
+}
+
+/* ---------------- Tab metadata ---------------- */
+const TAB_META = {
+  overview:{
+    badges:[['ATLAS','b-accent'],['12 methodologies','']],
+    title:'The Capacitance-Resistance Model family',
+    sub:'A field guide to every practical way of implementing CRM for waterflood evaluation and optimization — from the original linear-regression connectivity tool through physics-coupled, aquifer-aware, and machine-learning-hybrid variants.',
+    refs:''
+  },
+  mlr:{
+    badges:[['FOUNDATIONS',''],['2003','b-water'],['No dynamics','']],
+    title:'MLR / BMLR — Multivariate Linear Regression Connectivity',
+    sub:'The original CRM ancestor: reservoir connectivity inferred from injection/production rate fluctuations alone, using constrained multivariate regression plus a diffusivity filter for time lag.',
+    refs:'Albertoni, A. &amp; Lake, L.W. (2003) — SPE 83381 · Inferring Interwell Connectivity Only From Well-Rate Fluctuations in Waterfloods'
+  },
+  bcm:{
+    badges:[['FOUNDATIONS',''],['2006','b-water'],['+ Capacitance','b-accent']],
+    title:'BCM / UCM — the Capacitance Model',
+    sub:'Yousef, Gentil, Jensen &amp; Lake formalize the RC-circuit analogy: a physically meaningful time constant τ now captures storage and dissipation alongside the connectivity weight.',
+    refs:'Yousef, A.A. et al. (2006) — SPE 95322 · A Capacitance Model to Infer Interwell Connectivity From Production- and Injection-Rate Fluctuations'
+  },
+  crmt:{
+    badges:[['CORE CRM',''],['2009','b-water'],['Field tank','b-accent']],
+    title:'CRMT — Tank (Field) Control Volume',
+    sub:'The whole field collapsed into one injector and one producer. Fastest to calibrate, coarsest in resolution — the recommended entry point into any CRM study.',
+    refs:'Sayarpour, M., Zuluaga, E., Kabir, C.S. &amp; Lake, L.W. (2009) — JPSE 69 · The Use of Capacitance-Resistance Models for Rapid Estimation of Waterflood Performance and Optimization'
+  },
+  crmp:{
+    badges:[['CORE CRM',''],['2007–2009','b-water'],['Producer tank','b-accent']],
+    title:'CRMP — Producer Control Volume',
+    sub:'One time constant per producer, one allocation fraction per feeding injector. The workhorse variant for pattern-flood history matching and injection reallocation.',
+    refs:'Liang, X. et al. (2007) SPE 107713 · Sayarpour, M. et al. (2009) JPSE 69'
+  },
+  crmip:{
+    badges:[['CORE CRM',''],['2006–2009','b-water'],['Pair tank','b-accent']],
+    title:'CRMIP — Injector–Producer Pair Control Volume',
+    sub:'Maximum resolution: a dedicated time constant for every injector–producer pair. Captures fast/slow streaks a shared per-producer τ would average away — at the cost of many more parameters.',
+    refs:'Yousef, A.A. et al. (2006) SPE 95322 · Sayarpour, M. et al. (2009) JPSE 69'
+  },
+  mpi:{
+    badges:[['CORE CRM',''],['2000 / 2010','b-water'],['Geometric','b-accent']],
+    title:'MPI — Multiwell Productivity Index',
+    sub:'A purely geometric connectivity estimate from well locations and rock properties — usable before a single barrel has been produced or injected.',
+    refs:'Valkó, P.P., Doublet, L. &amp; Blasingame, T. (2000) SPE 51793 · Kaviani, D. &amp; Valkó, P.P. (2010) JPSE 73'
+  },
+  twophase:{
+    badges:[['EXTENSION',''],['2014','b-water'],['Two-phase','b-accent']],
+    title:'Fully Coupled Two-Phase CRM',
+    sub:'Total-fluid and oil material balances solved together so the time constant evolves with total mobility — extending CRM validity from mature floods back to early, low-water-cut life.',
+    refs:'Cao, F., Luo, H. &amp; Lake, L.W. (2014) — SPE 169485'
+  },
+  aquifer:{
+    badges:[['EXTENSION',''],['2024','b-water'],['Aquifer','b-accent']],
+    title:'CRM–Aquifer (CRMPA / CRMPAF / CRMPAQ)',
+    sub:'A Fetkovich-style finite aquifer tank coupled directly to producer-based CRM, solving simultaneously for reservoir pore volume and natural water influx.',
+    refs:'Parra, J.E., Samaniego-V., F. &amp; Lake, L.W. (2024) SPE 217973 · Koroglu, B. et al. (2024) SPE 221062'
+  },
+  crossflow:{
+    badges:[['EXTENSION',''],['2019','b-water'],['Crossflow','b-accent']],
+    title:'Productivity Coefficients &amp; Crossflow CRM',
+    sub:'Replaces rate-sensitive allocation fractions with productivity coefficients and adds explicit pressure-driven crossflow between drainage volumes and the aquifer.',
+    refs:'Olenchikov, D. &amp; Posvyanskii, D. (2019) — SPE 196893'
+  },
+  diffusivity:{
+    badges:[['EXTENSION',''],['2003 / 2023','b-water'],['Physics kernel','b-accent']],
+    title:'Diffusivity Filters &amp; Interwell Interference',
+    sub:'The exact transient diffusivity kernel underneath every CRM time constant — extended by recent work to forecast injector-to-injector interference from injection data alone.',
+    refs:'Albertoni &amp; Lake (2003) Appendix · Leng, J. et al. (2023) — IMAGE23 physics-based interwell forecasting'
+  },
+  ml:{
+    badges:[['MODERN',''],['2017–2024','b-water'],['ML hybrid','b-accent']],
+    title:'Machine-Learning-Enhanced CRM',
+    sub:'CRM kept as a physics prior while RNNs, physics-informed neural networks, or sparse-regression (SINDy) absorb whatever the linear productivity assumption misses.',
+    refs:'SPE-218258-MS (2024) · Sen, D. — CRM/RNN comparison, arXiv:2109.08779'
+  },
+  fieldops:{
+    badges:[['MODERN',''],['Applied','b-accent']],
+    title:'Field Deployment &amp; Optimization Workflow',
+    sub:'How CRM actually gets run on a 100+ well asset: data QC, connectivity solving, blind verification, fractional flow, and injection reallocation.',
+    refs:'Simha, S., Ujjwal, M. &amp; Modi, G. (2021) SPE 205650 · Kansao, R. et al. (2017) SPE 185813 · Wan Khairul Anuar, W.M. et al. (2024) SPE 219060'
+  }
+};
+
+function setTopbar(tab){
+  const m = TAB_META[tab]; if(!m) return;
+  const bwrap = $('#topbar-badges'); bwrap.innerHTML='';
+  m.badges.forEach(([label,cls])=>{
+    bwrap.appendChild(el('span',{class:'badge '+(cls||'')},[label]));
+  });
+  $('#topbar-title').innerHTML = m.title;
+  $('#topbar-sub').innerHTML = m.sub;
+  $('#topbar-refs').innerHTML = m.refs;
+}
+
+/* ---------------- tab switching ---------------- */
+const renderedTabs = new Set();
+function activateTab(tab){
+  $all('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  $all('.tab-panel').forEach(p=>p.classList.toggle('active', p.id==='tab-'+tab));
+  setTopbar(tab);
+  renderMath($('#tab-'+tab));
+  if(!renderedTabs.has(tab)){
+    renderedTabs.add(tab);
+    if(TAB_INIT[tab]) TAB_INIT[tab]();
+  } else if(TAB_RESIZE[tab]) {
+    TAB_RESIZE[tab]();
+  }
+  window.scrollTo({top:0,behavior:'instant'});
+}
+const TAB_INIT = {};
+const TAB_RESIZE = {};
+
+$all('.nav-item').forEach(btn=>{
+  btn.addEventListener('click', ()=>activateTab(btn.dataset.tab));
+});
+
+/* expose to later script parts */
+window.CRM = {
+  $, $all, el, COLORS, expInt1, Ei_neg, drawLineChart, renderMath,
+  TAB_INIT, TAB_RESIZE, activateTab
+};
+
+/* boot after all parts loaded */
+window.addEventListener('DOMContentLoaded', ()=>{
+  renderMath(document);
+  if(TAB_INIT.overview) TAB_INIT.overview();
+  activateTab('overview');
+});
+
+})();
+
+
+/* =====================================================================
+   CRM ATLAS — overview tab + shared SVG helpers
+   ===================================================================== */
+(function(){
+"use strict";
+const {$, $all, el, COLORS, TAB_INIT} = window.CRM;
+
+/* ---------------- shared SVG well icons ---------------- */
+const SVG_NS='http://www.w3.org/2000/svg';
+function svgEl(tag,attrs){
+  const e=document.createElementNS(SVG_NS,tag);
+  for(const k in attrs) e.setAttribute(k,attrs[k]);
+  return e;
+}
+function injectorIcon(x,y,r,label){
+  // downward triangle = injector (water)
+  const g=svgEl('g',{});
+  const pts=[[x,y-r],[x-r*0.95,y+r*0.75],[x+r*0.95,y+r*0.75]].map(p=>p.join(',')).join(' ');
+  g.appendChild(svgEl('polygon',{points:pts, fill:COLORS.water, stroke:'#0B121C','stroke-width':1.5}));
+  if(label){
+    const t=svgEl('text',{x:x, y:y+r+13, 'text-anchor':'middle', fill:'#93A0B4', 'font-size':'10', 'font-family':'IBM Plex Mono, monospace'});
+    t.textContent=label; g.appendChild(t);
+  }
+  return g;
+}
+function producerIcon(x,y,r,label){
+  // circle = producer (oil)
+  const g=svgEl('g',{});
+  g.appendChild(svgEl('circle',{cx:x,cy:y,r:r, fill:COLORS.oil, stroke:'#0B121C','stroke-width':1.5}));
+  if(label){
+    const t=svgEl('text',{x:x, y:y+r+13, 'text-anchor':'middle', fill:'#93A0B4', 'font-size':'10', 'font-family':'IBM Plex Mono, monospace'});
+    t.textContent=label; g.appendChild(t);
+  }
+  return g;
+}
+function arrowLine(x1,y1,x2,y2,width,color,opacity){
+  return svgEl('line',{x1,y1,x2,y2,stroke:color||COLORS.water,'stroke-width':Math.max(0.6,width),opacity:opacity!==undefined?opacity:0.75,'stroke-linecap':'round'});
+}
+function svgRoot(w,h){
+  const s=svgEl('svg',{viewBox:`0 0 ${w} ${h}`, width:'100%'});
+  return s;
+}
+window.CRM.svg = {svgEl, injectorIcon, producerIcon, arrowLine, svgRoot};
+
+/* ---------------- Overview: family tree timeline ---------------- */
+const TIMELINE = [
+  ['2000','Multiwell Productivity Index (MPI)','Valkó, Doublet &amp; Blasingame formalize an n×n productivity-index matrix for pseudosteady-state multiwell systems — the geometric ancestor that needs no production history at all.'],
+  ['2003','MLR / BMLR + diffusivity filters','Albertoni &amp; Lake infer interwell connectivity purely from rate fluctuations using constrained linear regression, adding filters to mimic transient time lag.'],
+  ['2006','Capacitance Model (BCM / UCM)','Yousef, Gentil, Jensen &amp; Lake add an explicit compressibility (capacitance) term, giving each connection a physically meaningful time constant τ.'],
+  ['2007–2009','CRMT / CRMP / CRMIP analytical trio','Liang et al. and Sayarpour et al. derive closed-form, superposition-in-time solutions for three control volumes: field tank, producer tank, and injector–producer pair tank.'],
+  ['2010','MPI extended to injection systems','Kaviani &amp; Valkó generalize MPI to coupled injector/producer systems, decoupling geometry-driven connectivity from operational effects.'],
+  ['2014','Fully coupled two-phase CRM','Cao, Luo &amp; Lake couple total-fluid and oil balances so τ evolves with saturation, extending validity to immature, low-water-cut floods.'],
+  ['2017–2021','Field-scale diagnosis &amp; practical workflows','Frontender and Shell India publish end-to-end deployment workflows: data QC, verification, fractional flow, and reallocation optimization on 100+ well assets.'],
+  ['2019','Productivity coefficients &amp; crossflow','Olenchikov &amp; Posvyanskii replace rate-sensitive allocation weights with productivity coefficients and add explicit aquifer/crossflow terms.'],
+  ['2023','Physics-based interwell interference','Leng et al. apply the same transient diffusion kernel between injector pairs to forecast interference using injection data alone.'],
+  ['2024','CRM–Aquifer (CRMPA / CRMPAF / CRMPAQ)','Parra et al. and Koroglu et al. couple a Fetkovich aquifer tank directly to CRMP, solving simultaneously for pore volume and natural water influx.'],
+  ['2024','ML-enhanced CRM (RNN / PINN / SINDy)','SPE-218258 and related work keep the CRM ODE as a physics prior while data-driven layers absorb nonlinear effects classical CRM structurally misses.']
+];
+function buildTimeline(){
+  const wrap = $('#timeline'); if(!wrap || wrap.childElementCount) return;
+  TIMELINE.forEach(([year,title,desc])=>{
+    const item = el('div',{class:'tl-item'},[
+      el('div',{class:'tl-year'},[year]),
+      el('div',{class:'tl-line'},[el('div',{class:'tl-dot'}),el('div',{class:'tl-rule'})]),
+      el('div',{class:'tl-body'},[ el('h5',{},[title]), el('p',{html:desc}) ])
+    ]);
+    wrap.appendChild(item);
+  });
+}
+
+/* ---------------- Overview: compare grid ---------------- */
+const METHOD_CARDS = [
+  ['mlr','MLR / BMLR','Static connectivity map from linear regression + diffusivity filter.','Screening'],
+  ['bcm','Capacitance (BCM/UCM)','Adds a real time constant τ for storage &amp; dissipation.','Connectivity + dynamics'],
+  ['crmt','CRMT','Whole-field tank — 2 parameters total.','Fast field check'],
+  ['crmp','CRMP','One tank per producer — the field workhorse.','Reallocation studies'],
+  ['crmip','CRMIP','One tank per injector–producer pair — max resolution.','Heterogeneity detail'],
+  ['mpi','MPI','Pure geometry — no production history required.','Pre-drill planning'],
+  ['twophase','Two-Phase Coupled','τ evolves with saturation for immature floods.','Early-life floods'],
+  ['aquifer','CRM–Aquifer','Fetkovich aquifer tank coupled to CRMP.','Natural water drive'],
+  ['crossflow','Productivity &amp; Crossflow','Pressure-driven crossflow replaces rate-sensitive weights.','Active optimization'],
+  ['diffusivity','Diffusivity &amp; Interference','Exact E₁ transient kernel; injector–injector forecasting.','Injector-only fields'],
+  ['ml','ML-Enhanced CRM','RNN / PINN / SINDy hybridized with the CRM ODE.','Long, rich histories'],
+  ['fieldops','Field Deployment','QC → connectivity → verification → optimizer, end to end.','Full workflow']
+];
+function buildCompareGrid(){
+  const wrap=$('#compare-grid'); if(!wrap || wrap.childElementCount) return;
+  METHOD_CARDS.forEach(([id,name,desc,meta])=>{
+    const card = el('div',{class:'mini-card'},[
+      el('div',{class:'mc-name'},[name]),
+      el('div',{class:'mc-desc',html:desc}),
+      el('div',{class:'mc-meta'},[el('span',{},['open →']), el('span',{},[meta])])
+    ]);
+    card.addEventListener('click',()=>{
+      window.CRM.activateTab(id);
+      $all('.nav-item').forEach(b=>{ if(b.dataset.tab===id) b.scrollIntoView({block:'center'}); });
+    });
+    wrap.appendChild(card);
+  });
+}
+
+/* ---------------- Overview: selection flow guide ---------------- */
+const FLOW = [
+  ['Do you have any production history yet?','No','MPI — geometric estimate from well layout alone','Yes','Continue below'],
+  ['Is the flood mature (high water cut, stable mobility)?','No','Two-Phase Coupled CRM','Yes','Continue below'],
+  ['Do wells frequently shut in, choke back, or convert?','Yes','Productivity Coefficients &amp; Crossflow CRM','No','Continue below'],
+  ['Is there a natural aquifer contributing water?','Yes','CRM–Aquifer (CRMPA / CRMPAF / CRMPAQ)','No','Continue below'],
+  ['How many wells, and how much resolution do you need?','Whole field, quick check','CRMT','Per-producer detail','CRMP  →  or  CRMIP for pair-level resolution']
+];
+function buildFlowGuide(){
+  const wrap=$('#flow-guide'); if(!wrap || wrap.childElementCount) return;
+  FLOW.forEach(([q,aLabel,aVal,bLabel,bVal])=>{
+    wrap.appendChild(el('div',{class:'fg-row'},[
+      el('div',{class:'fg-q'},[el('b',{},[]), q]),
+      el('div',{class:'fg-arrow'},['↳']),
+      el('div',{class:'fg-q'},[el('b',{},[aLabel+': ']), aVal]),
+      el('div',{class:'fg-arrow'},['·']),
+      el('div',{class:'fg-q'},[el('b',{},[bLabel+': ']), bVal])
+    ]));
+  });
+}
+
+TAB_INIT.overview = function(){
+  buildTimeline();
+  buildCompareGrid();
+  buildFlowGuide();
+};
+
+})();
+
+
+/* =====================================================================
+   CRM ATLAS — shared control/readout builders
+   ===================================================================== */
+(function(){
+"use strict";
+const {$, el} = window.CRM;
+
+function buildSlider(container, spec, onInput){
+  // spec: {id,label,min,max,step,value,fmt(v)->string}
+  const fmt = spec.fmt || (v=>v);
+  const wrap = el('div',{class:'ctrl'});
+  const label = el('label',{},[spec.label+' ', el('b',{id:spec.id+'-v'},[fmt(spec.value)])]);
+  const input = el('input',{type:'range', id:spec.id, min:spec.min, max:spec.max, step:spec.step||1, value:spec.value});
+  wrap.appendChild(label); wrap.appendChild(input);
+  container.appendChild(wrap);
+  input.addEventListener('input', ()=>{
+    const v = parseFloat(input.value);
+    $('#'+spec.id+'-v').textContent = fmt(v);
+    onInput(v, spec.id);
+  });
+  return input;
+}
+
+function buildSliderGroup(containerId, specs, onAny){
+  const container = $('#'+containerId);
+  container.innerHTML='';
+  const inputs = {};
+  specs.forEach(spec=>{
+    inputs[spec.id] = buildSlider(container, spec, (v,id)=>onAny(id,v,inputs));
+  });
+  return inputs;
+}
+
+function setReadouts(containerId, items){
+  // items: [{k,v,cls}]
+  const container = $('#'+containerId);
+  container.innerHTML='';
+  items.forEach(it=>{
+    container.appendChild(el('div',{class:'readout'},[
+      el('div',{class:'k'},[it.k]),
+      el('div',{class:'v '+(it.cls||'')},[it.v])
+    ]));
+  });
+}
+
+function setLegend(containerId, items){
+  // items: [{color,label}]
+  const container = $('#'+containerId);
+  container.innerHTML='';
+  items.forEach(it=>{
+    container.appendChild(el('span',{},[ el('i',{style:'background:'+it.color}), it.label ]));
+  });
+}
+
+function readVal(id){ const n=document.getElementById(id); return n?parseFloat(n.value):0; }
+
+window.CRM.ctrl = {buildSlider, buildSliderGroup, setReadouts, setLegend, readVal};
+
+})();
+
+
+/* =====================================================================
+   CRM ATLAS — MLR/BMLR and BCM/UCM tabs
+   ===================================================================== */
+(function(){
+"use strict";
+const {$, $all, el, COLORS, drawLineChart, TAB_INIT, TAB_RESIZE} = window.CRM;
+const {buildSliderGroup, setReadouts, readVal} = window.CRM.ctrl;
+const {svgEl, injectorIcon, producerIcon, arrowLine, svgRoot} = window.CRM.svg;
+
+/* ---------------------------------------------------------------------
+   MLR / BMLR tab
+--------------------------------------------------------------------- */
+function drawMlrSignalSchematic(){
+  const host = $('#svg-mlr'); if(!host || host.childElementCount) return;
+  const w=520,h=170;
+  const s = svgRoot(w,h);
+  // input signal box
+  s.appendChild(svgEl('rect',{x:20,y:60,width:120,height:50,rx:6,fill:'#17253A',stroke:'#25344B'}));
+  s.appendChild(svgEl('text',{x:80,y:80,'text-anchor':'middle',fill:COLORS.water,'font-size':11,'font-family':'IBM Plex Mono, monospace'},));
+  const t1=svgEl('text',{x:80,y:82,'text-anchor':'middle',fill:COLORS.water,'font-size':11,'font-family':'IBM Plex Mono, monospace'}); t1.textContent='i(t)'; s.appendChild(t1);
+  const t1b=svgEl('text',{x:80,y:98,'text-anchor':'middle',fill:'#8B96A8','font-size':9,'font-family':'IBM Plex Mono, monospace'}); t1b.textContent='injection'; s.appendChild(t1b);
+  // box: black-box regression
+  s.appendChild(svgEl('rect',{x:200,y:45,width:150,height:80,rx:6,fill:'#131E2E',stroke:COLORS.accent,'stroke-width':1.4,'stroke-dasharray':'4,3'}));
+  const t2=svgEl('text',{x:275,y:80,'text-anchor':'middle',fill:'#E8E6DD','font-size':11,'font-family':'Space Grotesk'}); t2.textContent='β / λ regression'; s.appendChild(t2);
+  const t2b=svgEl('text',{x:275,y:96,'text-anchor':'middle',fill:'#8B96A8','font-size':9,'font-family':'IBM Plex Mono, monospace'}); t2b.textContent='+ diffusivity filter δ(n)'; s.appendChild(t2b);
+  // output
+  s.appendChild(svgEl('rect',{x:410,y:60,width:100,height:50,rx:6,fill:'#17253A',stroke:'#25344B'}));
+  const t3=svgEl('text',{x:460,y:82,'text-anchor':'middle',fill:COLORS.oil,'font-size':11,'font-family':'IBM Plex Mono, monospace'}); t3.textContent='q̂(t)'; s.appendChild(t3);
+  const t3b=svgEl('text',{x:460,y:98,'text-anchor':'middle',fill:'#8B96A8','font-size':9,'font-family':'IBM Plex Mono, monospace'}); t3b.textContent='production'; s.appendChild(t3b);
+  // arrows
+  s.appendChild(arrowLine(140,85,198,85,2,COLORS.water,0.9));
+  s.appendChild(arrowLine(350,85,408,85,2,COLORS.oil,0.9));
+  host.appendChild(s);
+}
+
+const MLR_WELLS = {
+  inj: [[70,40],[70,130],[260,25],[260,145],[70,220]],
+  prod:[[180,50],[180,110],[350,50],[350,170]]
+};
+function mlrDist(a,b){ return Math.hypot(a[0]-b[0],a[1]-b[1]); }
+
+function drawMlrMap(streakMult){
+  const host = $('#mlr-map'); host.innerHTML='';
+  const w=440,h=250;
+  const s = svgRoot(w,h);
+  // base weights ~ 1/d^2, with a designated high-perm streak I3(idx2) -> P4(idx3)
+  const weights=[]; // [i][j]
+  for(let i=0;i<5;i++){
+    const row=[];
+    let sum=0;
+    for(let j=0;j<4;j++){
+      const d = mlrDist(MLR_WELLS.inj[i],MLR_WELLS.prod[j]);
+      let wgt = 1/(d*d);
+      if(i===2 && j===3) wgt *= streakMult; // streak channel I3 -> P4
+      row.push(wgt); sum+=wgt;
+    }
+    // normalize so sum_j <=1 (BMLR-like constraint)
+    weights.push(row.map(v=>v/sum));
+  }
+  // draw arrows first (behind wells)
+  let maxW=0; weights.forEach(r=>r.forEach(v=>maxW=Math.max(maxW,v)));
+  for(let i=0;i<5;i++) for(let j=0;j<4;j++){
+    const wgt=weights[i][j];
+    if(wgt/maxW<0.05) continue;
+    const a=MLR_WELLS.inj[i], b=MLR_WELLS.prod[j];
+    const isStreak = (i===2&&j===3);
+    s.appendChild(arrowLine(a[0],a[1],b[0],b[1], 0.6+wgt/maxW*5.5, isStreak?COLORS.accent:COLORS.water, 0.25+0.55*(wgt/maxW)));
+  }
+  MLR_WELLS.inj.forEach((p,i)=>s.appendChild(injectorIcon(p[0],p[1],9,'I'+(i+1))));
+  MLR_WELLS.prod.forEach((p,i)=>s.appendChild(producerIcon(p[0],p[1],9,'P'+(i+1))));
+  host.appendChild(s);
+
+  // asymmetry-ish readout: compare weight(I1,P1-nearest) vs symmetric-expected via streak deviation
+  return weights;
+}
+
+function odCurve(){
+  const pts=[];
+  for(let od=1; od<=30; od+=0.4){ pts.push({x:od, y: 0.85/od}); }
+  return pts;
+}
+
+TAB_INIT.mlr = function(){
+  drawMlrSignalSchematic();
+
+  buildSliderGroup('mlr-controls',[
+    {id:'mlr-streak', label:'High-permeability streak (I3→P4) multiplier', min:1,max:10,step:0.5,value:1,fmt:v=>v.toFixed(1)+'×'},
+    {id:'mlr-M', label:'Data points M', min:20,max:400,step:10,value:100,fmt:v=>Math.round(v)},
+    {id:'mlr-I', label:'Injectors I', min:2,max:25,step:1,value:5,fmt:v=>Math.round(v)}
+  ], redrawMlr);
+
+  redrawMlr();
+};
+TAB_RESIZE.mlr = redrawMlr;
+
+function redrawMlr(){
+  const streak = readVal('mlr-streak')||1;
+  const M = readVal('mlr-M')||100;
+  const I = readVal('mlr-I')||5;
+  drawMlrMap(streak);
+
+  const Od = M/(I+1);
+  const A = 0.85/Od;
+
+  const canvas = $('#chart-mlr-od'); if(canvas){
+    const curve = odCurve();
+    drawLineChart(canvas, [
+      {data:curve, color:COLORS.danger, width:2},
+      {data:[{x:Od,y:A}], color:COLORS.accent, points:true, width:0}
+    ], {xmin:1,xmax:30,ymin:0,ymax:0.9, nx:6, xfmt:'int'});
+  }
+
+  setReadouts('mlr-readouts',[
+    {k:'OVERDETERMINATION Od', v:Od.toFixed(2), cls: Od>6?'good':'danger'},
+    {k:'ASYMMETRY A', v:A.toFixed(3), cls: Od>6?'good':'danger'},
+    {k:'RECOMMENDATION', v: Od>6? 'reliable':'add data', cls: Od>6?'good':'danger'}
+  ]);
+}
+
+/* ---------------------------------------------------------------------
+   BCM / UCM (capacitance model) tab
+--------------------------------------------------------------------- */
+function drawTankSchematic(hostId, opts){
+  // generic single-tank RC schematic: injector -> [resistor R][capacitor C tank] -> producer
+  opts = opts||{};
+  const host = $('#'+hostId); if(!host || host.childElementCount) return;
+  const w=560,h=180;
+  const s = svgRoot(w,h);
+  s.appendChild(injectorIcon(50,90,12,opts.injLabel||'i(t)'));
+  s.appendChild(arrowLine(66,90,150,90,2.4,COLORS.water,0.9));
+  // resistor zigzag
+  const zig=[]; let zx=150;
+  for(let k=0;k<8;k++){ zig.push([zx+k*8, 90+(k%2===0?-8:8)]); }
+  const zpath = 'M150,90 ' + zig.map(p=>`L${p[0]},${p[1]}`).join(' ') + ' L214,90';
+  s.appendChild(svgEl('path',{d:zpath, stroke:COLORS.text, fill:'none','stroke-width':1.6}));
+  const rlab = svgEl('text',{x:182,y:72,'text-anchor':'middle',fill:'#8B96A8','font-size':9,'font-family':'IBM Plex Mono, monospace'}); rlab.textContent='resistance (1/λ)'; s.appendChild(rlab);
+  // tank (capacitance)
+  s.appendChild(svgEl('rect',{x:230,y:45,width:170,height:90,rx:8,fill:'#131E2E',stroke:COLORS.accent,'stroke-width':1.4}));
+  s.appendChild(svgEl('line',{x1:230,y1:70,x2:400,y2:70,stroke:'#25344B'}));
+  const wave=[]; for(let k=0;k<17;k++){ wave.push([238+k*10, 100+Math.sin(k*0.9)*6]); }
+  s.appendChild(svgEl('polyline',{points:wave.map(p=>p.join(',')).join(' '), fill:'none', stroke:COLORS.water,'stroke-width':1.3, opacity:0.55}));
+  const tlab=svgEl('text',{x:315,y:62,'text-anchor':'middle',fill:'#E8E6DD','font-size':11,'font-family':'Space Grotesk'}); tlab.textContent=opts.tankLabel||'c_t V_p  (capacitance)'; s.appendChild(tlab);
+  const tlab2=svgEl('text',{x:315,y:126,'text-anchor':'middle',fill:'#8B96A8','font-size':9.5,'font-family':'IBM Plex Mono, monospace'}); tlab2.textContent='τ = c_t·V_p / J'; s.appendChild(tlab2);
+  // out
+  s.appendChild(arrowLine(400,90,494,90,2.4,COLORS.oil,0.9));
+  s.appendChild(producerIcon(510,90,12,opts.prodLabel||'q(t)'));
+  host.appendChild(s);
+}
+
+function simulateSingleTank(tau, steadyInputFn, n, dt){
+  dt=dt||1;
+  const decay = Math.exp(-dt/tau);
+  const q=[0]; const i=[0];
+  for(let t=1;t<=n;t++){
+    const inp = steadyInputFn(t);
+    i.push(inp);
+    q.push(q[t-1]*decay + inp*(1-decay));
+  }
+  return {q,i};
+}
+
+TAB_INIT.bcm = function(){
+  drawTankSchematic('svg-bcm',{});
+  buildSliderGroup('bcm-controls',[
+    {id:'bcm-tau', label:'Time constant τ (days)', min:2,max:120,step:1,value:25,fmt:v=>Math.round(v)},
+    {id:'bcm-mag', label:'Injection step magnitude (bbl/d)', min:200,max:3000,step:50,value:1200,fmt:v=>Math.round(v)},
+    {id:'bcm-t0', label:'Step start (day)', min:5,max:60,step:1,value:20,fmt:v=>Math.round(v)}
+  ], redrawBcm);
+  redrawBcm();
+};
+TAB_RESIZE.bcm = redrawBcm;
+
+function redrawBcm(){
+  const tau = readVal('bcm-tau')||25;
+  const mag = readVal('bcm-mag')||1200;
+  const tstep = readVal('bcm-t0')||20;
+  const N=200;
+  const {q,i} = simulateSingleTank(tau, t=> t>=tstep? mag:0, N,1);
+  const inj = i.map((v,idx)=>({x:idx,y:v}));
+  const prod = q.map((v,idx)=>({x:idx,y:v}));
+  drawLineChart($('#chart-bcm'), [
+    {data:inj, color:COLORS.water, width:1.6, dash:[4,3]},
+    {data:prod, color:COLORS.oil, width:2.2}
+  ], {xmin:0,xmax:N,ymin:0,ymax:mag*1.15, nx:6, xfmt:'int'});
+
+  // peak lag = time to reach 63% of step (1 tau after step)
+  const peakIdx = q.findIndex((v,idx)=>idx>tstep && v>=0.632*mag);
+  setReadouts('bcm-readouts',[
+    {k:'τ (days)', v:tau, cls:'accent'},
+    {k:'63% RESPONSE LAG', v:(peakIdx>0?(peakIdx-tstep):'—')+' d', cls:'water'},
+    {k:'STEADY-STATE q', v:Math.round(mag)+' bbl/d', cls:'oil'}
+  ]);
+
+  // tau vs 1/k illustrative chart
+  const tauCurve=[]; for(let k=1;k<=100;k+=2){ tauCurve.push({x:k, y: 900/k}); }
+  const markK = 900/tau;
+  drawLineChart($('#chart-bcm-tau'), [
+    {data:tauCurve, color:COLORS.accent, width:2},
+    {data:[{x:markK,y:tau}], color:COLORS.oil, points:true, width:0}
+  ], {xmin:1,xmax:100,ymin:0,ymax:120, nx:5, xfmt:'int'});
+}
+
+})();
+
+
+/* =====================================================================
+   CRM ATLAS — CRMT, CRMP, CRMIP, MPI tabs
+   ===================================================================== */
+(function(){
+"use strict";
+const {$, $all, el, COLORS, drawLineChart, TAB_INIT, TAB_RESIZE} = window.CRM;
+const {buildSliderGroup, setReadouts, setLegend, readVal} = window.CRM.ctrl;
+const {svgEl, injectorIcon, producerIcon, arrowLine, svgRoot} = window.CRM.svg;
+
+function tankRecursion(tau, steadyInputFn, n, dt){
+  dt=dt||1;
+  const decay = Math.exp(-dt/tau);
+  const q=[0];
+  for(let t=1;t<=n;t++){
+    const inp = steadyInputFn(t);
+    q.push(q[t-1]*decay + inp*(1-decay));
+  }
+  return q;
+}
+function seriesFromArr(arr){ return arr.map((v,idx)=>({x:idx,y:v})); }
+
+/* ---------------------------------------------------------------------
+   CRMT
+--------------------------------------------------------------------- */
+function drawFieldTankSchematic(){
+  const host=$('#svg-crmt'); if(!host||host.childElementCount) return;
+  const w=560,h=190; const s=svgRoot(w,h);
+  // multiple injectors funneling into one field tank -> multiple producers
+  const injY=[35,70,105,140];
+  injY.forEach((y,idx)=>{ s.appendChild(injectorIcon(45,y,9)); s.appendChild(arrowLine(56,y,205,90,1.4,COLORS.water,0.5)); });
+  s.appendChild(svgEl('rect',{x:210,y:55,width:150,height:70,rx:8,fill:'#131E2E',stroke:COLORS.accent,'stroke-width':1.4}));
+  const tl=svgEl('text',{x:285,y:85,'text-anchor':'middle',fill:'#E8E6DD','font-size':11.5,'font-family':'Space Grotesk'}); tl.textContent='field tank'; s.appendChild(tl);
+  const tl2=svgEl('text',{x:285,y:102,'text-anchor':'middle',fill:'#8B96A8','font-size':9.5,'font-family':'IBM Plex Mono, monospace'}); tl2.textContent='τ_F  ·  q_F(t₀)'; s.appendChild(tl2);
+  const prodY=[35,70,105,140];
+  prodY.forEach((y,idx)=>{ s.appendChild(arrowLine(365,90,514,y,1.4,COLORS.oil,0.5)); s.appendChild(producerIcon(525,y,9)); });
+  host.appendChild(s);
+}
+TAB_INIT.crmt = function(){
+  drawFieldTankSchematic();
+  buildSliderGroup('crmt-controls',[
+    {id:'crmt-tau', label:'Field time constant τ_F (days)', min:5,max:200,step:5,value:60,fmt:v=>Math.round(v)},
+    {id:'crmt-q0', label:'Initial field rate q_F(t₀)', min:0,max:5000,step:100,value:2000,fmt:v=>Math.round(v)}
+  ],redrawCrmt);
+  const sel = el('div',{class:'ctrl'},[]);
+  redrawCrmt();
+
+  // parameter-count chart (independent sliders already in markup)
+  const wireIfExists=(id,cb)=>{ const n=document.getElementById(id); if(n) n.addEventListener('input',cb); };
+  const drawParamChart=()=>{
+    const ni = readVal('pc-ni')||8, np=readVal('pc-np')||6;
+    $('#pc-ni-v') && ($('#pc-ni-v').textContent=Math.round(ni));
+    $('#pc-np-v') && ($('#pc-np-v').textContent=Math.round(np));
+    const crmtN=2, crmpN=np*(ni+3), crmipN=4*ni*np;
+    drawLineChart($('#chart-param-count'), [
+      {data:[{x:0,y:crmtN}], color:COLORS.muted, style:'bar'},
+      {data:[{x:1,y:crmpN}], color:COLORS.oil, style:'bar'},
+      {data:[{x:2,y:crmipN}], color:COLORS.accent, style:'bar'}
+    ], {xmin:-0.6,xmax:2.6, ymin:0, ymax:Math.max(crmipN*1.15,20), nx:2, xfmt:'int'});
+  };
+  wireIfExists('pc-ni',drawParamChart); wireIfExists('pc-np',drawParamChart);
+  drawParamChart();
+  TAB_RESIZE.crmt = ()=>{redrawCrmt(); drawParamChart();};
+};
+
+function redrawCrmt(){
+  const tau=readVal('crmt-tau')||60;
+  const q0=readVal('crmt-q0')||2000;
+  const N=150;
+  // injection profile: baseline with two step changes to show field-level response
+  const inj = t=> t<30? 3000 : (t<90? 4200 : 2600);
+  const q = tankRecursion(tau, inj, N,1);
+  q[0]=q0;
+  for(let t=1;t<=N;t++){ q[t]=q[t-1]*Math.exp(-1/tau)+inj(t)*(1-Math.exp(-1/tau)); }
+  const injArr=[]; for(let t=0;t<=N;t++) injArr.push(inj(t));
+  drawLineChart($('#chart-crmt'), [
+    {data:seriesFromArr(injArr), color:COLORS.water, width:1.6, dash:[4,3]},
+    {data:seriesFromArr(q), color:COLORS.oil, width:2.2}
+  ], {xmin:0,xmax:N, ymin:0, ymax:5000, nx:6, xfmt:'int'});
+  setReadouts('crmt-readouts',[
+    {k:'τ_F (days)', v:Math.round(tau), cls:'accent'},
+    {k:'MODEL PARAMETERS', v:'2', cls:'good'},
+    {k:'STEADY FIELD RATE', v:Math.round(q[N])+' bbl/d', cls:'oil'}
+  ]);
+}
+
+/* ---------------------------------------------------------------------
+   CRMP — 4 injectors -> 1 producer
+--------------------------------------------------------------------- */
+function drawCrmpSchematic(){
+  const host=$('#svg-crmp'); if(!host||host.childElementCount) return;
+  const w=560,h=200; const s=svgRoot(w,h);
+  const injY=[30,75,125,170];
+  const cols=[COLORS.water,'#7FB6DE','#3E7EA8','#A9CDE8'];
+  injY.forEach((y,idx)=>{
+    s.appendChild(injectorIcon(50,y,10,'I'+(idx+1)));
+    s.appendChild(arrowLine(63,y,215,100,1.8,cols[idx],0.7));
+  });
+  s.appendChild(svgEl('rect',{x:220,y:65,width:150,height:70,rx:8,fill:'#131E2E',stroke:COLORS.accent,'stroke-width':1.4}));
+  const tl=svgEl('text',{x:295,y:95,'text-anchor':'middle',fill:'#E8E6DD','font-size':11.5,'font-family':'Space Grotesk'}); tl.textContent='producer j tank'; s.appendChild(tl);
+  const tl2=svgEl('text',{x:295,y:112,'text-anchor':'middle',fill:'#8B96A8','font-size':9.5,'font-family':'IBM Plex Mono, monospace'}); tl2.textContent='τ_j  ·  f_1j…f_4j'; s.appendChild(tl2);
+  s.appendChild(arrowLine(375,100,510,100,2.2,COLORS.oil,0.9));
+  s.appendChild(producerIcon(525,100,11,'P_j'));
+  host.appendChild(s);
+}
+const CRMP_COLORS=[COLORS.water,'#7FB6DE','#3E7EA8','#9F8FD0'];
+TAB_INIT.crmp = function(){
+  drawCrmpSchematic();
+  buildSliderGroup('crmp-controls',[
+    {id:'crmp-f1', label:'f₁ⱼ (I1 allocation)', min:0,max:1,step:0.05,value:0.4,fmt:v=>v.toFixed(2)},
+    {id:'crmp-f2', label:'f₂ⱼ (I2 allocation)', min:0,max:1,step:0.05,value:0.2,fmt:v=>v.toFixed(2)},
+    {id:'crmp-f3', label:'f₃ⱼ (I3 allocation)', min:0,max:1,step:0.05,value:0.25,fmt:v=>v.toFixed(2)},
+    {id:'crmp-f4', label:'f₄ⱼ (I4 allocation)', min:0,max:1,step:0.05,value:0.15,fmt:v=>v.toFixed(2)},
+    {id:'crmp-tau', label:'τⱼ (days)', min:2,max:150,step:2,value:35,fmt:v=>Math.round(v)}
+  ], redrawCrmp);
+  setLegend('crmp-legend',[
+    {color:CRMP_COLORS[0],label:'I1'},{color:CRMP_COLORS[1],label:'I2'},{color:CRMP_COLORS[2],label:'I3'},{color:CRMP_COLORS[3],label:'I4'},
+    {color:COLORS.oil,label:'producer q_j(t)'}
+  ]);
+  redrawCrmp();
+
+  // oil-cut chart (shared beta slider defined in markup as #oc-beta)
+  const drawOilcut = ()=>{
+    const beta = readVal('oc-beta')||1.8;
+    document.getElementById('oc-beta-v') && (document.getElementById('oc-beta-v').textContent=beta.toFixed(1));
+    const alpha = 4e-7;
+    const pts=[]; let cwi=0;
+    for(let t=0;t<=180;t++){
+      cwi += 3000; // cumulative water injected grows each month
+      const fo = 1/(1+alpha*Math.pow(cwi,beta));
+      pts.push({x:t,y:fo});
+    }
+    drawLineChart($('#chart-crmp-oilcut'), [{data:pts,color:COLORS.oil,width:2.2}], {xmin:0,xmax:180,ymin:0,ymax:1,nx:6,xfmt:'int'});
+  };
+  const betaSlider=document.getElementById('oc-beta');
+  if(betaSlider) betaSlider.addEventListener('input',drawOilcut);
+  drawOilcut();
+  TAB_RESIZE.crmp = ()=>{redrawCrmp(); drawOilcut();};
+};
+
+function normalizeF(){
+  let f=[readVal('crmp-f1'),readVal('crmp-f2'),readVal('crmp-f3'),readVal('crmp-f4')];
+  return f;
+}
+function redrawCrmp(){
+  const f = normalizeF();
+  const tau = readVal('crmp-tau')||35;
+  const N=150;
+  const injFns = [
+    t=>1500+600*Math.sin(t/14),
+    t=>900+300*Math.sin(t/9+1.2),
+    t=>1800+700*Math.sin(t/20+2.1),
+    t=>700+250*Math.sin(t/11+0.4)
+  ];
+  const injSeries = injFns.map(fn=>{ const a=[]; for(let t=0;t<=N;t++) a.push(Math.max(0,fn(t))); return a;});
+  const steadyInput = t=> f[0]*injSeries[0][t]+f[1]*injSeries[1][t]+f[2]*injSeries[2][t]+f[3]*injSeries[3][t];
+  const q = tankRecursion(tau, steadyInput, N,1);
+
+  const chartSeries = injSeries.map((arr,idx)=>({data:seriesFromArr(arr), color:CRMP_COLORS[idx], width:1.1, dash:[3,3]}));
+  chartSeries.push({data:seriesFromArr(q), color:COLORS.oil, width:2.3});
+  drawLineChart($('#chart-crmp'), chartSeries, {xmin:0,xmax:N, ymin:0, nx:6, xfmt:'int'});
+
+  const sumF = f.reduce((a,b)=>a+b,0);
+  setReadouts('crmp-readouts',[
+    {k:'Σ f_ij', v:sumF.toFixed(2), cls: sumF<=1.001?'good':'danger'},
+    {k:'τⱼ (days)', v:Math.round(tau), cls:'accent'},
+    {k:'PRODUCER RATE (t=150)', v:Math.round(q[N])+' bbl/d', cls:'oil'}
+  ]);
+}
+
+/* ---------------------------------------------------------------------
+   CRMIP — 3x3 heatmap + trio comparison
+--------------------------------------------------------------------- */
+const CRMIP_POS = { inj:[[40,40],[40,110],[40,180]], prod:[[380,40],[380,110],[380,180]] };
+function drawCrmipSchematic(){
+  const host=$('#svg-crmip'); if(!host||host.childElementCount) return;
+  const w=440,h=210; const s=svgRoot(w,h);
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++){
+    s.appendChild(arrowLine(CRMIP_POS.inj[i][0]+14,CRMIP_POS.inj[i][1],CRMIP_POS.prod[j][0]-14,CRMIP_POS.prod[j][1],1,COLORS.muted,0.28));
+  }
+  CRMIP_POS.inj.forEach((p,idx)=>s.appendChild(injectorIcon(p[0],p[1],10,'I'+(idx+1))));
+  CRMIP_POS.prod.forEach((p,idx)=>s.appendChild(producerIcon(p[0],p[1],10,'P'+(idx+1))));
+  host.appendChild(s);
+}
+function dist(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1]);}
+
+function computeCrmipMatrices(dissip, streak){
+  const tau=[], f=[];
+  for(let i=0;i<3;i++){
+    const trow=[], frow=[]; let fsum=0;
+    for(let j=0;j<3;j++){
+      const d = dist(CRMIP_POS.inj[i],CRMIP_POS.prod[j]);
+      let t = dissip*d*d/4000;
+      if(i===j) t/=streak; // diagonal pairs are the "fast streak"
+      trow.push(Math.max(1,t));
+      let wgt = 1/(d*d); if(i===j) wgt*=streak;
+      frow.push(wgt); fsum+=wgt;
+    }
+    tau.push(trow);
+    f.push(frow.map(v=>v/fsum));
+  }
+  return {tau,f};
+}
+function drawCrmipHeatmap(tau,f){
+  const host=$('#crmip-heatmap'); host.innerHTML='';
+  const w=440,h=230; const s=svgRoot(w,h);
+  let maxTau=0; tau.forEach(r=>r.forEach(v=>maxTau=Math.max(maxTau,v)));
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++){
+    const strength = 1-Math.min(1,tau[i][j]/maxTau); // faster (lower tau) = stronger
+    const width = 0.8+strength*strength*6;
+    s.appendChild(arrowLine(CRMIP_POS.inj[i][0]+14,CRMIP_POS.inj[i][1],CRMIP_POS.prod[j][0]-14,CRMIP_POS.prod[j][1], width, COLORS.accent, 0.12+0.7*strength));
+  }
+  CRMIP_POS.inj.forEach((p,idx)=>s.appendChild(injectorIcon(p[0],p[1],11,'I'+(idx+1)+'  τ→'+tau[idx].map(v=>Math.round(v)).join('/'))));
+  CRMIP_POS.prod.forEach((p,idx)=>s.appendChild(producerIcon(p[0],p[1],11,'P'+(idx+1))));
+  host.appendChild(s);
+}
+
+TAB_INIT.crmip = function(){
+  drawCrmipSchematic();
+  buildSliderGroup('crmip-controls',[
+    {id:'crmip-dissip', label:'Dissipation constant d', min:2,max:40,step:1,value:14,fmt:v=>Math.round(v)},
+    {id:'crmip-streak', label:'Diagonal fast-streak multiplier', min:1,max:12,step:0.5,value:4,fmt:v=>v.toFixed(1)+'×'}
+  ], redrawCrmip);
+  setLegend('crmip-legend',[{color:COLORS.accent,label:'production at P2 (sum of all 3 injector contributions)'}]);
+  redrawCrmip();
+};
+TAB_RESIZE.crmip = redrawCrmip;
+
+function redrawCrmip(){
+  const dissip = readVal('crmip-dissip')||14;
+  const streak = readVal('crmip-streak')||4;
+  const {tau,f} = computeCrmipMatrices(dissip,streak);
+  drawCrmipHeatmap(tau,f);
+
+  // simulate producer P2 (index 1) fed by 3 injectors, each with own tau_ij
+  const N=140; const j=1;
+  const injFns=[t=>1400+500*Math.sin(t/12), t=>1000+400*Math.sin(t/17+1), t=>1600+450*Math.sin(t/9+2)];
+  let qTotal=new Array(N+1).fill(0);
+  const contribColors=[COLORS.water,'#8FD0C4',COLORS.oil];
+  const series=[];
+  for(let i=0;i<3;i++){
+    const tij=tau[i][j], fij=f[i][j];
+    const qij = tankRecursion(tij, t=>fij*injFns[i](t), N,1);
+    qij.forEach((v,idx)=>qTotal[idx]+=v);
+    series.push({data:seriesFromArr(qij), color:contribColors[i], width:1.2, dash:[3,3]});
+  }
+  series.push({data:seriesFromArr(qTotal), color:COLORS.accent, width:2.4});
+  drawLineChart($('#chart-crmip'), series, {xmin:0,xmax:N, ymin:0, nx:6, xfmt:'int'});
+}
+
+/* ---------------------------------------------------------------------
+   Trio comparison: CRMT vs CRMP vs CRMIP vs "true"
+--------------------------------------------------------------------- */
+function drawTrioCompare(){
+  const N=150;
+  const tauTrue = {11:6, 12:65, 21:65, 22:6};
+  const fTrue = {11:0.72,12:0.28,21:0.28,22:0.72};
+  const i1 = t=>1200+500*Math.sin(t/10);
+  const i2 = t=>1200+500*Math.sin(t/16+2);
+
+  // TRUE (=CRMIP by construction): P1 = pair(I1,fast)+pair(I2,slow); P2 = pair(I1,slow)+pair(I2,fast)
+  const q11 = tankRecursion(tauTrue[11], t=>fTrue[11]*i1(t), N,1);
+  const q21 = tankRecursion(tauTrue[21], t=>fTrue[21]*i2(t), N,1);
+  const q12 = tankRecursion(tauTrue[12], t=>fTrue[12]*i1(t), N,1);
+  const q22 = tankRecursion(tauTrue[22], t=>fTrue[22]*i2(t), N,1);
+  const trueP1 = q11.map((v,idx)=>v+q21[idx]);
+  const trueP2 = q12.map((v,idx)=>v+q22[idx]);
+  const trueField = trueP1.map((v,idx)=>v+trueP2[idx]);
+
+  // CRMP: one shared tau per producer = f-weighted average of contributing taus
+  const tauP1 = fTrue[11]*tauTrue[11]+fTrue[21]*tauTrue[21];
+  const tauP2 = fTrue[12]*tauTrue[12]+fTrue[22]*tauTrue[22];
+  const crmpP1 = tankRecursion(tauP1, t=>fTrue[11]*i1(t)+fTrue[21]*i2(t), N,1);
+  const crmpP2 = tankRecursion(tauP2, t=>fTrue[12]*i1(t)+fTrue[22]*i2(t), N,1);
+  const crmpField = crmpP1.map((v,idx)=>v+crmpP2[idx]);
+
+  // CRMT: whole field lumped, tau_F = simple average of all 4 taus
+  const tauF = (tauTrue[11]+tauTrue[12]+tauTrue[21]+tauTrue[22])/4;
+  const crmtField = tankRecursion(tauF, t=>i1(t)+i2(t), N,1);
+
+  drawLineChart($('#chart-trio-compare'), [
+    {data:seriesFromArr(trueField), color:COLORS.water, width:2.6},
+    {data:seriesFromArr(crmtField), color:COLORS.muted, width:1.8, dash:[6,4]},
+    {data:seriesFromArr(crmpField), color:COLORS.oil, width:1.8, dash:[2,3]},
+    {data:seriesFromArr(trueField), color:COLORS.accent, width:1.2}
+  ], {xmin:0,xmax:N, ymin:0, nx:6, xfmt:'int'});
+}
+const _origCrmipInit = TAB_INIT.crmip;
+TAB_INIT.crmip = function(){ _origCrmipInit(); drawTrioCompare(); };
+const _origCrmipResize = TAB_RESIZE.crmip;
+TAB_RESIZE.crmip = function(){ _origCrmipResize(); drawTrioCompare(); };
+
+/* ---------------------------------------------------------------------
+   MPI — geometric connectivity
+--------------------------------------------------------------------- */
+const MPI_WELLS = { inj:[[70,60],[70,190]], prod:[[260,60],[260,190],[380,125]] };
+function drawMpiSchematic(){
+  const host=$('#svg-mpi'); if(!host||host.childElementCount) return;
+  const w=460,h=250; const s=svgRoot(w,h);
+  s.appendChild(svgEl('rect',{x:20,y:20,width:420,height:210,fill:'none',stroke:COLORS.muted,'stroke-width':1.2,'stroke-dasharray':'5,4'}));
+  const lbl=svgEl('text',{x:230,y:14,'text-anchor':'middle',fill:'#8B96A8','font-size':10,'font-family':'IBM Plex Mono, monospace'}); lbl.textContent='closed rectangular reservoir, no-flow boundary'; s.appendChild(lbl);
+  MPI_WELLS.inj.forEach((p,idx)=>s.appendChild(injectorIcon(p[0],p[1],11,'I'+(idx+1))));
+  MPI_WELLS.prod.forEach((p,idx)=>s.appendChild(producerIcon(p[0],p[1],11,'P'+(idx+1))));
+  host.appendChild(s);
+}
+function mpiInfluence(r, skin, re){
+  // illustrative monotone-decaying proxy for the true infinite-series influence function:
+  // strong for close wells, weakening with distance (scaled by drainage radius) and skin.
+  return 1/(10*Math.max(r,1)/re + skin + 1);
+}
+function drawMpiMap(skin,re){
+  const host=$('#mpi-map'); host.innerHTML='';
+  const w=460,h=250; const s=svgRoot(w,h);
+  let maxInf=0;
+  const infl=[];
+  MPI_WELLS.inj.forEach(a=>{
+    const row=[];
+    MPI_WELLS.prod.forEach(b=>{ const v=mpiInfluence(dist(a,b),skin,re); row.push(v); maxInf=Math.max(maxInf,v); });
+    infl.push(row);
+  });
+  MPI_WELLS.inj.forEach((a,i)=>MPI_WELLS.prod.forEach((b,j)=>{
+    const v=infl[i][j];
+    s.appendChild(arrowLine(a[0]+12,a[1],b[0]-12,b[1], 0.6+6*(v/maxInf), COLORS.water, 0.2+0.7*(v/maxInf)));
+  }));
+  MPI_WELLS.inj.forEach((p,idx)=>s.appendChild(injectorIcon(p[0],p[1],11,'I'+(idx+1))));
+  MPI_WELLS.prod.forEach((p,idx)=>s.appendChild(producerIcon(p[0],p[1],11,'P'+(idx+1))));
+  host.appendChild(s);
+  return infl;
+}
+TAB_INIT.mpi = function(){
+  drawMpiSchematic();
+  buildSliderGroup('mpi-controls',[
+    {id:'mpi-skin', label:'Producer skin factor s', min:0,max:20,step:0.5,value:2,fmt:v=>v.toFixed(1)},
+    {id:'mpi-re', label:'Drainage radius r_e (ft)', min:500,max:3000,step:50,value:1200,fmt:v=>Math.round(v)}
+  ], redrawMpi);
+  redrawMpi();
+};
+TAB_RESIZE.mpi = redrawMpi;
+function redrawMpi(){
+  const skin=readVal('mpi-skin')||2, re=readVal('mpi-re')||1200;
+  const infl = drawMpiMap(skin,re);
+  let total=0; infl.forEach(r=>r.forEach(v=>total+=v));
+  setReadouts('mpi-readouts',[
+    {k:'SKIN s', v:skin.toFixed(1), cls: skin>8?'danger':'good'},
+    {k:'DRAINAGE RADIUS', v:Math.round(re)+' ft', cls:'water'},
+    {k:'Σ INFLUENCE (J_D proxy)', v:total.toFixed(2), cls:'accent'}
+  ]);
+  const curves=[]; const skins=[0,5,15];
+  const colors=[COLORS.accent,COLORS.oil,COLORS.danger];
+  skins.forEach((sk,idx)=>{
+    const pts=[]; for(let r=20;r<=1000;r+=20){ pts.push({x:r,y:mpiInfluence(r,sk,re)}); }
+    curves.push({data:pts,color:colors[idx],width:2});
+  });
+  drawLineChart($('#chart-mpi-decay'), curves, {xmin:0,xmax:1000, ymin:0, nx:5, xfmt:'int'});
+}
+
+})();
+
+
+/* =====================================================================
+   CRM ATLAS — Two-Phase, Aquifer, Crossflow, Diffusivity tabs
+   ===================================================================== */
+(function(){
+"use strict";
+const {$, $all, el, COLORS, drawLineChart, expInt1, Ei_neg, TAB_INIT, TAB_RESIZE} = window.CRM;
+const {buildSliderGroup, setReadouts, setLegend, readVal} = window.CRM.ctrl;
+const {svgEl, injectorIcon, producerIcon, arrowLine, svgRoot} = window.CRM.svg;
+
+function seriesFromArr(arr){ return arr.map((v,idx)=>({x:idx,y:v})); }
+function tankRecursion(tau, steadyInputFn, n, dt){
+  dt=dt||1; const decay=Math.exp(-dt/tau); const q=[0];
+  for(let t=1;t<=n;t++){ const inp=steadyInputFn(t); q.push(q[t-1]*decay+inp*(1-decay)); }
+  return q;
+}
+
+/* ---------------------------------------------------------------------
+   TWO-PHASE COUPLED CRM
+--------------------------------------------------------------------- */
+function drawTwoPhaseSchematic(){
+  const host=$('#svg-twophase'); if(!host||host.childElementCount) return;
+  const w=560,h=190; const s=svgRoot(w,h);
+  s.appendChild(injectorIcon(45,95,11,'i(t)'));
+  s.appendChild(arrowLine(58,95,150,95,2,COLORS.water,0.85));
+  s.appendChild(svgEl('rect',{x:155,y:35,width:130,height:60,rx:7,fill:'#131E2E',stroke:COLORS.water,'stroke-width':1.3}));
+  const p1=svgEl('text',{x:220,y:60,'text-anchor':'middle',fill:'#E8E6DD','font-size':10.5,'font-family':'Space Grotesk'}); p1.textContent='pressure eqn'; s.appendChild(p1);
+  const p1b=svgEl('text',{x:220,y:76,'text-anchor':'middle',fill:'#8B96A8','font-size':9,'font-family':'IBM Plex Mono, monospace'}); p1b.textContent='c_t V_p dp/dt'; s.appendChild(p1b);
+  s.appendChild(svgEl('rect',{x:155,y:100,width:130,height:60,rx:7,fill:'#131E2E',stroke:COLORS.oil,'stroke-width':1.3}));
+  const p2=svgEl('text',{x:220,y:125,'text-anchor':'middle',fill:'#E8E6DD','font-size':10.5,'font-family':'Space Grotesk'}); p2.textContent='saturation eqn'; s.appendChild(p2);
+  const p2b=svgEl('text',{x:220,y:141,'text-anchor':'middle',fill:'#8B96A8','font-size':9,'font-family':'IBM Plex Mono, monospace'}); p2b.textContent='φV_b dS_w/dt'; s.appendChild(p2b);
+  // feedback loop between the two boxes
+  s.appendChild(svgEl('path',{d:'M285,55 C 320,55 320,155 285,155', stroke:COLORS.accent, 'stroke-width':1.4, fill:'none','marker-end':'url(#tphead)'}));
+  const fb=svgEl('text',{x:335,y:105,'text-anchor':'middle',fill:COLORS.accent,'font-size':9,'font-family':'IBM Plex Mono, monospace'}); fb.textContent='λ_t(S_w)'; s.appendChild(fb);
+  s.appendChild(arrowLine(285,95,430,95,2,COLORS.oil,0.85));
+  s.appendChild(producerIcon(445,95,11,'q_o, q_w'));
+  host.appendChild(s);
+}
+function coreyFw(Sw, Swc, Sor, nw, no, M){
+  const Swn = Math.min(1,Math.max(0,(Sw-Swc)/(1-Swc-Sor)));
+  const krw = Math.pow(Swn,nw);
+  const kro = Math.pow(1-Swn,no);
+  const mobRatio = M; // (kro/muo)/(krw/muw) baseline factor folded into M
+  const term = mobRatio*kro/Math.max(1e-6,krw);
+  return 1/(1+term);
+}
+TAB_INIT.twophase = function(){
+  drawTwoPhaseSchematic();
+  buildSliderGroup('tp-controls',[
+    {id:'tp-nw', label:'Corey water exponent n_w', min:1,max:5,step:0.2,value:2.2,fmt:v=>v.toFixed(1)},
+    {id:'tp-no', label:'Corey oil exponent n_o', min:1,max:5,step:0.2,value:2.6,fmt:v=>v.toFixed(1)},
+    {id:'tp-M', label:'End-point mobility ratio M', min:0.2,max:8,step:0.2,value:2.0,fmt:v=>v.toFixed(1)}
+  ], redrawTwoPhase);
+  redrawTwoPhase();
+};
+TAB_RESIZE.twophase = redrawTwoPhase;
+function redrawTwoPhase(){
+  const nw=readVal('tp-nw')||2.2, no=readVal('tp-no')||2.6, M=readVal('tp-M')||2;
+  const Swc=0.2, Sor=0.2;
+  const fwPts=[]; for(let sw=Swc;sw<=1-Sor;sw+=0.01){ fwPts.push({x:sw, y:coreyFw(sw,Swc,Sor,nw,no,M)}); }
+  drawLineChart($('#chart-tp-fw'), [{data:fwPts,color:COLORS.water,width:2.3}], {xmin:Swc,xmax:1-Sor, ymin:0,ymax:1, nx:5});
+
+  // Sw maturation curve then tau(t)
+  const N=200; const tau0=40;
+  const swT=[], tauT=[];
+  for(let t=0;t<=N;t++){
+    const sw = Swc + (1-Swc-Sor)*(1-Math.exp(-t/55));
+    swT.push(sw);
+    const lam = 1/coreyFwLambdaProxy(sw,Swc,Sor,nw,no,M);
+    tauT.push(tau0*lam);
+  }
+  drawLineChart($('#chart-tp-tau'), [{data:seriesFromArr(tauT), color:COLORS.accent, width:2.2}], {xmin:0,xmax:N,ymin:0, nx:6, xfmt:'int'});
+
+  // oil rate comparison: constant-tau CRM (power law fo) vs coupled two-phase
+  const qLiquid = tankRecursion(tau0, t=>2400, N,1); // constant injection -> liquid rate ramps up
+  const alpha=3e-7, beta=1.6;
+  const oilConst=[], oilCoupled=[];
+  let cwi=0;
+  for(let t=0;t<=N;t++){
+    cwi += 2400;
+    const foConst = 1/(1+alpha*Math.pow(cwi,beta));
+    oilConst.push(qLiquid[t]*foConst);
+    const fw = coreyFw(swT[t],Swc,Sor,nw,no,M);
+    oilCoupled.push(qLiquid[t]*(1-fw));
+  }
+  drawLineChart($('#chart-tp-oil'), [
+    {data:seriesFromArr(oilConst), color:COLORS.muted, width:2, dash:[6,4]},
+    {data:seriesFromArr(oilCoupled), color:COLORS.oil, width:2.3}
+  ], {xmin:0,xmax:N, ymin:0, nx:6, xfmt:'int'});
+}
+function coreyFwLambdaProxy(Sw,Swc,Sor,nw,no,M){
+  // total mobility proxy normalized so lambda(Swc)=1 (used only to scale tau illustratively)
+  const Swn = Math.min(1,Math.max(0,(Sw-Swc)/(1-Swc-Sor)));
+  const krw=Math.pow(Swn,nw), kro=Math.pow(1-Swn,no);
+  const lam = krw + kro/M;
+  const lam0 = 0 + 1/M;
+  return Math.max(0.15, lam/lam0);
+}
+
+/* ---------------------------------------------------------------------
+   CRM–AQUIFER
+--------------------------------------------------------------------- */
+function drawAquiferSchematic(){
+  const host=$('#svg-aquifer'); if(!host||host.childElementCount) return;
+  const w=560,h=190; const s=svgRoot(w,h);
+  s.appendChild(svgEl('rect',{x:20,y:100,width:140,height:70,rx:8,fill:'#131E2E',stroke:COLORS.accent,'stroke-width':1.3}));
+  const a1=svgEl('text',{x:90,y:130,'text-anchor':'middle',fill:'#E8E6DD','font-size':11,'font-family':'Space Grotesk'}); a1.textContent='aquifer tank'; s.appendChild(a1);
+  const a2=svgEl('text',{x:90,y:148,'text-anchor':'middle',fill:'#8B96A8','font-size':9,'font-family':'IBM Plex Mono, monospace'}); a2.textContent='V_p,aq · p̄_aq'; s.appendChild(a2);
+  // resistor between aquifer and reservoir
+  const zig=[]; let zx=170; for(let k=0;k<6;k++){ zig.push([zx+k*9,135+(k%2===0?-7:7)]); }
+  s.appendChild(svgEl('path',{d:'M160,135 '+zig.map(p=>`L${p[0]},${p[1]}`).join(' ')+' L228,135', stroke:'#E8E6DD',fill:'none','stroke-width':1.5}));
+  const rl=svgEl('text',{x:194,y:118,'text-anchor':'middle',fill:'#8B96A8','font-size':8.5,'font-family':'IBM Plex Mono, monospace'}); rl.textContent='J_aq'; s.appendChild(rl);
+  s.appendChild(injectorIcon(255,45,10,'i(t)'));
+  s.appendChild(arrowLine(266,45,315,80,1.8,COLORS.water,0.8));
+  s.appendChild(svgEl('rect',{x:228,y:80,width:150,height:80,rx:8,fill:'#131E2E',stroke:COLORS.water,'stroke-width':1.3}));
+  const r1=svgEl('text',{x:303,y:112,'text-anchor':'middle',fill:'#E8E6DD','font-size':11,'font-family':'Space Grotesk'}); r1.textContent='reservoir tank'; s.appendChild(r1);
+  const r2=svgEl('text',{x:303,y:130,'text-anchor':'middle',fill:'#8B96A8','font-size':9,'font-family':'IBM Plex Mono, monospace'}); r2.textContent='V_p,r · p̄_r'; s.appendChild(r2);
+  s.appendChild(arrowLine(378,120,505,120,2.2,COLORS.oil,0.9));
+  s.appendChild(producerIcon(520,120,11,'q(t)'));
+  host.appendChild(s);
+}
+TAB_INIT.aquifer = function(){
+  drawAquiferSchematic();
+  buildSliderGroup('aq-controls',[
+    {id:'aq-ratio', label:'Aquifer / reservoir PV ratio', min:1,max:40,step:1,value:8,fmt:v=>Math.round(v)+'×'},
+    {id:'aq-Jaq', label:'Aquifer productivity J_aq', min:0.2,max:10,step:0.2,value:2.0,fmt:v=>v.toFixed(1)},
+    {id:'aq-Jwell', label:'Well productivity J_well (bbl/d/psi)', min:1,max:15,step:0.5,value:6,fmt:v=>v.toFixed(1)},
+    {id:'aq-inj', label:'Injection rate i(t)', min:0,max:2500,step:50,value:800,fmt:v=>Math.round(v)}
+  ], redrawAquifer);
+  redrawAquifer();
+};
+TAB_RESIZE.aquifer = redrawAquifer;
+function redrawAquifer(){
+  const ratio=readVal('aq-ratio')||8, Jaq=readVal('aq-Jaq')||2, Jwell=readVal('aq-Jwell')||6, injRate=readVal('aq-inj')||800;
+  const capRes=22000, capAq=capRes*ratio;
+  const pwf=1500;
+  let pr=4200, paq=4500;
+  const N=220, dt=1;
+  const prArr=[],paqArr=[],qArr=[];
+  for(let t=0;t<=N;t++){
+    prArr.push(pr); paqArr.push(paq);
+    const q = Math.max(0, Jwell*(pr-pwf));
+    qArr.push(q);
+    const Wedot = Jaq*(paq-pr);
+    const dpr = (Wedot + injRate - q)/capRes;
+    const dpaq = -Wedot/capAq;
+    pr += dpr*dt; paq += dpaq*dt;
+  }
+  drawLineChart($('#chart-aq'), [
+    {data:seriesFromArr(prArr), color:COLORS.water, width:2},
+    {data:seriesFromArr(paqArr), color:COLORS.accent, width:1.8, dash:[5,4]},
+    {data:seriesFromArr(qArr), color:COLORS.oil, width:2.2, axis:2}
+  ], {xmin:0,xmax:N, nx:6, xfmt:'int', dual:true, y2min:0});
+  setReadouts('aq-readouts',[
+    {k:'FINAL RESERVOIR p̄_r', v:Math.round(prArr[N])+' psi', cls:'water'},
+    {k:'FINAL AQUIFER p̄_aq', v:Math.round(paqArr[N])+' psi', cls:'accent'},
+    {k:'FINAL RATE q(t)', v:Math.round(qArr[N])+' bbl/d', cls:'oil'},
+    {k:'PRESSURE SUPPORT', v: (paqArr[N]>prArr[N]?'ongoing influx':'depleted'), cls: paqArr[N]>prArr[N]?'good':'danger'}
+  ]);
+}
+
+/* ---------------------------------------------------------------------
+   PRODUCTIVITY COEFFICIENTS & CROSSFLOW
+--------------------------------------------------------------------- */
+function drawCrossflowSchematic(){
+  const host=$('#svg-crossflow'); if(!host||host.childElementCount) return;
+  const w=560,h=190; const s=svgRoot(w,h);
+  const cx=[110,290,470];
+  cx.forEach((x,idx)=>{
+    s.appendChild(injectorIcon(x-45,50,9));
+    s.appendChild(arrowLine(x-36,50,x-6,80,1.4,COLORS.water,0.7));
+    s.appendChild(svgEl('rect',{x:x-55,y:80,width:110,height:60,rx:7,fill:'#131E2E',stroke:COLORS.border||'#25344B','stroke-width':1.2}));
+    const tl=svgEl('text',{x:x,y:114,'text-anchor':'middle',fill:'#E8E6DD','font-size':10.5,'font-family':'Space Grotesk'}); tl.textContent='tank '+(idx+1); s.appendChild(tl);
+    s.appendChild(arrowLine(x+6,110,x+45,150,1.4,COLORS.oil,0.7));
+    s.appendChild(producerIcon(x+52,158,9));
+  });
+  for(let k=0;k<2;k++){
+    const x1=cx[k]+55, x2=cx[k+1]-55;
+    const zig=[]; for(let n=0;n<5;n++){ zig.push([x1+n*((x2-x1)/5),110+(n%2===0?-6:6)]); }
+    s.appendChild(svgEl('path',{d:`M${x1},110 `+zig.map(p=>`L${p[0]},${p[1]}`).join(' ')+` L${x2},110`, stroke:COLORS.accent, fill:'none','stroke-width':1.6}));
+    const lbl=svgEl('text',{x:(x1+x2)/2,y:95,'text-anchor':'middle',fill:COLORS.accent,'font-size':9,'font-family':'IBM Plex Mono, monospace'}); lbl.textContent='X'+(k+1)+(k+2); s.appendChild(lbl);
+  }
+  host.appendChild(s);
+}
+TAB_INIT.crossflow = function(){
+  drawCrossflowSchematic();
+  buildSliderGroup('cf-controls',[
+    {id:'cf-x12', label:'Crossflow X₁₂', min:0,max:25,step:1,value:8,fmt:v=>Math.round(v)},
+    {id:'cf-x23', label:'Crossflow X₂₃', min:0,max:25,step:1,value:8,fmt:v=>Math.round(v)},
+    {id:'cf-choke', label:'Tank-2 rate cut at t=60 (%)', min:0,max:90,step:5,value:60,fmt:v=>Math.round(v)+'%'}
+  ], redrawCrossflow);
+  setLegend('cf-legend',[
+    {color:COLORS.muted,label:'classic CRM (X=0) field total'},
+    {color:COLORS.accent,label:'crossflow-aware field total'},
+    {color:COLORS.water,label:'"true" 3-tank network (ground truth)'}
+  ]);
+  redrawCrossflow();
+};
+TAB_RESIZE.crossflow = redrawCrossflow;
+function simulateThreeTank(X12,X23,chokeFrac){
+  const N=200, dt=1, C=[4000,4000,4000], J=[10,28,16], pwf=1500;
+  let p=[3800,3800,3800];
+  const iBase=[1200,1200,1200];
+  const qArr=[[],[],[]], pArr=[[],[],[]];
+  for(let t=0;t<=N;t++){
+    const i2 = t>=60 ? iBase[1]*(1-chokeFrac/100) : iBase[1];
+    const iVec=[iBase[0], i2, iBase[2]];
+    const q = p.map((pp,idx)=>Math.max(0,J[idx]*(pp-pwf)));
+    for(let k=0;k<3;k++){ qArr[k].push(q[k]); pArr[k].push(p[k]); }
+    const flow12 = X12*(p[1]-p[0]);
+    const flow23 = X23*(p[2]-p[1]);
+    const dp0 = (iVec[0]-q[0]+flow12)/C[0];
+    const dp1 = (iVec[1]-q[1]-flow12+flow23)/C[1];
+    const dp2 = (iVec[2]-q[2]-flow23)/C[2];
+    p = [p[0]+dp0*dt, p[1]+dp1*dt, p[2]+dp2*dt];
+  }
+  const total = qArr[0].map((v,idx)=>v+qArr[1][idx]+qArr[2][idx]);
+  return total;
+}
+function redrawCrossflow(){
+  const X12=readVal('cf-x12')||8, X23=readVal('cf-x23')||8, choke=readVal('cf-choke')||60;
+  const trueTotal = simulateThreeTank(X12,X23,choke);      // ground truth with real crossflow
+  const classicTotal = simulateThreeTank(0,0,choke);        // classic CRM assumes no crossflow
+  const awareTotal = simulateThreeTank(X12,X23,choke);       // crossflow-aware model = matches truth by construction
+  drawLineChart($('#chart-cf'), [
+    {data:seriesFromArr(trueTotal), color:COLORS.water, width:2.6},
+    {data:seriesFromArr(classicTotal), color:COLORS.muted, width:1.8, dash:[6,4]},
+    {data:seriesFromArr(awareTotal), color:COLORS.accent, width:1.3}
+  ], {xmin:0,xmax:200, ymin:0, nx:6, xfmt:'int'});
+  let err=0; trueTotal.forEach((v,idx)=>{err+=Math.abs(v-classicTotal[idx]);});
+  err/=trueTotal.length;
+  setReadouts('cf-readouts',[
+    {k:'MEAN |ERROR| IGNORING CROSSFLOW', v:Math.round(err)+' bbl/d', cls: err>50?'danger':'good'},
+    {k:'X₁₂ / X₂₃', v:X12+' / '+X23, cls:'accent'},
+    {k:'TANK-2 CHOKE EVENT', v:'t=60, −'+choke+'%', cls:'oil'}
+  ]);
+}
+
+/* ---------------------------------------------------------------------
+   DIFFUSIVITY FILTERS & INTERFERENCE
+--------------------------------------------------------------------- */
+function drawDiffusivitySchematic(){
+  const host=$('#svg-diffusivity'); if(!host||host.childElementCount) return;
+  const w=520,h=180; const s=svgRoot(w,h);
+  s.appendChild(injectorIcon(90,95,12,'injector (source)'));
+  for(let k=1;k<=3;k++){
+    s.appendChild(svgEl('circle',{cx:90,cy:95,r:24*k,fill:'none',stroke:COLORS.water,'stroke-width':1,opacity:0.5-0.12*k}));
+  }
+  s.appendChild(arrowLine(90,95,410,95,1,COLORS.muted,0.4));
+  const rl=svgEl('text',{x:250,y:88,'text-anchor':'middle',fill:'#8B96A8','font-size':9.5,'font-family':'IBM Plex Mono, monospace'}); rl.textContent='distance r, dissipation d'; s.appendChild(rl);
+  s.appendChild(injectorIcon(430,95,12,'observation well'));
+  host.appendChild(s);
+}
+TAB_INIT.diffusivity = function(){
+  drawDiffusivitySchematic();
+  buildSliderGroup('diff-controls',[
+    {id:'diff-r', label:'Interwell distance r (ft)', min:200,max:3000,step:50,value:900,fmt:v=>Math.round(v)},
+    {id:'diff-d1', label:'Dissipation d₁ (tight)', min:1,max:60,step:1,value:35,fmt:v=>Math.round(v)},
+    {id:'diff-d2', label:'Dissipation d₂ (loose)', min:0.05,max:20,step:0.05,value:4,fmt:v=>v.toFixed(2)}
+  ], redrawDiffusivity);
+  setLegend('diff-legend',[
+    {color:COLORS.danger,label:'high dissipation (tight, low k)'},
+    {color:COLORS.water,label:'low dissipation (loose, high k)'},
+    {color:COLORS.accent,label:'no dissipation limit'}
+  ]);
+  redrawDiffusivity();
+};
+TAB_RESIZE.diffusivity = redrawDiffusivity;
+function stepResponseVal(r,d,t){
+  // constant-rate transient drawdown magnitude, Ei-based (unbounded, grows with t)
+  if(t<=0) return 0;
+  const x = d*r*r/(1e5*t);
+  return Math.max(0,-Ei_neg(x)); // = E1(x)
+}
+function impulseResponse(r,d,N){
+  // true unit-pulse (single time-step injection) response per Albertoni & Lake Appendix Eq. A-2:
+  // the finite difference of two consecutive step responses — this is what actually rises, peaks, and decays.
+  const raw=[];
+  for(let t=1;t<=N;t++){
+    const v = t<=1 ? stepResponseVal(r,d,t) : (stepResponseVal(r,d,t)-stepResponseVal(r,d,t-1));
+    raw.push(Math.max(0,v));
+  }
+  const maxV = Math.max(...raw, 1e-9);
+  return raw.map((v,idx)=>({x:idx+1,y:v/maxV}));
+}
+function redrawDiffusivity(){
+  const r=readVal('diff-r')||900, d1=readVal('diff-d1')||35, d2=readVal('diff-d2')||4;
+  const N=140;
+  const s1=impulseResponse(r,d1,N);
+  const s2=impulseResponse(r,d2,N);
+  const s3=[]; for(let t=1;t<=N;t++) s3.push({x:t,y: t<=2?1:0}); // no-dissipation limit: instantaneous
+  drawLineChart($('#chart-diff'), [
+    {data:s1, color:COLORS.danger, width:2.2},
+    {data:s2, color:COLORS.water, width:2.2},
+    {data:s3, color:COLORS.accent, width:1.4, dash:[3,3]}
+  ], {xmin:0,xmax:N, ymin:0, ymax:1.1, nx:6, xfmt:'int'});
+  const peak1 = s1.reduce((best,p)=>p.y>best.y?p:best, s1[0]);
+  const peak2 = s2.reduce((best,p)=>p.y>best.y?p:best, s2[0]);
+  const lagLabel = (peak,N)=> peak.x>=N ? '>'+N+' d' : peak.x+' d';
+  setReadouts('diff-readouts',[
+    {k:'PEAK LAG (tight)', v:lagLabel(peak1,N), cls:'danger'},
+    {k:'PEAK LAG (loose)', v:lagLabel(peak2,N), cls:'water'},
+    {k:'DISTANCE r', v:Math.round(r)+' ft', cls:'accent'}
+  ]);
+}
+
+})();
+
+
+/* =====================================================================
+   CRM ATLAS — ML-Enhanced CRM and Field Deployment tabs
+   ===================================================================== */
+(function(){
+"use strict";
+const {$, $all, el, COLORS, drawLineChart, TAB_INIT, TAB_RESIZE} = window.CRM;
+const {buildSliderGroup, setReadouts, setLegend, readVal} = window.CRM.ctrl;
+const {svgEl, injectorIcon, producerIcon, arrowLine, svgRoot} = window.CRM.svg;
+
+function seriesFromArr(arr){ return arr.map((v,idx)=>({x:idx,y:v})); }
+function tankRecursion(tau, steadyInputFn, n, dt){
+  dt=dt||1; const decay=Math.exp(-dt/tau); const q=[0];
+  for(let t=1;t<=n;t++){ const inp=steadyInputFn(t); q.push(q[t-1]*decay+inp*(1-decay)); }
+  return q;
+}
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------------------------------------------------------------------
+   ML-ENHANCED CRM
+--------------------------------------------------------------------- */
+function drawMlArchitecture(){
+  const host=$('#svg-ml'); if(!host||host.childElementCount) return;
+  const w=560,h=220; const s=svgRoot(w,h);
+  s.appendChild(injectorIcon(45,110,11,'injection history'));
+  s.appendChild(arrowLine(58,110,140,60,1.8,COLORS.water,0.8));
+  s.appendChild(arrowLine(58,110,140,160,1.8,COLORS.water,0.8));
+  // CRM physics branch
+  s.appendChild(svgEl('rect',{x:145,y:30,width:150,height:60,rx:7,fill:'#131E2E',stroke:COLORS.water,'stroke-width':1.3}));
+  const b1=svgEl('text',{x:220,y:56,'text-anchor':'middle',fill:'#E8E6DD','font-size':11,'font-family':'Space Grotesk'}); b1.textContent='CRM ODE (physics)'; s.appendChild(b1);
+  const b1b=svgEl('text',{x:220,y:74,'text-anchor':'middle',fill:'#8B96A8','font-size':9,'font-family':'IBM Plex Mono, monospace'}); b1b.textContent='τ, f_ij, J — interpretable'; s.appendChild(b1b);
+  // ML residual branch
+  s.appendChild(svgEl('rect',{x:145,y:130,width:150,height:60,rx:7,fill:'#131E2E',stroke:COLORS.accent,'stroke-width':1.3}));
+  const b2=svgEl('text',{x:220,y:156,'text-anchor':'middle',fill:'#E8E6DD','font-size':11,'font-family':'Space Grotesk'}); b2.textContent='NN / SINDy residual'; s.appendChild(b2);
+  const b2b=svgEl('text',{x:220,y:174,'text-anchor':'middle',fill:'#8B96A8','font-size':9,'font-family':'IBM Plex Mono, monospace'}); b2b.textContent='absorbs unmodeled effects'; s.appendChild(b2b);
+  // merge
+  s.appendChild(arrowLine(295,60,380,105,1.8,COLORS.water,0.8));
+  s.appendChild(arrowLine(295,160,380,115,1.8,COLORS.accent,0.8));
+  s.appendChild(svgEl('circle',{cx:395,cy:110,r:16,fill:'#131E2E',stroke:'#E8E6DD','stroke-width':1.3}));
+  const plus=svgEl('text',{x:395,y:115,'text-anchor':'middle',fill:'#E8E6DD','font-size':14,'font-family':'Space Grotesk'}); plus.textContent='+'; s.appendChild(plus);
+  s.appendChild(arrowLine(411,110,505,110,2.2,COLORS.oil,0.9));
+  s.appendChild(producerIcon(520,110,11,'q̂(t)'));
+  host.appendChild(s);
+}
+TAB_INIT.ml = function(){
+  drawMlArchitecture();
+  buildSliderGroup('ml-controls',[
+    {id:'ml-noise', label:'Unmodeled nonlinearity amplitude', min:0,max:600,step:20,value:280,fmt:v=>Math.round(v)},
+    {id:'ml-smooth', label:'Residual-model smoothing window', min:3,max:41,step:2,value:15,fmt:v=>Math.round(v)}
+  ], redrawMl);
+  redrawMl();
+};
+TAB_RESIZE.ml = redrawMl;
+function redrawMl(){
+  const amp = readVal('ml-noise')||280;
+  const win = readVal('ml-smooth')||15;
+  const N=220;
+  const rnd = mulberry32(42);
+  // synthetic "true" system: CRM baseline + a slow nonlinear drift (skin growth) + noise
+  const tau=45;
+  const inj = t=>1800+500*Math.sin(t/18);
+  const crmBase = tankRecursion(tau, inj, N,1);
+  const trueArr=[], crmOnly=[], corrected=[];
+  const drift = t=> amp*Math.sin(t/70)*(t/N) + amp*0.4*Math.sin(t/23+1.3);
+  for(let t=0;t<=N;t++){
+    const noise = (rnd()-0.5)*90;
+    trueArr.push(crmBase[t] + drift(t) + noise);
+  }
+  // CRM-only fit: refit a single tau/steady curve (approximate by the noiseless crmBase itself, representing best linear CRM can do)
+  for(let t=0;t<=N;t++) crmOnly.push(crmBase[t]);
+  // physics-informed correction: CRM baseline + smoothed residual (moving average of true-crmOnly)
+  const resid = trueArr.map((v,idx)=>v-crmOnly[idx]);
+  const half=Math.floor(win/2);
+  for(let t=0;t<=N;t++){
+    let s=0,c=0;
+    for(let k=Math.max(0,t-half); k<=Math.min(N,t+half); k++){ s+=resid[k]; c++; }
+    corrected.push(crmOnly[t] + s/c);
+  }
+  drawLineChart($('#chart-ml'), [
+    {data:seriesFromArr(trueArr), color:COLORS.muted, width:1.3},
+    {data:seriesFromArr(crmOnly), color:COLORS.water, width:2},
+    {data:seriesFromArr(corrected), color:COLORS.accent, width:2.2}
+  ], {xmin:0,xmax:N, nx:6, xfmt:'int'});
+
+  function rmse(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=(a[i]-b[i])*(a[i]-b[i]); return Math.sqrt(s/a.length); }
+  const rmseCrm = rmse(trueArr,crmOnly);
+  const rmseCorr = rmse(trueArr,corrected);
+  setReadouts('ml-readouts',[
+    {k:'CRM-ONLY RMSE', v:Math.round(rmseCrm)+' bbl/d', cls:'water'},
+    {k:'PHYSICS-INFORMED RMSE', v:Math.round(rmseCorr)+' bbl/d', cls:'accent'},
+    {k:'ERROR REDUCTION', v:Math.round(100*(1-rmseCorr/rmseCrm))+'%', cls: rmseCorr<rmseCrm?'good':'danger'}
+  ]);
+}
+
+/* ---------------------------------------------------------------------
+   FIELD DEPLOYMENT & OPTIMIZATION WORKFLOW
+--------------------------------------------------------------------- */
+function drawWorkflowSchematic(){
+  const host=$('#svg-workflow'); if(!host||host.childElementCount) return;
+  const w=900,h=140; const s=svgRoot(w,h);
+  const steps=['Data QC &\ncleaning','Connectivity\nsolver','Blind-test\nverification','Fractional-flow\nsplit','Injection\noptimizer','Monitor &\nre-calibrate'];
+  const n=steps.length;
+  const boxW=118, gap=(w-40-boxW*n)/(n-1);
+  steps.forEach((label,idx)=>{
+    const x=20+idx*(boxW+gap);
+    s.appendChild(svgEl('rect',{x,y:35,width:boxW,height:70,rx:8,fill:'#131E2E',stroke: idx===n-1?COLORS.accent:'#25344B','stroke-width':1.3}));
+    label.split('\n').forEach((line,li)=>{
+      const t=svgEl('text',{x:x+boxW/2,y:62+li*15,'text-anchor':'middle',fill:'#E8E6DD','font-size':10.5,'font-family':'Space Grotesk'});
+      t.textContent=line; s.appendChild(t);
+    });
+    const num=svgEl('text',{x:x+10,y:28,fill:'#5E6C82','font-size':10,'font-family':'IBM Plex Mono, monospace'}); num.textContent='0'+(idx+1); s.appendChild(num);
+    if(idx<n-1){ s.appendChild(arrowLine(x+boxW,70,x+boxW+gap,70,1.6,COLORS.muted,0.8)); }
+  });
+  // feedback loop arrow from last back to second
+  s.appendChild(svgEl('path',{d:`M${20+(n-1)*(boxW+gap)+boxW/2},107 C ${20+(n-1)*(boxW+gap)+boxW/2},135 ${20+1*(boxW+gap)+boxW/2},135 ${20+1*(boxW+gap)+boxW/2},107`, stroke:COLORS.accent, 'stroke-width':1.3, fill:'none','stroke-dasharray':'4,3'}));
+  host.appendChild(s);
+}
+function drawFieldResultsChart(){
+  const data=[
+    ['Streak synfield\n(Sayarpour)',35],
+    ['MESL field\n(Sayarpour)',6],
+    ['Diagnosis case\n(Kansao et al.)',12],
+    ['West-Texas field\n(Cao et al.)',9],
+    ['Nine-spot pattern\n(Petronas)',15]
+  ];
+  const series=[{data:data.map((d,idx)=>({x:idx,y:d[1]})), color:COLORS.good, style:'bar'}];
+  drawLineChart($('#chart-fieldresults'), series, {xmin:-0.6,xmax:data.length-0.4, ymin:0, ymax:40, nx:data.length-1, xfmt:'int'});
+}
+
+/* ---- optimizer ---- */
+const OPT_F = [ // 4 injectors x 4 producers allocation fractions
+  [0.55,0.10,0.05,0.05],
+  [0.15,0.50,0.10,0.05],
+  [0.05,0.15,0.55,0.10],
+  [0.05,0.05,0.15,0.55]
+];
+const OPT_OILWEIGHT = [0.62,0.35,0.48,0.70]; // producer oil fraction (economic value per bbl liquid)
+TAB_INIT.fieldops = function(){
+  drawWorkflowSchematic();
+  drawFieldResultsChart();
+  buildSliderGroup('opt-controls',[
+    {id:'opt-cap1', label:'Injector 1 capacity', min:0,max:4000,step:100,value:2500,fmt:v=>Math.round(v)},
+    {id:'opt-cap2', label:'Injector 2 capacity', min:0,max:4000,step:100,value:2500,fmt:v=>Math.round(v)},
+    {id:'opt-cap3', label:'Injector 3 capacity', min:0,max:4000,step:100,value:2500,fmt:v=>Math.round(v)},
+    {id:'opt-cap4', label:'Injector 4 capacity', min:0,max:4000,step:100,value:2500,fmt:v=>Math.round(v)}
+  ], redrawOptimizer);
+  redrawOptimizer();
+};
+TAB_RESIZE.fieldops = redrawOptimizer;
+
+function computeProducerOil(allocation){
+  // allocation: array of 4 injection rates -> producer liquid = F^T * allocation ; oil = liquid*oilweight
+  const liquid=[0,0,0,0];
+  for(let j=0;j<4;j++) for(let i=0;i<4;i++) liquid[j]+=OPT_F[i][j]*allocation[i];
+  const oil = liquid.map((l,j)=>l*OPT_OILWEIGHT[j]);
+  return {liquid,oil,totalOil:oil.reduce((a,b)=>a+b,0)};
+}
+function optimizeAllocation(capacities){
+  const totalBudget = capacities.reduce((a,b)=>a+b,0);
+  // start proportional to capacity, then greedily shift small increments toward the injector
+  // whose marginal oil-per-bbl (sum_j F[i][j]*oilweight[j]) is highest, respecting capacity bounds
+  let alloc = capacities.map(c=>c*0.001>0?Math.min(c, totalBudget/4):0);
+  // normalize alloc so sum = totalBudget respecting caps (simple water-filling)
+  alloc = waterFill(capacities, totalBudget);
+  const marginal = capacities.map((c,i)=> OPT_F[i].reduce((s,f,j)=>s+f*OPT_OILWEIGHT[j],0));
+  const step = Math.max(10, totalBudget/400);
+  for(let iter=0; iter<400; iter++){
+    let giver=-1, taker=-1;
+    // find lowest marginal-value injector currently >0 that can give, and highest marginal-value injector that can take more
+    let minVal=Infinity, maxVal=-Infinity;
+    for(let i=0;i<4;i++){
+      if(alloc[i]>=step && marginal[i]<minVal){ minVal=marginal[i]; giver=i; }
+      if(alloc[i]<=capacities[i]-step && marginal[i]>maxVal){ maxVal=marginal[i]; taker=i; }
+    }
+    if(giver<0||taker<0||giver===taker||marginal[taker]<=marginal[giver]) break;
+    alloc[giver]-=step; alloc[taker]+=step;
+  }
+  return alloc;
+}
+function waterFill(capacities,budget){
+  // simplest: allocate proportional to capacity, capped
+  const totalCap = capacities.reduce((a,b)=>a+b,0);
+  if(totalCap<=0) return capacities.map(()=>0);
+  const scale = Math.min(1, budget/totalCap);
+  return capacities.map(c=>c*scale);
+}
+function redrawOptimizer(){
+  const caps = [readVal('opt-cap1'),readVal('opt-cap2'),readVal('opt-cap3'),readVal('opt-cap4')];
+  const current = waterFill(caps, caps.reduce((a,b)=>a+b,0)); // proportional baseline = full capacity use, proportional shape
+  const currentAlloc = caps.slice(); // "current" = simply inject at capacity, unoptimized mix
+  const optimized = optimizeAllocation(caps);
+
+  const curRes = computeProducerOil(currentAlloc);
+  const optRes = computeProducerOil(optimized);
+
+  const bars=[];
+  for(let i=0;i<4;i++){
+    bars.push({x:i*2, y:currentAlloc[i], color:COLORS.muted});
+    bars.push({x:i*2+0.8, y:optimized[i], color:COLORS.good});
+  }
+  drawLineChart($('#chart-opt'), [
+    {data:bars.map(b=>({x:b.x,y:b.y})), color:COLORS.muted, style:'bar'},
+  ], {xmin:-0.6,xmax:8.4, ymin:0, ymax:Math.max(...caps,1)*1.15, nx:8, xfmt:'int'});
+  // draw a second pass manually with mixed colors since drawLineChart bar uses one color per series
+  const canvas=$('#chart-opt');
+  const ctx=canvas.getContext('2d');
+  // (bars already drawn once in muted; overlay optimized bars in good color at offset positions using direct canvas calls)
+  const cssW=canvas.clientWidth||600, cssH=parseInt(canvas.getAttribute('height')||'230',10);
+  const padL=44,padR=14,padT=14,padB=26;
+  const plotW=cssW-padL-padR, plotH=cssH-padT-padB;
+  const xmin=-0.6,xmax=8.4, ymax=Math.max(...caps,1)*1.15;
+  function X(x){return padL+(x-xmin)/(xmax-xmin)*plotW;}
+  function Y(y){return padT+plotH-(y-0)/(ymax-0)*plotH;}
+  const bw=Math.max(2,plotW/9*0.38);
+  ctx.fillStyle=COLORS.good;
+  for(let i=0;i<4;i++){
+    const px=X(i*2+0.8), py=Y(optimized[i]), zy=Y(0);
+    ctx.fillRect(px-bw/2, py, bw, zy-py);
+  }
+  ctx.fillStyle='#0B121C'; ctx.font='10px "IBM Plex Mono",monospace'; ctx.textAlign='center';
+  for(let i=0;i<4;i++){ ctx.fillStyle='#93A0B4'; ctx.fillText('I'+(i+1), X(i*2+0.4), cssH-8); }
+
+  const gainPct = Math.round(100*(optRes.totalOil/curRes.totalOil-1));
+  setReadouts('opt-readouts',[
+    {k:'CURRENT Σ OIL', v:Math.round(curRes.totalOil)+' bbl/d', cls:'muted'},
+    {k:'OPTIMIZED Σ OIL', v:Math.round(optRes.totalOil)+' bbl/d', cls:'good'},
+    {k:'GAIN', v:(gainPct>=0?'+':'')+gainPct+'%', cls: gainPct>=0?'good':'danger'},
+    {k:'TOTAL INJECTION BUDGET', v:Math.round(caps.reduce((a,b)=>a+b,0))+' bbl/d', cls:'water'}
+  ]);
+}
+
+})();
+
+
+
+</script>
+</body>
+</html>

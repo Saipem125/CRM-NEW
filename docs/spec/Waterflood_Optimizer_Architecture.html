@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Waterflood Optimizer — Application Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B121C;--bg2:#0F1826;--panel:#131E2E;--panel2:#17253A;--border:#25344B;--border2:#1C293C;--text:#E8E6DC;--dim:#93A0B4;--faint:#5E6C82;--water:#4C9BD4;--oil:#E0973F;--accent:#5CC2AE;--danger:#D2685A;--good:#7DB88A;--violet:#9F8FD0;--sans:'IBM Plex Sans',sans-serif;--display:'Space Grotesk',sans-serif;--mono:'IBM Plex Mono',monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14.5px;line-height:1.55}
+.app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+aside{background:var(--bg2);border-right:1px solid var(--border2);position:sticky;top:0;height:100vh;overflow-y:auto;padding:22px 14px}
+aside .brand{font-family:var(--display);font-weight:700;font-size:15px;padding:0 8px 14px;border-bottom:1px solid var(--border2);margin-bottom:10px}
+aside .brand small{display:block;font-family:var(--mono);font-size:10px;color:var(--faint);font-weight:400;margin-top:2px}
+aside .grp{font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:1px;padding:12px 8px 4px}
+aside a{display:block;color:var(--dim);text-decoration:none;font-size:12.8px;padding:6px 8px;border-radius:5px}aside a:hover{background:var(--panel);color:var(--text)}
+main{padding:34px 44px 90px;min-width:0}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{position:relative;height:auto}main{padding:20px}}
+header{border-bottom:1px solid var(--border2);padding-bottom:20px;margin-bottom:26px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.badge{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--dim)}.badge.a{color:var(--accent);border-color:#2E6459}.badge.o{color:var(--oil);border-color:#8A5F2A}
+h1{font-family:var(--display);font-size:30px;margin:0 0 8px}header p{color:var(--dim);max-width:840px;margin:0}
+h2{font-family:var(--display);font-size:20px;margin:48px 0 8px;display:flex;align-items:center;gap:10px;scroll-margin-top:20px}h2 .n{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+h3{font-family:var(--display);font-size:14.5px;margin:0 0 10px}
+.lead{color:var(--dim);margin:0 0 14px;max-width:860px}
+.card{background:var(--panel);border:1px solid var(--border2);border-radius:6px;padding:18px 20px;margin-top:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}@media(max-width:1000px){.g2,.g3{grid-template-columns:1fr}}
+.svgbox{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:12px}.svgbox svg{width:100%;height:auto;display:block}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;font-family:var(--mono);font-size:10.5px;color:var(--faint);font-weight:500;padding:6px 10px 8px 0;border-bottom:1px solid var(--border2)}
+td{padding:8px 10px 8px 0;border-bottom:1px solid var(--border2);vertical-align:top;color:var(--dim)}td.k{color:var(--text);font-weight:500;white-space:nowrap}tr:last-child td{border-bottom:none}
+code{font-family:var(--mono);font-size:12px;color:var(--accent);background:#0f1a28;padding:1px 5px;border-radius:3px}
+ul{margin:0;padding-left:18px;color:var(--dim);font-size:13.3px}li{margin-bottom:6px}
+.tag{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);color:var(--dim)}.tag.g{color:var(--good);border-color:#3f6b4a}.tag.o{color:var(--oil);border-color:#8A5F2A}.tag.r{color:var(--danger);border-color:#7a3d35}.tag.v{color:var(--violet);border-color:#5f5490}
+.road{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}@media(max-width:1000px){.road{grid-template-columns:1fr 1fr}}
+.ph{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:14px}.ph .t{font-family:var(--mono);font-size:11px;color:var(--accent);margin-bottom:4px}.ph h4{margin:0 0 8px;font-family:var(--display);font-size:14px}
+.tree{font-family:var(--mono);font-size:12px;color:var(--dim);line-height:1.65;white-space:pre;overflow-x:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:14px 16px}.tree b{color:var(--text);font-weight:500}.tree i{color:var(--accent);font-style:normal}
+.msg{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:0;font-size:12.6px}.msg>div{padding:8px 10px 8px 0;border-bottom:1px solid var(--border2);color:var(--dim)}.msg>div.h{font-family:var(--mono);font-size:10.5px;color:var(--faint)}.msg>div.t{font-family:var(--mono);font-size:11.5px;color:var(--faint)}.msg>div.u{color:var(--text)}
+.callout{border-left:3px solid var(--accent);background:var(--bg2);padding:10px 14px;border-radius:0 6px 6px 0;color:var(--dim);font-size:13.3px;margin-top:12px}.callout.o{border-left-color:var(--oil)}
+footer{margin-top:50px;border-top:1px solid var(--border2);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--faint)}
+</style></head>
+<body><div class="app">
+<aside>
+  <div class="brand">Waterflood Optimizer<small>ARCHITECTURE · v2.1 · 2026-09-03</small></div>
+  <div class="grp">PRODUCT</div><a href="#s1">1 · Purpose &amp; principles</a><a href="#s2">2 · What the user sees</a><a href="#s3">3 · Roles &amp; approval workflow</a>
+  <div class="grp">ENGINE</div><a href="#s4">4 · Five-layer architecture</a><a href="#s5">5 · Data loading</a><a href="#s6">6 · Units &amp; conversions</a><a href="#s7">7 · Processing &amp; QC</a><a href="#s8">8 · Sampling &amp; pressure</a><a href="#s9">9 · Model engine &amp; tournament</a><a href="#s10">10 · Time-varying connectivity</a><a href="#s11">11 · New wells &amp; what-if</a><a href="#s12">12 · Optimization &amp; economics</a><a href="#s13">13 · Uncertainty → decision</a><a href="#s14">14 · Operational recommendation</a><a href="#s15">15 · Surveillance loop</a>
+  <div class="grp">TRUST</div><a href="#s16">16 · Validation strategy</a><a href="#s17">17 · Plain-language messaging</a><a href="#s18">18 · Governance &amp; deployment</a>
+  <div class="grp">DELIVERY</div><a href="#s19">19 · Modules &amp; stack</a><a href="#s20">20 · Roadmap</a><a href="#s21">21 · Companion documents</a>
+</aside>
+<main>
+<header>
+  <div class="badges"><span class="badge a">APPLICATION ARCHITECTURE</span><span class="badge">CRM-based waterflood evaluation &amp; optimization</span><span class="badge o">gas / WAG: next release</span></div>
+  <h1>Waterflood Injection Evaluation &amp; Optimization — Architecture</h1>
+  <p>One document for the whole application: what the user experiences, what the engine does behind it, and how the result becomes a trusted field action. Consolidates the CRM methodology review, the five-layer blueprint, the data-loader design, the model-tournament selector, the sampling/pressure rules, and the gap analysis.</p>
+</header>
+
+<!-- 1 -->
+<h2 id="s1"><span class="n">1</span>Purpose &amp; design principles</h2>
+<div class="card">
+  <p class="lead" style="margin-bottom:10px">Turn routine production/injection data into a monthly, auditable injection plan using capacitance-resistance models, without asking the user to understand the models.</p>
+  <div class="g2">
+    <ul><li><b style="color:var(--text)">Encapsulation</b> — the user path is load → confirm mapping → pick wells → run. Every technical choice (method, τ, Δt, solver) is automatic and hidden behind a "Details" panel.</li>
+    <li><b style="color:var(--text)">Physics first, ML as correction</b> — every deployed model exposes f<sub>ij</sub>, τ, J. Pure black-box forecasters are benchmarks only.</li>
+    <li><b style="color:var(--text)">Evidence before recommendation</b> — nothing is shown without a blind test and a confidence level.</li></ul>
+    <ul><li><b style="color:var(--text)">Reproducible</b> — data snapshot hash + config + code version stored per run.</li>
+    <li><b style="color:var(--text)">Actionable</b> — output is a ramped, approved change list, not a parameter table.</li>
+    <li><b style="color:var(--text)">Self-correcting</b> — implemented changes are evaluated against forecast, and that evaluation re-scores the model.</li></ul>
+  </div>
+</div>
+
+<!-- 2 -->
+<h2 id="s2"><span class="n">2</span>What the user sees — four steps, one panel</h2>
+<div class="svgbox"><svg viewBox="0 0 1120 300" font-family="IBM Plex Sans,sans-serif" font-size="11">
+<defs><marker id="a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#93A0B4"/></marker></defs>
+<g>
+<rect x="20" y="40" width="200" height="80" rx="8" fill="#131E2E" stroke="#4C9BD4" stroke-width="1.4"/><text x="120" y="68" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="13" font-weight="600">1 · Connect / drop file</text><text x="120" y="88" text-anchor="middle" fill="#93A0B4">SQL · CSV · Excel</text><text x="120" y="104" text-anchor="middle" fill="#93A0B4">mapping pre-filled</text>
+<line x1="220" y1="80" x2="255" y2="80" stroke="#93A0B4" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="258" y="40" width="200" height="80" rx="8" fill="#131E2E" stroke="#4C9BD4" stroke-width="1.4"/><text x="358" y="68" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="13" font-weight="600">2 · Field &amp; wells</text><text x="358" y="88" text-anchor="middle" fill="#93A0B4">filter from category table</text><text x="358" y="104" text-anchor="middle" fill="#93A0B4">tick wells · type auto-derived</text>
+<line x1="458" y1="80" x2="493" y2="80" stroke="#93A0B4" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="496" y="40" width="200" height="80" rx="8" fill="#131E2E" stroke="#E0973F" stroke-width="1.4"/><text x="596" y="68" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="13" font-weight="600">3 · Run</text><text x="596" y="88" text-anchor="middle" fill="#93A0B4">objective: oil / NPV / min water</text><text x="596" y="104" text-anchor="middle" fill="#93A0B4">risk posture: aggressive · balanced · robust</text>
+<line x1="696" y1="80" x2="731" y2="80" stroke="#93A0B4" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="734" y="40" width="366" height="80" rx="8" fill="#0F1826" stroke="#7DB88A" stroke-width="1.4"/><text x="917" y="68" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="13" font-weight="600">4 · Result</text><text x="917" y="88" text-anchor="middle" fill="#93A0B4">connectivity map · forecast fan · "change this week" list</text><text x="917" y="104" text-anchor="middle" fill="#93A0B4">confidence badge · approve / send to operations</text>
+</g>
+<rect x="20" y="150" width="1080" height="60" rx="8" fill="#131E2E" stroke="#25344B" stroke-dasharray="5,4"/><text x="560" y="174" text-anchor="middle" fill="#93A0B4" font-family="IBM Plex Mono" font-size="11">▸ Details (collapsed): which method won, why others were excluded, leaderboard, fit plots, Δt/τ check, pressure handling, data-quality report</text><text x="560" y="194" text-anchor="middle" fill="#5E6C82" font-family="IBM Plex Mono" font-size="10.5">▸ Advanced mode (role-gated): manual variant, solver settings, parameter overrides, sector editing</text>
+<text x="560" y="250" text-anchor="middle" fill="#5CC2AE" font-family="IBM Plex Mono" font-size="11">Every technical condition maps to one plain sentence + one suggested action (§17). Confidence is one badge: HIGH · MEDIUM · LOW.</text>
+<text x="560" y="280" text-anchor="middle" fill="#5E6C82" font-family="IBM Plex Mono" font-size="10.5">Screens 1–2 are the Data Loader design; the Tournament Selector and the CRM Atlas live inside "Details" and the documentation.</text>
+</svg></div>
+
+<!-- 3 -->
+<h2 id="s3"><span class="n">3</span>Roles &amp; approval workflow</h2>
+<p class="lead">A recommendation has a lifecycle. "Evaluated" is what closes the surveillance loop and feeds the validation record (§16).</p>
+<div class="svgbox"><svg viewBox="0 0 1120 150" font-family="IBM Plex Sans,sans-serif" font-size="11">
+<g>
+<rect x="20" y="40" width="150" height="56" rx="7" fill="#131E2E" stroke="#25344B"/><text x="95" y="63" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-weight="600">DRAFT</text><text x="95" y="82" text-anchor="middle" fill="#93A0B4">engineer runs</text>
+<line x1="170" y1="68" x2="215" y2="68" stroke="#93A0B4" marker-end="url(#a)"/>
+<rect x="218" y="40" width="150" height="56" rx="7" fill="#131E2E" stroke="#25344B"/><text x="293" y="63" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-weight="600">REVIEWED</text><text x="293" y="82" text-anchor="middle" fill="#93A0B4">senior RE checks Details</text>
+<line x1="368" y1="68" x2="413" y2="68" stroke="#93A0B4" marker-end="url(#a)"/>
+<rect x="416" y="40" width="150" height="56" rx="7" fill="#131E2E" stroke="#E0973F"/><text x="491" y="63" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-weight="600">APPROVED</text><text x="491" y="82" text-anchor="middle" fill="#93A0B4">asset manager signs</text>
+<line x1="566" y1="68" x2="611" y2="68" stroke="#93A0B4" marker-end="url(#a)"/>
+<rect x="614" y="40" width="150" height="56" rx="7" fill="#131E2E" stroke="#25344B"/><text x="689" y="63" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-weight="600">IMPLEMENTED</text><text x="689" y="82" text-anchor="middle" fill="#93A0B4">operations logs actual rates</text>
+<line x1="764" y1="68" x2="809" y2="68" stroke="#93A0B4" marker-end="url(#a)"/>
+<rect x="812" y="40" width="150" height="56" rx="7" fill="#0F1826" stroke="#5CC2AE"/><text x="887" y="63" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-weight="600">EVALUATED</text><text x="887" y="82" text-anchor="middle" fill="#93A0B4">actual vs forecast after 3–6 mo</text>
+<path d="M887,96 L887,125 L95,125 L95,98" fill="none" stroke="#5CC2AE" stroke-dasharray="4,3" marker-end="url(#a)"/><text x="490" y="140" text-anchor="middle" fill="#5CC2AE" font-family="IBM Plex Mono" font-size="10">outcome re-scores model confidence and enters the validation record</text>
+<rect x="985" y="30" width="115" height="76" rx="7" fill="#131E2E" stroke="#25344B"/><text x="1042" y="50" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="11" font-weight="600">Roles</text><text x="1042" y="66" text-anchor="middle" fill="#93A0B4" font-size="10">viewer · engineer</text><text x="1042" y="80" text-anchor="middle" fill="#93A0B4" font-size="10">reviewer · approver</text><text x="1042" y="94" text-anchor="middle" fill="#93A0B4" font-size="10">operations · admin</text>
+</g></svg></div>
+<div class="card"><table><tr><th>Rule</th><th>Detail</th></tr>
+<tr><td class="k">Separation</td><td>The person who runs cannot approve. Advanced-mode overrides require reviewer role and are shown in the approval view.</td></tr>
+<tr><td class="k">Immutable snapshot</td><td>Approving freezes data hash, config, model version and the recommended rates; later edits create a new draft.</td></tr>
+<tr><td class="k">Implementation record</td><td>Operations enters what was actually set (or the app reads it back from the historian). Deviations from plan are stored, since evaluation must compare against what was <em>done</em>, not what was recommended.</td></tr>
+<tr><td class="k">Evaluation trigger</td><td>Automatic at 3 and 6 months after implementation: realised incremental oil vs. forecast P10–P90 band → outcome class (within band / better / worse) → confidence calibration (§16).</td></tr></table></div>
+
+
+<div class="card"><h3>3.1 User management (admin)</h3>
+<table><tr><th>Role</th><th>Can do</th><th>Typical person</th></tr>
+<tr><td class="k">Admin</td><td>Everything below, plus manage users, assets, connections, thresholds; may act in any role</td><td>app owner / lead RE</td></tr>
+<tr><td class="k">Approver</td><td>Approve / reject drafts; override a LOW-confidence block with a stated reason</td><td>asset manager</td></tr>
+<tr><td class="k">Reviewer</td><td>Open Details, use advanced mode, mark Reviewed</td><td>senior RE</td></tr>
+<tr><td class="k">Engineer</td><td>Load data, run, create drafts and scenarios</td><td>RE / production engineer</td></tr>
+<tr><td class="k">Operations</td><td>Enter implemented settings; view change lists</td><td>production supervisor</td></tr>
+<tr><td class="k">Viewer</td><td>Read-only dashboards and reports</td><td>management, partners</td></tr></table>
+<ul style="margin-top:12px">
+<li>Admin adds users by e-mail or account name, assigns one or more roles and the assets they may see; deactivates rather than deletes so past approvals keep their author. No self-registration.</li>
+<li>Authentication: local accounts or corporate SSO pass-through; passwords never stored when SSO is used.</li>
+<li><b style="color:var(--text)">Acting-as is explicit:</b> every action logs <code>actor</code> and <code>acting_role</code>.</li>
+<li><b style="color:var(--text)">Same-person rule is logged, not blocked</b> in Phase 1: if originator = approver the record carries <code>approved_by_originator</code>, visible in the report. Policy setting <code>separation: log | enforce</code> lets the asset switch to enforcement later without touching history.</li>
+<li>The Operations role should be handed to a real field person early — it is the source of the implemented-rate ground truth that drives evaluation (§16).</li></ul></div>
+
+<!-- 4 -->
+<h2 id="s4"><span class="n">4</span>Five-layer engine architecture</h2>
+<div class="svgbox"><svg viewBox="0 0 1120 300" font-family="IBM Plex Sans,sans-serif">
+<g>
+<rect x="20" y="60" width="190" height="140" rx="8" fill="#131E2E" stroke="#4C9BD4" stroke-width="1.4"/><text x="115" y="50" text-anchor="middle" fill="#5E6C82" font-family="IBM Plex Mono" font-size="10">L1</text><text x="115" y="90" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="14" font-weight="600">Data Loading</text><text x="115" y="114" text-anchor="middle" fill="#93A0B4" font-size="11">connectors · mapping</text><text x="115" y="131" text-anchor="middle" fill="#93A0B4" font-size="11">units · versioning</text><text x="115" y="148" text-anchor="middle" fill="#93A0B4" font-size="11">well-type derivation</text><text x="115" y="184" text-anchor="middle" fill="#4C9BD4" font-family="IBM Plex Mono" font-size="10">§5 §6</text>
+<rect x="245" y="60" width="190" height="140" rx="8" fill="#131E2E" stroke="#5CC2AE" stroke-width="1.4"/><text x="340" y="50" text-anchor="middle" fill="#5E6C82" font-family="IBM Plex Mono" font-size="10">L2</text><text x="340" y="90" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="14" font-weight="600">Processing / QC</text><text x="340" y="114" text-anchor="middle" fill="#93A0B4" font-size="11">clean · events · sectors</text><text x="340" y="131" text-anchor="middle" fill="#93A0B4" font-size="11">Δt/τ · pressure prep</text><text x="340" y="148" text-anchor="middle" fill="#93A0B4" font-size="11">identifiability gates</text><text x="340" y="184" text-anchor="middle" fill="#5CC2AE" font-family="IBM Plex Mono" font-size="10">§7 §8</text>
+<rect x="470" y="60" width="190" height="140" rx="8" fill="#131E2E" stroke="#E0973F" stroke-width="1.4"/><text x="565" y="50" text-anchor="middle" fill="#5E6C82" font-family="IBM Plex Mono" font-size="10">L3</text><text x="565" y="90" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="14" font-weight="600">Model Engine</text><text x="565" y="114" text-anchor="middle" fill="#93A0B4" font-size="11">tournament · blind test</text><text x="565" y="131" text-anchor="middle" fill="#93A0B4" font-size="11">rolling windows · change alerts</text><text x="565" y="148" text-anchor="middle" fill="#93A0B4" font-size="11">UQ ensemble · MPI bridge</text><text x="565" y="184" text-anchor="middle" fill="#E0973F" font-family="IBM Plex Mono" font-size="10">§9 §10 §11</text>
+<rect x="695" y="60" width="190" height="140" rx="8" fill="#131E2E" stroke="#9F8FD0" stroke-width="1.4"/><text x="790" y="50" text-anchor="middle" fill="#5E6C82" font-family="IBM Plex Mono" font-size="10">L4</text><text x="790" y="90" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="14" font-weight="600">Optimization</text><text x="790" y="114" text-anchor="middle" fill="#93A0B4" font-size="11">objective · economics</text><text x="790" y="131" text-anchor="middle" fill="#93A0B4" font-size="11">risk posture · constraints</text><text x="790" y="148" text-anchor="middle" fill="#93A0B4" font-size="11">ramping · action list</text><text x="790" y="184" text-anchor="middle" fill="#9F8FD0" font-family="IBM Plex Mono" font-size="10">§12 §13 §14</text>
+<rect x="920" y="60" width="180" height="140" rx="8" fill="#131E2E" stroke="#7DB88A" stroke-width="1.4"/><text x="1010" y="50" text-anchor="middle" fill="#5E6C82" font-family="IBM Plex Mono" font-size="10">L5</text><text x="1010" y="90" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="14" font-weight="600">Outputs &amp; Loop</text><text x="1010" y="114" text-anchor="middle" fill="#93A0B4" font-size="11">dashboard · report</text><text x="1010" y="131" text-anchor="middle" fill="#93A0B4" font-size="11">approval · evaluation</text><text x="1010" y="148" text-anchor="middle" fill="#93A0B4" font-size="11">refresh &amp; alerts</text><text x="1010" y="184" text-anchor="middle" fill="#7DB88A" font-family="IBM Plex Mono" font-size="10">§3 §15</text>
+<line x1="210" y1="130" x2="243" y2="130" stroke="#93A0B4" stroke-width="1.6" marker-end="url(#a)"/><line x1="435" y1="130" x2="468" y2="130" stroke="#93A0B4" stroke-width="1.6" marker-end="url(#a)"/><line x1="660" y1="130" x2="693" y2="130" stroke="#93A0B4" stroke-width="1.6" marker-end="url(#a)"/><line x1="885" y1="130" x2="918" y2="130" stroke="#93A0B4" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M1010,200 L1010,245 L340,245 L340,202" fill="none" stroke="#5CC2AE" stroke-width="1.3" stroke-dasharray="5,4" marker-end="url(#a)"/><text x="675" y="262" text-anchor="middle" fill="#5CC2AE" font-family="IBM Plex Mono" font-size="10.5">surveillance loop (§15): new data → re-QC → rolling re-fit → change alert → re-optimize → evaluate implemented plan</text>
+<rect x="20" y="276" width="1080" height="20" rx="4" fill="#0F1826" stroke="#25344B"/><text x="560" y="290" text-anchor="middle" fill="#93A0B4" font-family="IBM Plex Mono" font-size="10">cross-cutting: project store · run registry · validation record · units service · audit log · roles · messaging map</text>
+</g></svg></div>
+
+<!-- 5 -->
+<h2 id="s5"><span class="n">5</span>Data loading (L1)</h2>
+<div class="g2">
+  <div class="card"><h3>Sources &amp; mapping</h3><ul>
+    <li><b style="color:var(--text)">SQL</b> (Oracle/OFM, SQL Server, PostgreSQL, MySQL, SQLite) via a backend connector with read-only credentials; optional view/query override. The browser never opens a database socket.</li>
+    <li><b style="color:var(--text)">CSV</b> one file per dataset; <b style="color:var(--text)">Excel</b> one workbook, sheets become candidate tables.</li>
+    <li>Four canonical datasets: <code>rates</code> (required), <code>pressure</code>, <code>coords</code>, <code>category</code>. Column mapping auto-suggested from naming conventions; required fields flagged; missing optional tables degrade features rather than block.</li>
+    <li>Category table drives a cascading field → reservoir → block filter.</li>
+    <li>Mapping, filter and well list are saved as the <b style="color:var(--text)">project config</b>; monthly refresh re-runs identically.</li></ul></div>
+  <div class="card"><h3>Well type derived from rates, not from a master table</h3><ul>
+    <li>Per time step: production &gt; 0 → P, injection &gt; 0 → I, both → B (flagged as a data-quality issue).</li>
+    <li>Well type = PROD or INJ if a single mode ever appears, else MIXED with conversion dates.</li>
+    <li>MIXED wells are split into separate injector-role and producer-role series per period, so the CRM sees a converted well as two entities with a date boundary. A conversion is also written to the events table.</li>
+    <li>Multi-select with search and one-click groups (producers / injectors / mixed / active last 12 months).</li></ul>
+  <div class="callout">Commingled / multi-reservoir wells: rates are split by the allocation factor from the category table (or equal split with a warning). The split factor is stored per well and can be overridden in advanced mode.</div></div>
+</div>
+
+<!-- 6 -->
+<h2 id="s6"><span class="n">6</span>Units, conventions &amp; reservoir-volume conversion</h2>
+<div class="card"><table><tr><th>Topic</th><th>Rule</th></tr>
+<tr><td class="k">Unit system</td><td>Project-level setting (field / metric / mixed). Every column carries a unit tag from mapping; a units service converts once at load and stores SI internally. Display converts back.</td></tr>
+<tr><td class="k">Reservoir volumes</td><td>CRM balances reservoir barrels: q<sub>res</sub> = q<sub>o</sub>B<sub>o</sub> + q<sub>w</sub>B<sub>w</sub> + (q<sub>g</sub> − q<sub>o</sub>R<sub>s</sub>)B<sub>g</sub>; injection i<sub>res</sub> = i<sub>w</sub>B<sub>w</sub>. B<sub>o</sub>, R<sub>s</sub>, B<sub>g</sub> taken from PVT table at average reservoir pressure (static surveys or CRMPA estimate); constant values allowed with a warning.</td></tr>
+<tr><td class="k">Free gas</td><td>If producing GOR exceeds R<sub>s</sub> (below bubble point), the free-gas term is included in the total-fluid balance and the run is flagged "gas-affected — reduced confidence". Gas injection / WAG is out of scope for this release (§20).</td></tr>
+<tr><td class="k">Time base</td><td>Rates normalised by <code>days_on</code> to calendar-day rates; volumes preserved. Shut-in months keep days_on = 0 rather than rate = 0.</td></tr>
+<tr><td class="k">Datum</td><td>All pressures shifted to a project datum with a fluid gradient; pressure source and datum stored with each value.</td></tr>
+<tr><td class="k">Naming</td><td>Well IDs normalised (case, whitespace, aliases table) so the four datasets join reliably; unmatched IDs are reported, never silently dropped.</td></tr></table></div>
+
+<!-- 7 -->
+<h2 id="s7"><span class="n">7</span>Processing &amp; QC (L2)</h2>
+<div class="g2">
+  <div class="card"><table><tr><th>Step</th><th>What happens</th></tr>
+  <tr><td class="k">Outliers</td><td>Hampel/MAD per well; caps at physical limits; raw kept for verification plots.</td></tr>
+  <tr><td class="k">Events</td><td>Workovers, conversions, long shut-ins, choke/ESP-frequency changes → history split into windows; short shut-ins retained as signal.</td></tr>
+  <tr><td class="k">Sectors</td><td>Distance graph + faults + patterns → hydraulically plausible sectors; boundary injectors shared with an open-boundary constant. Automatic for &gt; ~40 wells, editable in advanced mode.</td></tr>
+  <tr><td class="k">Pseudo-wells</td><td>Aquifer / unmetered injection as pseudo-injector only when the explicit aquifer variant is not eligible.</td></tr>
+  <tr><td class="k">Gates</td><td>O<sub>d</sub> = M/(I+1) &gt; 6; rate points ≥ 4× parameters; injection-signal CV ≥ 0.15; τ/Δt ≥ 3 (§8). Failures produce plain-language messages (§17) and change which methods are eligible (§9).</td></tr>
+  <tr><td class="k">Split</td><td>Last 20–25 % of each window held out for the blind test.</td></tr></table></div>
+  <div class="card"><h3>Data-quality report (shown as a traffic light, detail in "Details")</h3><ul>
+    <li>Coverage per well, gap count, outliers removed, simultaneous P+I steps, unmatched IDs</li>
+    <li>Identifiability summary per sector</li>
+    <li>Units and PVT assumptions used</li>
+    <li>Report stored with the run; a change in the report between refreshes is itself an alert (§15)</li></ul></div>
+</div>
+
+<!-- 8 -->
+<h2 id="s8"><span class="n">8</span>Sampling frequency &amp; pressure data</h2>
+<div class="g2">
+  <div class="card"><h3>Δt versus τ</h3><ul>
+    <li>Default grid monthly; minimum 36 steps, ideally 60–120. Finer Δt never substitutes for history length.</li>
+    <li>Rule Δt ≤ τ/5 preferred, τ/3 minimum; τ estimated from a quick CRMT or c<sub>t</sub>V<sub>p</sub>/J. If τ<sub>F</sub> &lt; 3Δt and metered daily data exist, resample finer; if production is monthly-allocated, a finer grid adds noise, not information — stay monthly and prefer CRMT/CRMP.</li>
+    <li>Injection and production always on the same grid, aligned by days-on.</li>
+    <li>Daily/weekly grids justified for close-spaced high-permeability patterns, injector-interference or crossflow variants, and the ML residual layer.</li></ul></div>
+  <div class="card"><h3>Pressure handling by source</h3><table>
+    <tr><td class="k">Downhole gauge</td><td>Use flowing pressure; average to rate grid; buildups calibrate J independently.</td></tr>
+    <tr><td class="k">ESP intake (PIP)</td><td>Remove trips/gas-lock; shift PIP to mid-perf with a water-cut-dependent mixture gradient; average to grid; keep Hz/choke changes as events — they are the p<sub>wf</sub> steps the J·dp<sub>wf</sub>/dt term explains. Trip build-ups used as mini-PBUs to bound J.</td></tr>
+    <tr><td class="k">WHP only</td><td>Calculated BHP accepted with a bias check; constant-BHP mode preferred unless WHP varies strongly.</td></tr>
+    <tr><td class="k">Static surveys</td><td>Not p<sub>wf</sub>(t); used to validate CRMPA pore volume and bound τ.</td></tr>
+    <tr><td class="k">None</td><td>Constant-BHP formulation; crossflow variant ineligible; lift changes must be in the events table.</td></tr></table></div>
+</div>
+
+<!-- 9 -->
+<h2 id="s9"><span class="n">9</span>Model engine &amp; tournament (L3)</h2>
+<div class="svgbox"><svg viewBox="0 0 1120 250" font-family="IBM Plex Sans,sans-serif" font-size="11">
+<g>
+<rect x="20" y="30" width="180" height="190" rx="8" fill="#131E2E" stroke="#25344B"/><text x="110" y="55" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-weight="600" font-size="12.5">Registry</text>
+<g font-family="IBM Plex Mono" font-size="10.5" fill="#93A0B4"><text x="34" y="80">CRMT · CRMP · CRMIP</text><text x="34" y="98">CRM-Aquifer (CRMPA)</text><text x="34" y="116">Two-phase coupled</text><text x="34" y="134">Crossflow / prod.-coeff.</text><text x="34" y="152">MPI (prior / new wells)</text><text x="34" y="170">PINN / residual ML</text><text x="34" y="188" fill="#5E6C82">RNN (benchmark only)</text></g>
+<line x1="200" y1="125" x2="240" y2="125" stroke="#93A0B4" marker-end="url(#a)"/>
+<rect x="243" y="30" width="200" height="190" rx="8" fill="#131E2E" stroke="#D2685A"/><text x="343" y="55" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-weight="600" font-size="12.5">Eligibility gates</text>
+<g font-size="10.5" fill="#93A0B4"><text x="258" y="80">coordinates · BHP · rel-perm present</text><text x="258" y="98">O_d &gt; 6 · data ≥ 4× params</text><text x="258" y="116">water cut &lt; 0.5 → two-phase</text><text x="258" y="134">Σf_ij &gt; 1.15 → aquifer</text><text x="258" y="152">events ≥ 4/well → crossflow</text><text x="258" y="170">history ≥ 120 → ML</text><text x="258" y="188">interpretability gate (f_ij, τ exposed)</text></g>
+<line x1="443" y1="125" x2="483" y2="125" stroke="#93A0B4" marker-end="url(#a)"/>
+<rect x="486" y="30" width="200" height="190" rx="8" fill="#131E2E" stroke="#E0973F"/><text x="586" y="55" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-weight="600" font-size="12.5">Fit all eligible</text>
+<g font-size="10.5" fill="#93A0B4"><text x="501" y="80">same train/blind split &amp; seeds</text><text x="501" y="98">SLSQP / trust-region; multi-start</text><text x="501" y="116">constraints: 0≤f≤1, Σf≤1, τ&gt;Δt</text><text x="501" y="134">sparsity penalty on f_ij</text><text x="501" y="152">distance / MPI prior</text><text x="501" y="170">oil-cut fit after liquid match</text><text x="501" y="188">per-sector parallel</text></g>
+<line x1="686" y1="125" x2="726" y2="125" stroke="#93A0B4" marker-end="url(#a)"/>
+<rect x="729" y="30" width="200" height="190" rx="8" fill="#131E2E" stroke="#25344B"/><text x="829" y="55" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-weight="600" font-size="12.5">Score &amp; rank</text>
+<g font-size="10.5" fill="#93A0B4"><text x="744" y="80">blind-test R², MAPE (liquid+oil)</text><text x="744" y="98">AICc parsimony</text><text x="744" y="116">multi-start parameter spread</text><text x="744" y="134">physical plausibility checks</text><text x="744" y="152">residual autocorrelation</text><text x="744" y="170">runtime</text><text x="744" y="188">→ composite; tie → simpler</text></g>
+<line x1="929" y1="125" x2="969" y2="125" stroke="#93A0B4" marker-end="url(#a)"/>
+<rect x="972" y="60" width="128" height="130" rx="8" fill="#0F1826" stroke="#5CC2AE"/><text x="1036" y="88" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-weight="600" font-size="12">Select</text><text x="1036" y="110" text-anchor="middle" fill="#93A0B4" font-size="10.5">winner, or</text><text x="1036" y="126" text-anchor="middle" fill="#93A0B4" font-size="10.5">score-weighted</text><text x="1036" y="142" text-anchor="middle" fill="#93A0B4" font-size="10.5">ensemble of top 3</text><text x="1036" y="168" text-anchor="middle" fill="#5CC2AE" font-family="IBM Plex Mono" font-size="10">+ confidence badge</text>
+</g></svg></div>
+<div class="card"><table><tr><th>Item</th><th>Design</th></tr>
+<tr><td class="k">Calibrated model object</td><td>f<sub>ij</sub>, τ, J, q₀, oil-cut / Koval parameters, aquifer terms, fit metrics, UQ ensemble, window definition, data hash, code version. Stored in the run registry.</td></tr>
+<tr><td class="k">Fit order</td><td>CRMT per sector (seconds, sanity) → CRMP → CRMIP only where CRMP residuals show pair structure → oil-cut → optional ML residual if residuals remain autocorrelated.</td></tr>
+<tr><td class="k">Confidence badge</td><td>HIGH: blind R² ≥ 0.85 and parameter spread &lt; 15 % and no gate warnings. MEDIUM: R² ≥ 0.7 or one warning. LOW: otherwise — recommendation shown as "screening only", cannot be approved without reviewer override. Thresholds calibrated by §16.</td></tr>
+<tr><td class="k">pywaterflood</td><td>Used as the Phase-1 CRMP/CRMIP/MPI engine and later as a regression baseline for the in-house solver.</td></tr></table></div>
+
+<!-- 10 -->
+<h2 id="s10"><span class="n">10</span>Time-varying connectivity &amp; change detection</h2>
+<div class="g2">
+  <div class="card"><h3>Rolling-window fitting</h3><ul>
+    <li>Besides the full-history fit, the engine fits overlapping windows (default 36 months, step 6) and stores f<sub>ij</sub>(t), τ(t) per window.</li>
+    <li>Event boundaries (infill, workover, conversion) force a window break.</li>
+    <li>The forecast and the optimizer use the <em>latest</em> window's parameters, weighted with the full-history fit by their blind-test scores.</li></ul></div>
+  <div class="card"><h3>Change alerts</h3><ul>
+    <li>Per pair: CUSUM on f<sub>ij</sub>(t) and τ(t) relative to the multi-start spread; a shift larger than 2× spread that persists for two windows raises "connectivity between I-3 and P-7 has shifted since March".</li>
+    <li>Per producer: forecast-error monitoring (§15) distinguishes reservoir change from data problems.</li>
+    <li>Alerts appear in plain language with the likely cause list (breakthrough, new well, fault, meter) and a link to the Details plot.</li></ul></div>
+</div>
+
+<!-- 11 -->
+<h2 id="s11"><span class="n">11</span>New wells, conversions &amp; what-if without history</h2>
+<div class="card"><table><tr><th>Case</th><th>How connectivity is estimated</th><th>Confidence</th></tr>
+<tr><td class="k">New injector</td><td>MPI influence from coordinates and k·h → prior f<sub>ij</sub>, scaled to the distance–f<sub>ij</sub> trend observed among existing pairs in the same sector; τ from neighbouring pairs.</td><td><span class="tag o">MEDIUM at best</span></td></tr>
+<tr><td class="k">Producer → injector conversion</td><td>Uses the well's producer-role drainage volume (τ, J) as the starting tank; f<sub>ij</sub> to neighbours from the MPI-scaled prior.</td><td><span class="tag o">MEDIUM</span></td></tr>
+<tr><td class="k">Shut-in / abandon injector</td><td>Direct: remove its column of f<sub>ij</sub>; crossflow variant recommended if BHP exists, since neighbours' pressure redistributes.</td><td><span class="tag g">HIGH</span></td></tr>
+<tr><td class="k">Infill producer</td><td>MPI-based split of neighbouring injectors' allocation; flagged for re-fit after 12 months of data.</td><td><span class="tag r">LOW → re-fit</span></td></tr></table>
+<div class="callout">What-if scenarios with prior-based wells are labelled "prior-based" on every chart and are automatically re-evaluated once 12 months of real data exist.</div></div>
+
+<!-- 12 -->
+<h2 id="s12"><span class="n">12</span>Optimization &amp; economics (L4)</h2>
+<div class="g2">
+  <div class="card"><table><tr><th>Element</th><th>Design</th></tr>
+  <tr><td class="k">Decision variables</td><td>Injection rate per injector per period over a 6–24 month horizon; optionally producer BHP / choke targets.</td></tr>
+  <tr><td class="k">Objectives (user picks)</td><td><b style="color:var(--text)">Max cumulative oil</b> · <b style="color:var(--text)">Max NPV</b> = Σ(oil price·q<sub>o</sub> − water-handling cost·q<sub>w</sub> − injection cost·i)/(1+r)<sup>t</sup> · <b style="color:var(--text)">Min water for target oil</b>.</td></tr>
+  <tr><td class="k">Constraints</td><td>Total water available; per-injector min/max (injectivity, frac gradient); producer liquid / ESP limits; max water cut; VRR band per pattern; reservoir-pressure window (above bubble point, below parting pressure).</td></tr>
+  <tr><td class="k">Algorithm</td><td>SLSQP / trust-region for smooth short horizons; ensemble (EnOpt) or GA for long horizons and robust objectives.</td></tr>
+  <tr><td class="k">Economics inputs</td><td>Price deck, cost per bbl water handled, cost per bbl injected, discount rate — project-level with scenario overrides; sensitivity to price shown as a tornado.</td></tr></table></div>
+  <div class="card"><h3>Scenario manager</h3><ul><li>Base (hold current) · Reallocation (same water) · Water-budget sweep (marginal value of water) · Shut-in / convert / new well (§11) · Pattern balancing (VRR targets)</li><li>Every scenario stores inputs, model version, objective, posture, results and delta-vs-base.</li><li>Scenarios are compared on the same UQ ensemble so differences are not noise.</li></ul></div>
+</div>
+
+<!-- 13 -->
+<h2 id="s13"><span class="n">13</span>Uncertainty → decision</h2>
+<div class="card"><p class="lead" style="margin-bottom:8px">P10/P50/P90 fans describe uncertainty; the risk posture decides what to do with it. The posture is a user setting on the Run screen, with "balanced" as default.</p>
+<table><tr><th>Posture</th><th>Objective actually optimized</th><th>Typical user</th></tr>
+<tr><td class="k">Aggressive</td><td>P50 (expected value) of the objective across the calibrated ensemble</td><td>mature asset, reversible changes</td></tr>
+<tr><td class="k">Balanced</td><td>Expected value minus 0.5 × standard deviation (mean-variance)</td><td>default</td></tr>
+<tr><td class="k">Robust</td><td>Maximize the P10 outcome (worst-case among realizations); also rejects plans that lose oil in any realization</td><td>constrained facilities, low confidence</td></tr></table>
+<div class="callout">The confidence badge and the posture interact: a LOW-confidence model forces the Robust posture and reduces the allowed step size (§14).</div></div>
+
+<!-- 14 -->
+<h2 id="s14"><span class="n">14</span>Operational recommendation — "what to change this week"</h2>
+<div class="g2">
+  <div class="card"><table><tr><th>Rule</th><th>Default</th></tr>
+  <tr><td class="k">Ramp rate</td><td>≤ 15 % of current rate per week per injector (HIGH confidence), ≤ 8 % (MEDIUM/LOW); configurable per facility.</td></tr>
+  <tr><td class="k">Minimum actionable change</td><td>Changes below 5 % or below meter resolution are suppressed to avoid churn.</td></tr>
+  <tr><td class="k">Setting translation</td><td>Target rate → choke / pump-frequency suggestion using the last known injectivity curve; the field confirms the actual setting.</td></tr>
+  <tr><td class="k">Ordering</td><td>Highest marginal-oil changes first; changes touching the same facility grouped.</td></tr>
+  <tr><td class="k">Reversibility</td><td>Each change carries a "revert if" condition (water-cut jump, pressure limit) monitored by §15.</td></tr></table></div>
+  <div class="card"><h3>Output artefacts</h3><ul><li>Change list (well, from → to, step this week, target date, setting hint, expected oil gain, revert condition)</li><li>Forecast fan per producer and field with the implemented-plan overlay</li><li>Connectivity and τ maps, injector efficiency (oil per bbl injected)</li><li>Report (PDF/DOCX), tables (XLSX/CSV), model JSON, optional writeback of targets to the surveillance system</li></ul></div>
+</div>
+
+<!-- 15 -->
+<h2 id="s15"><span class="n">15</span>Surveillance loop — rules</h2>
+<div class="card"><table><tr><th>Trigger</th><th>Action</th></tr>
+<tr><td class="k">New month of data</td><td>Re-run L1–L2 with saved config; data-quality report diffed against last run. Forecast error for the past month computed per producer.</td></tr>
+<tr><td class="k">Forecast error within P10–P90</td><td>No re-fit; parameters kept; plan continues.</td></tr>
+<tr><td class="k">Forecast error outside band, data-quality unchanged</td><td>Reservoir-change hypothesis → rolling re-fit (§10) → if parameters shift, re-optimize and open a new DRAFT; the running plan's "revert if" conditions are checked.</td></tr>
+<tr><td class="k">Forecast error outside band, data-quality changed</td><td>Data-problem hypothesis → user message names the well/meter; no re-fit until resolved.</td></tr>
+<tr><td class="k">New event (workover, conversion, new well)</td><td>Window break; affected sector re-fit; prior-based parameters for new wells (§11).</td></tr>
+<tr><td class="k">Quarterly</td><td>Full tournament re-run (method choice may change as history grows); confidence recalibrated from §16 outcomes.</td></tr>
+<tr><td class="k">Implemented plan reaches 3 / 6 months</td><td>Evaluation record created (§3); outcome class feeds validation.</td></tr></table></div>
+
+<!-- 16 -->
+<h2 id="s16"><span class="n">16</span>Validation strategy</h2>
+<div class="g3">
+  <div class="card"><h3>Tier 1 — synthetic ground truth</h3><ul><li>Reservoir-simulator cases with known f<sub>ij</sub>, τ: 5×4 streak field; aquifer-supported; converted wells; monthly-allocated noisy rates; large 60-well sectored field.</li><li>Every solver change runs the suite in CI; pass = parameters within tolerance and blind R² above floor.</li><li>pywaterflood results as an independent baseline.</li></ul></div>
+  <div class="card"><h3>Tier 2 — historical field back-tests</h3><ul><li>At least one asset with a documented reallocation: fit on data before the change, forecast the change, compare with what actually happened.</li><li>Establishes the mapping from blind-test metrics to realised-outcome accuracy — i.e. what HIGH / MEDIUM / LOW actually mean.</li></ul></div>
+  <div class="card"><h3>Tier 3 — live calibration</h3><ul><li>Every EVALUATED recommendation (§3) adds a point: predicted band vs. realised.</li><li>Confidence thresholds are re-tuned quarterly so that a HIGH badge means ≥ 80 % of past HIGH recommendations landed within band.</li><li>A validation dashboard is part of the admin view.</li></ul></div>
+</div>
+
+<!-- 17 -->
+<h2 id="s17"><span class="n">17</span>Plain-language messaging map</h2>
+<p class="lead">Every hidden technical condition has exactly one user-facing sentence and one suggested action. This table is a deliverable, versioned with the code.</p>
+<div class="card"><div class="msg">
+<div class="h">technical condition</div><div class="h">what the user reads</div><div class="h">suggested action</div>
+<div class="t">O_d &lt; 6</div><div class="u">History is too short for the number of injectors — results are indicative only.</div><div>Extend the history or analyse a smaller group of wells.</div>
+<div class="t">CRMIP data/params &lt; 2</div><div class="u">Not enough data for pair-level detail; using producer-level model.</div><div>None needed.</div>
+<div class="t">injection CV &lt; 0.15</div><div class="u">Injection rates barely change, so the reservoir's response cannot be separated well.</div><div>Include periods with rate changes, or consider a short injection test.</div>
+<div class="t">τ/Δt &lt; 3</div><div class="u">The reservoir responds faster than the data are sampled.</div><div>Use daily metered data if available; otherwise treat time constants as approximate.</div>
+<div class="t">Σf_ij &gt; 1.15</div><div class="u">Producers receive more support than injection explains — likely aquifer support.</div><div>Aquifer model applied automatically; confirm with pressure surveys if available.</div>
+<div class="t">no BHP, events ≥ 4/well</div><div class="u">Frequent lift/choke changes without pressure data may be read as connectivity changes.</div><div>Load ESP/gauge pressure or an events log.</div>
+<div class="t">simultaneous P+I steps</div><div class="u">Well X reports production and injection in the same month.</div><div>Check allocation for that month; the app treats it as a conversion month.</div>
+<div class="t">GOR &gt; R_s</div><div class="u">Free gas is present; water-only balance is less reliable.</div><div>Results marked reduced confidence; gas handling arrives in the next release.</div>
+<div class="t">multi-start spread &gt; 30 %</div><div class="u">Several different connectivity patterns fit equally well.</div><div>Recommendation uses the robust posture; add data or pressure to resolve.</div>
+<div class="t">forecast outside band, DQ changed</div><div class="u">Well Y's recent data looks inconsistent with earlier records (possible meter/allocation issue).</div><div>Verify with production accounting before acting.</div>
+<div class="t">CUSUM shift in f_ij</div><div class="u">Connection between I-3 and P-7 has strengthened since March.</div><div>Review for breakthrough; plan updated automatically.</div>
+<div class="t">confidence LOW</div><div class="u">Screening result — not for approval.</div><div>See Details for what limits confidence.</div>
+</div></div>
+
+<!-- 18 -->
+<h2 id="s18"><span class="n">18</span>Governance, security &amp; deployment</h2>
+<div class="g2">
+  <div class="card"><table><tr><th>Topic</th><th>Design</th></tr>
+  <tr><td class="k">Database access</td><td>Backend service holds read-only credentials in a secrets store; browser calls the API only. Query override is restricted to reviewer/admin and logged.</td></tr>
+  <tr><td class="k">Data residency</td><td>On-prem or private-cloud deployment; no field data leaves the corporate network. Container images signed and pinned.</td></tr>
+  <tr><td class="k">Access control</td><td>Row-level: users see only assets they are assigned; roles per §3.</td></tr>
+  <tr><td class="k">Audit</td><td>Every load, run, override, approval and implementation entry is logged with user, time, data hash and config hash. Logs are PII-free (user ID only).</td></tr>
+  <tr><td class="k">Retention</td><td>Raw snapshots immutable; runs retained for the asset's life; exports watermarked with run ID.</td></tr></table></div>
+  <div class="card"><h3>Integration</h3><ul><li>Read: OFM / PDMS / historian (PI) / WITSML / files</li><li>Write (optional, approver-gated): injection targets to the surveillance system; monthly KPI feed to corporate reporting</li><li>API: <code>POST /runs</code>, <code>GET /runs/{id}</code>, <code>GET /recommendations/{id}</code>, webhooks on state change</li><li>Offline mode: SQLite project store, file sources, single-node worker</li></ul></div>
+</div>
+
+<!-- 19 -->
+<h2 id="s19"><span class="n">19</span>Modules &amp; stack</h2>
+<div class="g2">
+  <div class="card"><div class="tree"><b>waterflood_app/</b>
+├── <b>ingest/</b>     <i>L1</i> connectors  mapping  units  validate  welltype
+├── <b>prep/</b>       <i>L2</i> clean  events  sectors  split  gates  pressure_prep
+├── <b>models/</b>     <i>L3</i> base  crmt  crmp  crmip  aquifer  twophase
+│                 crossflow  mpi  fractional_flow  solver
+│                 tournament  verify  uq  rolling  change_detect
+├── <b>optimize/</b>   <i>L4</i> objectives  economics  constraints  posture
+│                 solvers  scenarios  ramping  action_list
+├── <b>outputs/</b>    <i>L5</i> maps  plots  report  export  writeback
+├── <b>workflow/</b>        states  approvals  evaluation  scheduler  alerts
+├── <b>validation/</b>      synthetic_suite  backtests  calibration
+├── <b>messaging/</b>       condition_map.yaml
+├── <b>store/</b>           project  registry  audit  (Parquet + Postgres/SQLite)
+├── <b>api/</b>             FastAPI  auth  jobs
+└── <b>ui/</b>              loader  run  result  details  admin</div></div>
+  <div class="card"><table><tr><th>Layer</th><th>Choice</th></tr>
+  <tr><td class="k">Numerics</td><td>Python · NumPy · SciPy; pywaterflood for Phase 1; Numba/Rust kernels for &gt; 300 wells</td></tr>
+  <tr><td class="k">Data</td><td>pandas/polars · Parquet snapshots · Postgres (SQLite offline)</td></tr>
+  <tr><td class="k">Service</td><td>FastAPI · job queue (Celery/RQ) · scheduler for monthly refresh</td></tr>
+  <tr><td class="k">UI</td><td>Streamlit for internal MVP → React + Plotly for production; the three companion HTML designs are the UI reference</td></tr>
+  <tr><td class="k">Reports</td><td>python-docx / WeasyPrint templates from the registry</td></tr>
+  <tr><td class="k">ML</td><td>PyTorch (PINN), pysindy; only behind the interpretability gate</td></tr>
+  <tr><td class="k">CI</td><td>GitHub Actions running the synthetic validation suite on every merge</td></tr></table></div>
+</div>
+
+<!-- 20 -->
+<h2 id="s20"><span class="n">20</span>Roadmap</h2>
+<div class="road">
+  <div class="ph"><div class="t">PHASE 1 · 8 wks</div><h4>Usable MVP</h4><ul><li>Loader (SQL/CSV/Excel, mapping, field filter, well-type derivation)</li><li>Units service, PVT conversion</li><li>QC + gates + messaging map v1</li><li>CRMT/CRMP via pywaterflood, blind test, confidence badge</li><li>Reallocation optimizer (oil objective, balanced posture)</li><li>User admin screen, roles, acting-as logging</li><li>Synthetic validation suite in CI</li></ul></div>
+  <div class="ph"><div class="t">PHASE 2 · 8 wks</div><h4>Trust &amp; workflow</h4><ul><li>Full tournament (CRMIP, aquifer, two-phase, crossflow), ensemble, UQ</li><li>NPV objective, economics, postures</li><li>Ramping + action list, revert conditions</li><li>Approval states, roles, audit</li><li>Historical back-test on one asset → calibrated thresholds</li></ul></div>
+  <div class="ph"><div class="t">PHASE 3 · 10 wks</div><h4>Living model</h4><ul><li>Rolling windows, change alerts, surveillance rules</li><li>MPI bridge for new wells / conversions</li><li>Evaluation records, live calibration dashboard</li><li>Historian connectors, writeback</li><li>PINN / residual ML behind the gate</li></ul></div>
+  <div class="ph" style="border-color:#8A5F2A"><div class="t" style="color:var(--oil)">NEXT RELEASE</div><h4>Gas injection &amp; WAG</h4><ul><li>Three-phase reservoir-volume balance</li><li>Gas-injector roles and mixed WAG wells</li><li>Gas-oil fractional flow</li><li>Gas-specific constraints (MMP, GOR limits)</li><li>Extends registry without changing the user flow</li></ul></div>
+</div>
+
+<!-- 21 -->
+<h2 id="s21"><span class="n">21</span>Companion documents</h2>
+<div class="card"><table><tr><th>Document</th><th>Role in the product</th></tr>
+<tr><td class="k">CRM Atlas (13-tab methodology dashboard)</td><td>Reference and training material; source for the "Details" explanations.</td></tr>
+<tr><td class="k">Application Blueprint v1</td><td>Superseded by this document; retained for history.</td></tr>
+<tr><td class="k">Data Loader (interactive)</td><td>UI reference for screens 1–2.</td></tr>
+<tr><td class="k">Model Tournament Selector (interactive)</td><td>UI reference for the "Details" panel: gates, exclusions, ranking, Δt/τ and pressure checks.</td></tr></table></div>
+
+<footer>Waterflood Optimizer architecture v2.1 · 2026-09-03 · Methodology basis: Albertoni &amp; Lake 2003 · Yousef et al. 2006 · Sayarpour et al. 2009 · Weber et al. 2009 · Kaviani &amp; Valkó 2010 · Cao, Luo &amp; Lake 2014 · Holanda et al. 2018 · Olenchikov &amp; Posvyanskii 2019 · Simha et al. 2021 · Leng et al. 2023 · Parra et al. 2024 · Koroglu et al. 2024 · SPE-218258 · pywaterflood (Male 2024).</footer>
+</main></div></body></html>

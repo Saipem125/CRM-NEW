@@ -1,0 +1,31 @@
+{
+  "generator_version": "1.0.0",
+  "files": {
+    "streak_5x4/rates.parquet": "1592f4e4b99df077cff80cab6349cdf36d8eedf79609f9f55a30b1b5f688c734",
+    "streak_5x4/coords.parquet": "0f3812a179f40041e790441d5a83dc66cc5004c591b1a1e16880c74e55586baa",
+    "streak_5x4/category.parquet": "527b1acc88bf2bbc62c75cf38873bce5ba7826b5e20336e0972a21184c98ab9f",
+    "streak_5x4/events.parquet": "a9f098d8c3eecb03bc0fdaabcfcd90aa453fb55702db3b2729c00036e6a6fc36",
+    "streak_5x4_noise5/rates.parquet": "c01a9c6bdd178b571f9e6349b4380584c8300345227855dfbec607f996a8f204",
+    "streak_5x4_noise5/coords.parquet": "0f3812a179f40041e790441d5a83dc66cc5004c591b1a1e16880c74e55586baa",
+    "streak_5x4_noise5/category.parquet": "527b1acc88bf2bbc62c75cf38873bce5ba7826b5e20336e0972a21184c98ab9f",
+    "streak_5x4_noise5/events.parquet": "a9f098d8c3eecb03bc0fdaabcfcd90aa453fb55702db3b2729c00036e6a6fc36",
+    "aquifer_6x9/rates.parquet": "fc54ce7b6a66a2febb0ca2db3d3cd3c2f88ba3059894106f60e9fd14f712cfc7",
+    "aquifer_6x9/coords.parquet": "115f39dafccec138eb0d65355cd43d5647446105d9b0a14d5115178a7db54718",
+    "aquifer_6x9/category.parquet": "3644659d9d3ac826cfa986016cf072af8628260a1f60bf0a5d85cfac4908bdb5",
+    "aquifer_6x9/events.parquet": "a9f098d8c3eecb03bc0fdaabcfcd90aa453fb55702db3b2729c00036e6a6fc36",
+    "aquifer_6x9/pressure.parquet": "dd19a0a3b663c049401e5fe7a48494a9787c788407a709b65cafccc738de578c",
+    "converted_wells/rates.parquet": "58cc630da13b3eeba78fc8ddb2262dfecb85658a67a5e6f06c5cdfdd3f7001d5",
+    "converted_wells/coords.parquet": "230e1791e710f94ec0c04994c3d6e2ddbe08377daabafdfa891f21bf2efaa656",
+    "converted_wells/category.parquet": "0894a73b1713fac3f878bec5cbdd43eabaab7bf1a8b36311812d9a28ab1898e9",
+    "converted_wells/events.parquet": "9ee7bd90460c7ce2e479a5a6292b1092b09d9d55f77c929052a3e6b1c5642ac7",
+    "allocated_noisy/rates.parquet": "636c1c7f823389ecad6567423c681a6b8e81e7af9b408dfda650ca517ac4ba0c",
+    "allocated_noisy/coords.parquet": "b58e4e42984f629a84422126556943a498e4d99fb2f871627c0b395326da8e63",
+    "allocated_noisy/category.parquet": "09eb8c288ae923cd1ad757bf98481ffc0dc89ce8cbacc351df6f99abad3f79de",
+    "allocated_noisy/events.parquet": "d27a082a68bf6efbfc203f22ee4a7ea465878c048b7417a1290b67c5be93a87d",
+    "sectored_60/rates.parquet": "032bbc3a40421ba5e4de1983adc52bfab9aa164828cefc20d972e37cfcf198ab",
+    "sectored_60/coords.parquet": "702f8f86ebb06bb16997b65e74f8cf35410b8af522894b09df4ac215a9f7eff1",
+    "sectored_60/category.parquet": "e1fccae53aa1112e5916d4fae4def9f711a2d52a80e044eced15cc7ffecde82e",
+    "sectored_60/events.parquet": "a9f098d8c3eecb03bc0fdaabcfcd90aa453fb55702db3b2729c00036e6a6fc36",
+    "sectored_60/faults.parquet": "45643ab29bad7d166fa307f9b089502e2f9acc1d0e887408b0ecccf66caa6194"
+  }
+}

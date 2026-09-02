@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Model Tournament — Smart Method Selector</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B121C;--bg2:#0F1826;--panel:#131E2E;--panel2:#17253A;--border:#25344B;--border2:#1C293C;--text:#E8E6DC;--dim:#93A0B4;--faint:#5E6C82;--water:#4C9BD4;--oil:#E0973F;--accent:#5CC2AE;--danger:#D2685A;--good:#7DB88A;--violet:#9F8FD0;--sans:'IBM Plex Sans',sans-serif;--display:'Space Grotesk',sans-serif;--mono:'IBM Plex Mono',monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14.5px;line-height:1.55}
+.wrap{max-width:1240px;margin:0 auto;padding:30px 28px 70px}
+header{border-bottom:1px solid var(--border2);padding-bottom:18px;margin-bottom:22px}
+.badges{display:flex;gap:8px;margin-bottom:8px}.badge{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--dim)}.badge.a{color:var(--accent);border-color:#2E6459}
+h1{font-family:var(--display);font-size:26px;margin:0 0 6px}header p{color:var(--dim);margin:0;max-width:860px}
+h2{font-family:var(--display);font-size:18px;margin:34px 0 8px;display:flex;align-items:center;gap:10px}h2 .n{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+.lead{color:var(--dim);margin:0 0 12px}
+.card{background:var(--panel);border:1px solid var(--border2);border-radius:6px;padding:16px 18px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}@media(max-width:900px){.g2,.g3{grid-template-columns:1fr}}
+.ctrl label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-bottom:4px}.ctrl label b{color:var(--text)}
+.ctrl input[type=range]{width:100%;accent-color:var(--accent)}.ctrl{margin-bottom:10px}
+.toggle{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-bottom:8px}.toggle input{accent-color:var(--accent)}
+.btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:5px;cursor:pointer}.btn:hover{border-color:var(--accent)}
+.btn.primary{background:#1e3a34;border-color:var(--accent)}
+input[type=file]{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.profile{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.kv{background:var(--bg2);border:1px solid var(--border2);border-radius:5px;padding:8px 10px}.kv .k{font-family:var(--mono);font-size:10px;color:var(--faint)}.kv .v{font-family:var(--mono);font-size:14px;font-weight:500;margin-top:2px}
+.v.ok{color:var(--good)}.v.warn{color:var(--oil)}.v.bad{color:var(--danger)}
+.svgbox{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:10px}.svgbox svg{width:100%;height:auto;display:block}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;font-family:var(--mono);font-size:10.5px;color:var(--faint);font-weight:500;padding:6px 8px 8px 0;border-bottom:1px solid var(--border2)}
+td{padding:8px 8px 8px 0;border-bottom:1px solid var(--border2);vertical-align:top;color:var(--dim)}td.k{color:var(--text);font-weight:500;white-space:nowrap}tr:last-child td{border-bottom:none}
+.bar{height:6px;border-radius:3px;background:var(--border2);overflow:hidden;min-width:90px}.bar i{display:block;height:100%;background:var(--accent)}
+.rank{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:500}
+.reason{font-size:12.5px}.reason.ex{color:var(--danger)}.reason.rec{color:var(--good)}
+.rec-card{background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--accent);border-radius:6px;padding:12px 14px;margin-bottom:10px}
+.rec-card h4{margin:0 0 4px;font-family:var(--display);font-size:14px;display:flex;justify-content:space-between}
+.rec-card p{margin:0;color:var(--dim);font-size:13px}
+.rec-card.ex{border-left-color:var(--danger);opacity:.85}
+.note{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:8px}
+footer{margin-top:40px;border-top:1px solid var(--border2);padding-top:14px;font-family:var(--mono);font-size:11px;color:var(--faint)}
+</style></head>
+<body><div class="wrap">
+<header>
+  <div class="badges"><span class="badge a">MODEL TOURNAMENT</span><span class="badge">smart selector</span><span class="badge">Layer 3 add-on</span></div>
+  <h1>Which CRM method fits <em style="font-style:normal;color:var(--accent)">this</em> dataset?</h1>
+  <p>Load a rate file (or use the synthetic field), and the app profiles the data, excludes methods whose assumptions or data requirements are not met, ranks what remains, and explains every decision. After a real tournament run, blind-test scores replace the pre-run suitability estimates.</p>
+</header>
+
+<h2><span class="n">1</span>Load data</h2>
+<div class="g2">
+  <div class="card">
+    <h3 style="margin:0 0 8px;font-family:var(--display);font-size:14px">Upload CSV</h3>
+    <p class="lead" style="font-size:12.5px">Long format, one row per well per date. Recognized columns (case-insensitive): <code style="font-family:var(--mono);color:var(--accent)">well_id, date, type (INJ/PROD), q_oil, q_water, q_inj, bhp, x, y</code>. Missing columns are simply detected as unavailable.</p>
+    <input type="file" id="file" accept=".csv,.txt">
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn primary" id="btn-synth">Use synthetic 5×4 field</button>
+      <button class="btn" id="btn-synth-poor">Use sparse / noisy variant</button>
+      <button class="btn" id="btn-synth-aq">Use aquifer-supported variant</button>
+    </div>
+    <div class="note" id="file-status">No file loaded — synthetic 5×4 streak field active.</div>
+  </div>
+  <div class="card">
+    <h3 style="margin:0 0 8px;font-family:var(--display);font-size:14px">Override the profile (what-if)</h3>
+    <div class="g2">
+      <div>
+        <div class="ctrl"><label>Time steps M <b id="v-M">100</b></label><input type="range" id="s-M" min="10" max="400" value="100"></div>
+        <div class="ctrl"><label>Injectors I <b id="v-I">5</b></label><input type="range" id="s-I" min="1" max="40" value="5"></div>
+        <div class="ctrl"><label>Producers N<sub>p</sub> <b id="v-P">4</b></label><input type="range" id="s-P" min="1" max="60" value="4"></div>
+        <div class="ctrl"><label>Mean water cut <b id="v-wc">0.65</b></label><input type="range" id="s-wc" min="0" max="1" step="0.05" value="0.65"></div>
+      </div>
+      <div>
+        <div class="ctrl"><label>Injection signal CV <b id="v-cv">0.30</b></label><input type="range" id="s-cv" min="0" max="0.8" step="0.05" value="0.30"></div>
+        <div class="ctrl"><label>Σf<sub>ij</sub> quick-CRMP estimate <b id="v-sf">0.95</b></label><input type="range" id="s-sf" min="0.3" max="2" step="0.05" value="0.95"></div>
+        <div class="ctrl"><label>Events / shut-ins per well <b id="v-ev">1</b></label><input type="range" id="s-ev" min="0" max="12" value="1"></div>
+        <div class="toggle"><input type="checkbox" id="t-xy" checked> well coordinates</div>
+        <div class="toggle"><input type="checkbox" id="t-bhp" checked> producer BHP</div>
+        <div class="toggle"><input type="checkbox" id="t-kr"> rel-perm / fractional-flow curve</div>
+      </div>
+    </div>
+    <div class="g2" style="margin-top:6px;border-top:1px solid var(--border2);padding-top:10px">
+      <div>
+        <div class="ctrl"><label>Rate sampling Δt (days) <b id="v-dt">30</b></label><input type="range" id="s-dt" min="1" max="90" value="30"></div>
+        <div class="ctrl"><label>Estimated τ (days) <b id="v-tau">120</b></label><input type="range" id="s-tau" min="2" max="600" value="120"></div>
+        <div class="toggle"><input type="checkbox" id="t-alloc" checked> production is monthly-allocated (not metered)</div>
+      </div>
+      <div>
+        <div class="ctrl"><label>Pressure source</label>
+          <select id="s-psrc" style="width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px;font-family:var(--mono);font-size:12px">
+            <option value="none">none</option><option value="esp" selected>ESP intake sensor (PIP)</option><option value="gauge">downhole gauge</option><option value="whp">WHP only (calculated BHP)</option><option value="sbhp">static surveys only</option>
+          </select></div>
+        <div class="ctrl"><label>Pressure sampling (minutes) <b id="v-pdt">1</b></label><input type="range" id="s-pdt" min="1" max="1440" value="1"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2><span class="n">2</span>Data profile</h2>
+<div class="card"><div class="profile" id="profile"></div></div>
+
+<h2><span class="n">2b</span>Sampling-frequency check — Δt vs τ</h2>
+<p class="lead">CRM cannot resolve dynamics faster than its sampling interval: the recovered τ is only meaningful when τ ≫ Δt. The plot shows the producer's exponential response to an injection step, with your sampling grid overlaid.</p>
+<div class="g2">
+  <div class="card"><div class="svgbox" id="dt-plot"></div><div class="note" id="dt-note"></div></div>
+  <div class="card" id="dt-verdict"></div>
+</div>
+
+<h2><span class="n">2c</span>Pressure data — how to use it</h2>
+<div class="g2">
+  <div class="card" id="p-verdict"></div>
+  <div class="card">
+    <h3 style="margin:0 0 8px;font-family:var(--display);font-size:14px">ESP sensor → CRM-ready BHP</h3>
+    <div class="svgbox"><svg viewBox="0 0 520 170" font-family="IBM Plex Sans,sans-serif" font-size="11">
+      <defs><marker id="pa" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#93A0B4"/></marker></defs>
+      <rect x="10" y="55" width="100" height="60" rx="6" fill="#131E2E" stroke="#4C9BD4"/><text x="60" y="80" text-anchor="middle" fill="#E8E6DC">PIP, T, Hz</text><text x="60" y="97" text-anchor="middle" fill="#93A0B4">1-min raw</text>
+      <line x1="110" y1="85" x2="138" y2="85" stroke="#93A0B4" marker-end="url(#pa)"/>
+      <rect x="140" y="55" width="100" height="60" rx="6" fill="#131E2E" stroke="#25344B"/><text x="190" y="75" text-anchor="middle" fill="#E8E6DC">clean</text><text x="190" y="91" text-anchor="middle" fill="#93A0B4">trips · gas-lock</text><text x="190" y="105" text-anchor="middle" fill="#93A0B4">spikes removed</text>
+      <line x1="240" y1="85" x2="268" y2="85" stroke="#93A0B4" marker-end="url(#pa)"/>
+      <rect x="270" y="55" width="100" height="60" rx="6" fill="#131E2E" stroke="#25344B"/><text x="320" y="75" text-anchor="middle" fill="#E8E6DC">datum shift</text><text x="320" y="91" text-anchor="middle" fill="#93A0B4">+ ρ·g·Δh to perfs</text><text x="320" y="105" text-anchor="middle" fill="#93A0B4">(fluid gradient)</text>
+      <line x1="370" y1="85" x2="398" y2="85" stroke="#93A0B4" marker-end="url(#pa)"/>
+      <rect x="400" y="55" width="110" height="60" rx="6" fill="#0F1826" stroke="#5CC2AE"/><text x="455" y="75" text-anchor="middle" fill="#E8E6DC">average to Δt</text><text x="455" y="91" text-anchor="middle" fill="#5CC2AE" font-family="IBM Plex Mono" font-size="10">p_wf(t) on rate grid</text><text x="455" y="105" text-anchor="middle" fill="#93A0B4">→ J·dp_wf/dt term</text>
+      <text x="260" y="145" text-anchor="middle" fill="#5E6C82" font-family="IBM Plex Mono" font-size="10">same time grid as rates · flowing (dynamic) pressure only · static surveys used to calibrate J</text>
+    </svg></div>
+  </div>
+</div>
+
+<h2><span class="n">3</span>Smart selection schematic</h2>
+<p class="lead">Every method passes through the same gates. Grey = excluded (hover or read the badge for the reason). Coloured = eligible, sized by suitability rank.</p>
+<div class="svgbox" id="schematic"></div>
+
+<h2><span class="n">4</span>Ranking</h2>
+<div class="card">
+  <table id="leaderboard"></table>
+  <div class="note">Suitability = weighted rubric: data sufficiency 30% · assumption match 30% · parsimony 15% · interpretability gate (pass/fail) · expected runtime 10% · robustness 15%. After running the tournament, blind-test R², AICc, and parameter stability overwrite these estimates.</div>
+</div>
+
+<h2><span class="n">5</span>Recommendation &amp; exclusions explained</h2>
+<div class="g2">
+  <div><h3 style="font-family:var(--display);font-size:14px;margin:0 0 8px;color:var(--good)">Recommended — run these</h3><div id="rec-list"></div></div>
+  <div><h3 style="font-family:var(--display);font-size:14px;margin:0 0 8px;color:var(--danger)">Excluded — and why</h3><div id="ex-list"></div></div>
+</div>
+
+<footer>Rules encode published applicability limits: O<sub>d</sub>>6 (Albertoni &amp; Lake 2003), 4× parameter-count data rule (Sayarpour et al. 2009), power-law oil cut valid only at high water cut (Ershaghi &amp; Abdassah; Sayarpour 2009), two-phase coupling for immature floods (Cao et al. 2014), Σf<sub>ij</sub>>1 as influx signature (Olenchikov &amp; Posvyanskii 2019), aquifer CRM (Parra et al. 2024; Koroglu et al. 2024), ML needing long rich histories (SPE-218258).</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const C={water:'#4C9BD4',oil:'#E0973F',accent:'#5CC2AE',danger:'#D2685A',good:'#7DB88A',violet:'#9F8FD0',dim:'#93A0B4',faint:'#5E6C82',text:'#E8E6DC'};
+
+/* ---------------- data profile state ---------------- */
+let P={M:100,I:5,Np:4,wc:0.65,cv:0.30,sumF:0.95,events:1,xy:true,bhp:true,kr:false,dt:30,tau:120,alloc:true,psrc:'esp',pdt:1,source:'synthetic 5×4 streak field'};
+
+function syncSlidersFromP(){
+  $('#s-M').value=P.M;$('#s-I').value=P.I;$('#s-P').value=P.Np;$('#s-wc').value=P.wc;$('#s-cv').value=P.cv;$('#s-sf').value=P.sumF;$('#s-ev').value=P.events;
+  $('#t-xy').checked=P.xy;$('#t-bhp').checked=P.bhp;$('#t-kr').checked=P.kr;
+  $('#s-dt').value=P.dt;$('#s-tau').value=P.tau;$('#t-alloc').checked=P.alloc;$('#s-psrc').value=P.psrc;$('#s-pdt').value=P.pdt;
+}
+function readSliders(){
+  P.M=+$('#s-M').value;P.I=+$('#s-I').value;P.Np=+$('#s-P').value;P.wc=+$('#s-wc').value;P.cv=+$('#s-cv').value;P.sumF=+$('#s-sf').value;P.events=+$('#s-ev').value;
+  P.xy=$('#t-xy').checked;P.bhp=$('#t-bhp').checked;P.kr=$('#t-kr').checked;
+  P.dt=+$('#s-dt').value;P.tau=+$('#s-tau').value;P.alloc=$('#t-alloc').checked;P.psrc=$('#s-psrc').value;P.pdt=+$('#s-pdt').value;
+  $('#v-dt').textContent=P.dt;$('#v-tau').textContent=P.tau;$('#v-pdt').textContent=P.pdt;
+  $('#v-M').textContent=P.M;$('#v-I').textContent=P.I;$('#v-P').textContent=P.Np;$('#v-wc').textContent=P.wc.toFixed(2);$('#v-cv').textContent=P.cv.toFixed(2);$('#v-sf').textContent=P.sumF.toFixed(2);$('#v-ev').textContent=P.events;
+}
+['s-M','s-I','s-P','s-wc','s-cv','s-sf','s-ev','t-xy','t-bhp','t-kr','s-dt','s-tau','t-alloc','s-psrc','s-pdt'].forEach(id=>$('#'+id).addEventListener('input',()=>{readSliders();P.source+=P.source.includes('(edited)')?'':' (edited)';render();}));
+
+/* ---------------- CSV profiling ---------------- */
+function profileCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2) throw new Error('empty file');
+  const hdr=lines[0].split(/[,;\t]/).map(h=>h.trim().toLowerCase());
+  const col=n=>hdr.indexOf(n);
+  const ci={well:col('well_id')>=0?col('well_id'):col('well'),date:col('date'),type:col('type'),qo:col('q_oil'),qw:col('q_water'),qi:col('q_inj'),bhp:col('bhp'),x:col('x'),y:col('y')};
+  if(ci.well<0||ci.date<0) throw new Error('need well_id and date columns');
+  const dates=new Set(),inj=new Set(),prod=new Set();const dateVals=[];let wcS=0,wcN=0,bhpN=0,xyN=0,rows=0;
+  const injSeries={};const shutins={};let prevZero={};
+  for(let i=1;i<lines.length;i++){
+    const c=lines[i].split(/[,;\t]/);if(c.length<2)continue;rows++;
+    const w=c[ci.well].trim();dates.add(c[ci.date].trim());const dv=Date.parse(c[ci.date].trim());if(!isNaN(dv))dateVals.push(dv);
+    const qi=ci.qi>=0?parseFloat(c[ci.qi]):NaN,qo=ci.qo>=0?parseFloat(c[ci.qo]):NaN,qw=ci.qw>=0?parseFloat(c[ci.qw]):NaN;
+    const t=ci.type>=0?c[ci.type].trim().toUpperCase():'';
+    const isInj=t.startsWith('I')||(!t&&qi>0);
+    if(isInj){inj.add(w);(injSeries[w]=injSeries[w]||[]).push(qi||0);}
+    else{prod.add(w);if(qo>=0&&qw>=0&&qo+qw>0){wcS+=qw/(qo+qw);wcN++;}
+      const z=(qo||0)+(qw||0)===0;if(z&&!prevZero[w]){shutins[w]=(shutins[w]||0)+1;}prevZero[w]=z;}
+    if(ci.bhp>=0&&!isNaN(parseFloat(c[ci.bhp])))bhpN++;
+    if(ci.x>=0&&ci.y>=0&&!isNaN(parseFloat(c[ci.x])))xyN++;
+  }
+  let cvs=[];Object.values(injSeries).forEach(a=>{const m=a.reduce((s,v)=>s+v,0)/a.length;if(m>0){const sd=Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length);cvs.push(sd/m);}});
+  const ev=Object.values(shutins);
+  const ud=[...new Set(dateVals)].sort((a,b)=>a-b);const gaps=[];for(let i=1;i<ud.length;i++)gaps.push((ud[i]-ud[i-1])/86400000);gaps.sort((a,b)=>a-b);const medDt=gaps.length?Math.max(1,Math.round(gaps[Math.floor(gaps.length/2)])):30;
+  P={M:dates.size,I:inj.size,Np:prod.size,wc:wcN?wcS/wcN:0.5,cv:cvs.length?cvs.reduce((a,b)=>a+b,0)/cvs.length:0.1,
+     sumF:0.95, // unknown until quick CRMP is run — user can override
+     events:ev.length?Math.round(ev.reduce((a,b)=>a+b,0)/ev.length):0,
+     xy:xyN>0,bhp:bhpN>rows*0.3,kr:false,dt:medDt,tau:P.tau,alloc:medDt>=28,psrc:bhpN>rows*0.3?'gauge':'none',pdt:medDt*1440,source:'uploaded CSV ('+rows+' rows)'};
+}
+$('#file').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{try{profileCSV(r.result);$('#file-status').textContent='Loaded '+f.name+'. Σf_ij defaults to 0.95 until a quick CRMP is run — adjust the slider if you know it.';syncSlidersFromP();readSliders();render();}
+  catch(err){$('#file-status').textContent='Could not parse: '+err.message;}};r.readAsText(f);
+});
+$('#btn-synth').addEventListener('click',()=>{P={M:100,I:5,Np:4,wc:0.65,cv:0.30,sumF:0.95,events:1,xy:true,bhp:true,kr:false,dt:30,tau:120,alloc:true,psrc:'esp',pdt:1,source:'synthetic 5×4 streak field'};$('#file-status').textContent='Synthetic 5×4 streak field active.';syncSlidersFromP();readSliders();render();});
+$('#btn-synth-poor').addEventListener('click',()=>{P={M:28,I:14,Np:10,wc:0.55,cv:0.08,sumF:0.9,events:3,xy:false,bhp:false,kr:false,dt:30,tau:12,alloc:true,psrc:'sbhp',pdt:1440,source:'synthetic sparse / noisy field'};$('#file-status').textContent='Sparse / noisy variant active.';syncSlidersFromP();readSliders();render();});
+$('#btn-synth-aq').addEventListener('click',()=>{P={M:160,I:6,Np:9,wc:0.35,cv:0.25,sumF:1.45,events:2,xy:true,bhp:true,kr:true,dt:1,tau:45,alloc:false,psrc:'gauge',pdt:60,source:'synthetic aquifer-supported field'};$('#file-status').textContent='Aquifer-supported variant active.';syncSlidersFromP();readSliders();render();});
+
+/* ---------------- derived diagnostics ---------------- */
+function derive(p){
+  const Od=p.M/(p.I+1);
+  const nCRMP=p.Np*(p.I+(p.bhp?3:2)), nCRMIP=(p.bhp?4:3)*p.I*p.Np;
+  const ptsAvail=p.M*p.Np;
+  return{Od,nCRMP,nCRMIP,ptsAvail,ratioCRMP:ptsAvail/nCRMP,ratioCRMIP:ptsAvail/nCRMIP,
+    influx:p.sumF>1.15,mature:p.wc>=0.5,richSignal:p.cv>=0.15,eventHeavy:p.events>=4,longHist:p.M>=120};
+}
+
+/* ---------------- method rules ---------------- */
+const METHODS=[
+ {id:'mpi',name:'MPI (geometric)',color:C.violet,
+  rule:(p,d)=>{if(!p.xy)return{ex:'no well coordinates → influence matrix cannot be built'};return{score:0.45,why:'usable as a geometric prior / sanity check on f_ij; not a history-match method itself'};}},
+ {id:'mlr',name:'MLR / BMLR',color:C.dim,
+  rule:(p,d)=>{if(d.Od<3)return{ex:`O_d=${d.Od.toFixed(1)} < 3 — regression hopelessly under-determined`};
+    return{score:0.35+(d.Od>6?0.15:0),why:'cheap screening for barriers; no dynamics, superseded by CRM for forecasting'};}},
+ {id:'crmt',name:'CRMT (field tank)',color:C.dim,
+  rule:(p,d)=>{if(p.M<8)return{ex:'fewer than 8 time steps — cannot fit even 2 parameters'};
+    return{score:0.55+(d.richSignal?0:0.1)+(d.Od<6?0.15:0),why:'2 parameters, always identifiable; ideal first pass and fallback when data is thin'};}},
+ {id:'crmp',name:'CRMP (producer)',color:C.oil,
+  rule:(p,d)=>{if(d.ratioCRMP<1)return{ex:`only ${d.ptsAvail} rate points for ${d.nCRMP} parameters`};
+    let s=0.6;let w=[];if(d.Od>6){s+=0.15;w.push(`O_d=${d.Od.toFixed(1)}>6`);}else{s-=0.15;w.push(`O_d=${d.Od.toFixed(1)}<6 → expect non-unique f_ij, sectorize`);}
+    if(d.ratioCRMP>=4){s+=0.1;w.push('data ≥4× parameters');}else w.push(`data only ${d.ratioCRMP.toFixed(1)}× parameters`);
+    if(d.richSignal){s+=0.05;w.push('rich injection signal');}else{s-=0.1;w.push('flat injection signal (CV<0.15) → weak identifiability');}
+    if(d.influx){s-=0.1;w.push('Σf_ij>1 suggests influx — pair with aquifer variant');}
+    if(d.eventHeavy){s-=0.1;w.push('frequent events → allocations may drift');}
+    return{score:Math.min(1,s),why:w.join(' · ')};}},
+ {id:'crmip',name:'CRMIP (pair)',color:C.accent,
+  rule:(p,d)=>{if(d.ratioCRMIP<1)return{ex:`${d.nCRMIP} parameters exceed ${d.ptsAvail} rate points`};
+    if(d.ratioCRMIP<2)return{ex:`data only ${d.ratioCRMIP.toFixed(1)}× parameters (need ≥4×; 2× absolute floor)`};
+    let s=0.45;let w=[];if(d.ratioCRMIP>=4){s+=0.2;w.push('enough data for pair-level τ');}else{w.push(`data ${d.ratioCRMIP.toFixed(1)}× parameters — borderline`);}
+    if(d.richSignal)s+=0.1;if(!d.richSignal){s-=0.15;w.push('flat signal hurts pair-level resolution most');}
+    w.push('use where CRMP residuals show pair structure');return{score:Math.min(1,s),why:w.join(' · ')};}},
+ {id:'aquifer',name:'CRM-Aquifer (CRMPA/AQ)',color:C.water,
+  rule:(p,d)=>{if(!d.influx)return{ex:`Σf_ij≈${p.sumF.toFixed(2)} — no influx signature; extra aquifer parameters would be unidentifiable`};
+    if(d.ratioCRMP<2)return{ex:'not enough data for CRMP + aquifer PV/J_aq'};
+    return{score:0.8,why:`Σf_ij=${p.sumF.toFixed(2)}>1.15 indicates external support; explicit aquifer tank beats pseudo-injectors`};}},
+ {id:'twophase',name:'Two-phase coupled',color:C.oil,
+  rule:(p,d)=>{if(d.mature)return{ex:`mean water cut ${p.wc.toFixed(2)} ≥ 0.5 — mobility stable, constant-τ CRM sufficient`};
+    if(!p.kr)return{ex:'no rel-perm / fractional-flow curve loaded (required for saturation coupling)'};
+    return{score:0.78,why:`water cut ${p.wc.toFixed(2)} still rising → τ varies with mobility; power-law oil cut invalid here`};}},
+ {id:'crossflow',name:'Crossflow / productivity-coeff.',color:C.violet,
+  rule:(p,d)=>{if(!d.eventHeavy)return{ex:`${p.events} events/well — operating modes stable, classical f_ij holds`};
+    if(!p.bhp)return{ex:'no BHP — pressure-driven crossflow term cannot be constrained'};
+    return{score:0.72,why:`${p.events} shut-ins/chokes per well → allocation weights drift; pressure-based formulation is robust to it`};}},
+ {id:'pinn',name:'PINN / residual ML',color:C.good,
+  rule:(p,d)=>{if(!d.longHist)return{ex:`${p.M} time steps < 120 — insufficient history to train a network without overfitting`};
+    if(d.Od<6)return{ex:'base CRM not identifiable → nothing physical for the network to correct'};
+    return{score:0.5+(d.eventHeavy?0.15:0),why:'long history available; run only if classical residuals show structure (autocorrelation)'};}},
+ {id:'rnn',name:'Pure RNN / LSTM',color:C.faint,
+  rule:(p,d)=>{return{ex:'fails interpretability gate — exposes no f_ij / τ for the optimizer (benchmark only)'};}}
+];
+
+/* ---------------- render ---------------- */
+function render(){
+  const d=derive(P);
+  const cls=(ok,warn)=>ok?'ok':(warn?'warn':'bad');
+  $('#profile').innerHTML=[
+    ['SOURCE',P.source,''],['TIME STEPS M',P.M,cls(P.M>=60,P.M>=24)],['INJECTORS / PRODUCERS',P.I+' / '+P.Np,''],
+    ['OVERDETERMINATION O_d',d.Od.toFixed(1),cls(d.Od>6,d.Od>3)],['CRMP DATA/PARAM',d.ratioCRMP.toFixed(1)+'×',cls(d.ratioCRMP>=4,d.ratioCRMP>=2)],
+    ['CRMIP DATA/PARAM',d.ratioCRMIP.toFixed(1)+'×',cls(d.ratioCRMIP>=4,d.ratioCRMIP>=2)],['MEAN WATER CUT',P.wc.toFixed(2),''],
+    ['INJ. SIGNAL CV',P.cv.toFixed(2),cls(P.cv>=0.15,P.cv>=0.08)],['Σf_ij (quick CRMP)',P.sumF.toFixed(2),cls(P.sumF<=1.15,P.sumF<=1.4)],
+    ['EVENTS / WELL',P.events,cls(P.events<4,P.events<8)],['RATE Δt (days)',P.dt,''],['τ / Δt',(P.tau/P.dt).toFixed(1),cls(P.tau/P.dt>=5,P.tau/P.dt>=3)],['PRESSURE SOURCE',P.psrc,cls(P.psrc==='gauge'||P.psrc==='esp',P.psrc==='whp')],['COORDINATES',P.xy?'yes':'no',cls(P.xy,false)],['PRODUCER BHP',P.bhp?'yes':'no',cls(P.bhp,true)],['REL-PERM CURVE',P.kr?'yes':'no','']
+  ].map(([k,v,c])=>`<div class="kv"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
+
+  const results=METHODS.map(m=>({m,r:m.rule(P,d)}));
+  const elig=results.filter(x=>x.r.score!==undefined).sort((a,b)=>b.r.score-a.r.score);
+  const excl=results.filter(x=>x.r.ex);
+  elig.forEach((x,i)=>x.rank=i+1);
+
+  drawSchematic(results,d);renderDt();renderPressure();
+
+  $('#leaderboard').innerHTML='<tr><th>#</th><th>Method</th><th>Suitability</th><th></th><th>Rationale</th></tr>'+
+    elig.map(x=>`<tr><td class="rank">${x.rank}</td><td class="k">${x.m.name}</td><td><div class="bar"><i style="width:${Math.round(x.r.score*100)}%;background:${x.m.color}"></i></div></td><td class="rank">${(x.r.score*100).toFixed(0)}</td><td class="reason rec">${x.r.why}</td></tr>`).join('')+
+    excl.map(x=>`<tr style="opacity:.55"><td class="rank" style="color:var(--danger)">—</td><td class="k">${x.m.name}</td><td><div class="bar"></div></td><td></td><td class="reason ex">excluded: ${x.r.ex}</td></tr>`).join('');
+
+  const top=elig.slice(0,3);
+  $('#rec-list').innerHTML=top.map(x=>`<div class="rec-card"><h4>${x.m.name}<span class="rank">#${x.rank}</span></h4><p>${x.r.why}</p></div>`).join('')+
+    (elig.length>3?`<div class="note">Also eligible, lower priority: ${elig.slice(3).map(x=>x.m.name).join(', ')}.</div>`:'')+
+    `<div class="note">Plan: run all eligible variants in the tournament, then re-rank on blind-test R², AICc and multi-start stability.</div>`;
+  $('#ex-list').innerHTML=excl.map(x=>`<div class="rec-card ex"><h4>${x.m.name}</h4><p>${x.r.ex}</p></div>`).join('')||'<div class="note">Nothing excluded.</div>';
+}
+
+function renderDt(){
+  const tau=P.tau,dt=P.dt,ratio=tau/dt;
+  const T=Math.max(tau*4,dt*8);const W=520,H=190,pl=40,pb=30;
+  const X=t=>pl+(t/T)*(W-pl-10),Y=v=>15+(1-v)*(H-pb-15);
+  let path='';for(let i=0;i<=200;i++){const t=T*i/200;const v=t<T*0.1?0:1-Math.exp(-(t-T*0.1)/tau);path+=(i?'L':'M')+X(t).toFixed(1)+','+Y(v).toFixed(1)+' ';}
+  let dots='';for(let t=0;t<=T;t+=dt){const v=t<T*0.1?0:1-Math.exp(-(t-T*0.1)/tau);dots+=`<circle cx="${X(t).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.2" fill="${ratio>=5?C.good:ratio>=3?C.oil:C.danger}"/>`;}
+  $('#dt-plot').innerHTML=`<svg viewBox="0 0 ${W} ${H}" font-family="IBM Plex Mono,monospace" font-size="10">
+   <line x1="${pl}" y1="${Y(0)}" x2="${W-10}" y2="${Y(0)}" stroke="#5E6C82"/><line x1="${pl}" y1="15" x2="${pl}" y2="${Y(0)}" stroke="#5E6C82"/>
+   <line x1="${X(T*0.1)}" y1="15" x2="${X(T*0.1)}" y2="${Y(0)}" stroke="#4C9BD4" stroke-dasharray="3,3"/><text x="${X(T*0.1)+4}" y="26" fill="#4C9BD4">injection step</text>
+   <path d="${path}" stroke="#E0973F" stroke-width="2" fill="none"/>${dots}
+   <line x1="${X(T*0.1)}" y1="${Y(0.632)}" x2="${X(T*0.1+tau)}" y2="${Y(0.632)}" stroke="#5CC2AE" stroke-dasharray="2,3"/><text x="${X(T*0.1+tau)+4}" y="${Y(0.632)+3}" fill="#5CC2AE">τ = ${tau} d (63%)</text>
+   <text x="${W/2}" y="${H-6}" text-anchor="middle" fill="#93A0B4">time (days) — dots = samples every Δt = ${dt} d</text><text x="8" y="20" fill="#93A0B4">q/q∞</text></svg>`;
+  const nInTau=Math.floor(tau/dt);
+  $('#dt-note').textContent=`${nInTau} sample${nInTau===1?'':'s'} inside one time constant.`;
+  let v,cls,fix=[];
+  if(ratio>=5){v='Sampling adequate';cls='ok';}else if(ratio>=3){v='Marginal — τ resolvable but noisy';cls='warn';}else{v='Too coarse — τ will collapse toward Δt (model degenerates to static regression)';cls='bad';}
+  if(ratio<5){fix.push(P.alloc?'production is monthly-allocated: a finer grid adds no information — consider CRMT/MLR only, or obtain metered daily rates':'raw data is metered: resample to a finer grid (Δt ≤ τ/5 ≈ '+Math.max(1,Math.round(tau/5))+' d)');}
+  if(!P.alloc&&dt<=1&&ratio>30)fix.push('very fine grid relative to τ: daily noise dominates — weekly averaging will improve identifiability without losing dynamics');
+  if(P.alloc&&dt<28)fix.push('grid finer than the allocation period: "daily" values are monthly totals ÷ days-on and carry false precision — use the monthly grid');
+  const Mneed=Math.ceil(6*(P.I+1));
+  fix.push(`history length: need M > ${Mneed} steps for O_d > 6 (you have ${P.M}) — ${P.M>Mneed?'OK':'extend history; finer Δt does not substitute for length'}`);
+  $('#dt-verdict').innerHTML=`<h3 style="margin:0 0 6px;font-family:var(--display);font-size:14px">Verdict</h3><div class="kv" style="margin-bottom:10px"><div class="k">τ / Δt = ${ratio.toFixed(1)}</div><div class="v ${cls}">${v}</div></div><ul>${fix.map(f=>'<li>'+f+'</li>').join('')}</ul>
+  <div class="note">Rule: Δt ≤ τ/5 preferred, τ/3 minimum (Yousef et al. 2006: recovered pore volume converges only when τ > Δt). Estimate τ ≈ c<sub>t</sub>V<sub>p</sub>/J or from a quick CRMT run.</div>`;
+}
+function renderPressure(){
+  const src=P.psrc,pdt=P.pdt;let rows=[],verdict='',cls='ok';
+  if(src==='none'){verdict='No pressure — constant-BHP formulation (J·dp_wf/dt term dropped)';cls='warn';rows=['Acceptable for pattern floods with stable lift settings.','Choke/ESP frequency changes will be absorbed into f_ij and τ as apparent connectivity changes — flag events instead.','Crossflow and productivity-coefficient variants are excluded (need pressure).'];}
+  else if(src==='esp'){verdict='ESP intake pressure available — best dynamic BHP source, needs conditioning';cls='ok';
+    rows=[`Sensor rate ${pdt} min → average to the rate grid (Δt = ${P.dt} d). Do not fit CRM at sensor frequency: rates are not known at that resolution and the J·dp_wf/dt term becomes pure noise.`,
+      'Convert PIP to p_wf at mid-perforation: p_wf = PIP + ρ_mix·g·(D_perf − D_intake). Use a mixture gradient from water cut; gas at intake biases it low.',
+      'Remove ESP trips, restarts, and gas-lock signatures (PIP spikes with rising motor temperature) before averaging — they are not reservoir response.',
+      'Keep ESP frequency (Hz) and choke as event features: a frequency change is a p_wf step that CRM handles explicitly via dp_wf/dt, which is exactly why pressure data improves the match.',
+      'Use short PIP build-ups during trips as free mini-PBUs to bound J per well.'];}
+  else if(src==='gauge'){verdict='Downhole gauge — ideal; use flowing pressure directly';cls='ok';rows=['Average to the rate grid; keep raw for verification.','Shift to common datum if gauge depth ≠ perforation depth.','Buildups during shut-ins calibrate J and the primary-depletion term independently of the history match.'];}
+  else if(src==='whp'){verdict='WHP only — calculated BHP is usable but weak';cls='warn';rows=['Requires a wellbore flow model (multiphase correlation); errors of ±50–100 psi are typical and can exceed the dynamic signal.','Use only if WHP varies strongly (choke management); otherwise prefer the constant-BHP formulation.','Never mix calculated and measured BHP across wells without a bias check.'];}
+  else{verdict='Static surveys only — not usable as p_wf(t)';cls='bad';rows=['SBHP is average reservoir pressure, not flowing pressure: use it to validate the CRM pressure/pore-volume interpretation (CRMPA) and to bound τ = c_tV_p/J.','Fit CRM in constant-BHP mode.'];}
+  const freqNote= src!=='none'&&src!=='sbhp' ? `Recommended pressure grid: same as rates (${P.dt} d) for the CRM fit; keep ≤ 1-h averages archived for event detection and PBU analysis.` : '';
+  $('#p-verdict').innerHTML=`<h3 style="margin:0 0 6px;font-family:var(--display);font-size:14px">Pressure verdict</h3><div class="kv" style="margin-bottom:10px"><div class="k">source: ${src}</div><div class="v ${cls}" style="font-size:12.5px">${verdict}</div></div><ul>${rows.map(r=>'<li>'+r+'</li>').join('')}</ul>${freqNote?'<div class="note">'+freqNote+'</div>':''}`;
+}
+function drawSchematic(results,d){
+  const W=1160,H=520;
+  const gates=[['coordinates',P.xy],['O_d > 6',d.Od>6],['data ≥ 4× params',d.ratioCRMP>=4],['water cut < 0.5',!d.mature],['Σf_ij > 1.15',d.influx],['events ≥ 4/well',d.eventHeavy],['history ≥ 120',d.longHist],['BHP',P.bhp],['rel-perm',P.kr]];
+  let s=`<svg viewBox="0 0 ${W} ${H}" font-family="IBM Plex Sans,sans-serif">
+  <defs><marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#5E6C82"/></marker></defs>
+  <rect x="20" y="30" width="200" height="460" rx="8" fill="#131E2E" stroke="#25344B"/>
+  <text x="120" y="55" text-anchor="middle" fill="#E8E6DC" font-family="Space Grotesk" font-size="13" font-weight="600">Data gates</text>`;
+  gates.forEach(([g,ok],i)=>{const y=85+i*44;s+=`<circle cx="42" cy="${y}" r="6" fill="${ok?C.good:C.danger}"/><text x="56" y="${y+4}" fill="${ok?'#E8E6DC':'#93A0B4'}" font-size="11.5" font-family="IBM Plex Mono">${g}</text><text x="205" y="${y+4}" text-anchor="end" fill="${ok?C.good:C.danger}" font-size="10" font-family="IBM Plex Mono">${ok?'pass':'fail'}</text>`;});
+  s+=`<line x1="220" y1="260" x2="262" y2="260" stroke="#5E6C82" stroke-width="1.4" marker-end="url(#ah)"/>`;
+  const cols=[280,560,840];const rowH=92;
+  results.forEach((x,i)=>{
+    const cx=cols[i%3]+130,cy=60+Math.floor(i/3)*rowH+30;const ex=!!x.r.ex;
+    const stroke=ex?'#25344B':x.m.color;const rank=x.rank;
+    s+=`<g><rect x="${cx-130}" y="${cy-30}" width="260" height="72" rx="7" fill="${ex?'#0F1826':'#131E2E'}" stroke="${stroke}" stroke-width="${ex?1:1.6}" ${ex?'stroke-dasharray="4,3"':''}/>`;
+    s+=`<text x="${cx-118}" y="${cy-8}" fill="${ex?'#5E6C82':'#E8E6DC'}" font-family="Space Grotesk" font-size="12.5" font-weight="600">${x.m.name}</text>`;
+    if(ex){s+=`<text x="${cx+118}" y="${cy-8}" text-anchor="end" fill="${C.danger}" font-family="IBM Plex Mono" font-size="10">EXCLUDED</text>`;
+      s+=`<text x="${cx-118}" y="${cy+12}" fill="#93A0B4" font-size="10">${wrap(x.r.ex,52)[0]||''}</text><text x="${cx-118}" y="${cy+26}" fill="#93A0B4" font-size="10">${wrap(x.r.ex,52)[1]||''}</text>`;}
+    else{s+=`<rect x="${cx+80}" y="${cy-24}" width="38" height="18" rx="9" fill="${x.m.color}22" stroke="${x.m.color}"/><text x="${cx+99}" y="${cy-11}" text-anchor="middle" fill="${x.m.color}" font-family="IBM Plex Mono" font-size="10.5">#${rank}</text>`;
+      s+=`<rect x="${cx-118}" y="${cy+6}" width="236" height="5" rx="2" fill="#1C293C"/><rect x="${cx-118}" y="${cy+6}" width="${236*x.r.score}" height="5" rx="2" fill="${x.m.color}"/>`;
+      s+=`<text x="${cx-118}" y="${cy+28}" fill="#93A0B4" font-size="10">${wrap(x.r.why,56)[0]||''}</text>`;}
+    s+=`</g>`;
+  });
+  s+=`</svg>`;$('#schematic').innerHTML=s;
+}
+function wrap(t,n){const w=t.split(' '),o=[];let l='';w.forEach(x=>{if((l+' '+x).trim().length>n){o.push(l.trim());l=x;}else l+=' '+x;});o.push(l.trim());if(o.length>2){o[1]=o[1].slice(0,n-1)+'…';}return o;}
+
+syncSlidersFromP();readSliders();render();
+})();
+</script>
+</body></html>

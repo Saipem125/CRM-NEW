@@ -1,0 +1,170 @@
+{
+  "case": "allocated_noisy",
+  "description": "5\u00d74 field, monthly-allocated volumes with days-on (shut-ins, partial months) and 8 % allocation noise",
+  "generator_version": "1.0.0",
+  "seed": 8801,
+  "n_steps": 120,
+  "dt_days_mean": 30.433333333333334,
+  "injectors": [
+    "I-1",
+    "I-2",
+    "I-3",
+    "I-4",
+    "I-5"
+  ],
+  "producers": [
+    "P-1",
+    "P-2",
+    "P-3",
+    "P-4"
+  ],
+  "f_ij": {
+    "I-1": {
+      "P-1": 0.599055,
+      "P-2": 0.280945,
+      "P-3": 0.0,
+      "P-4": 0.0
+    },
+    "I-2": {
+      "P-1": 0.356423,
+      "P-2": 0.356423,
+      "P-3": 0.167155,
+      "P-4": 0.0
+    },
+    "I-3": {
+      "P-1": 0.140472,
+      "P-2": 0.299528,
+      "P-3": 0.299528,
+      "P-4": 0.140472
+    },
+    "I-4": {
+      "P-1": 0.0,
+      "P-2": 0.167155,
+      "P-3": 0.356423,
+      "P-4": 0.356423
+    },
+    "I-5": {
+      "P-1": 0.0,
+      "P-2": 0.0,
+      "P-3": 0.280945,
+      "P-4": 0.599055
+    }
+  },
+  "tau_days": {
+    "P-1": 130.0,
+    "P-2": 160.0,
+    "P-3": 120.0,
+    "P-4": 190.0
+  },
+  "q0_bbl_d": {
+    "P-1": 705.371301229954,
+    "P-2": 1090.9896234444695,
+    "P-3": 1578.8783736288103,
+    "P-4": 1690.8732755080757
+  },
+  "oil_cut": {
+    "model": "f_o = 1/(1+alpha*CWI^beta), CWI in Mbbl (Atlas CRMP tab)",
+    "alpha": {
+      "P-1": 0.003,
+      "P-2": 0.0034,
+      "P-3": 0.0029,
+      "P-4": 0.0031
+    },
+    "beta": {
+      "P-1": 1.25,
+      "P-2": 1.2,
+      "P-3": 1.3,
+      "P-4": 1.25
+    },
+    "cwi0_mbbl": {
+      "P-1": 50.0,
+      "P-2": 50.0,
+      "P-3": 50.0,
+      "P-4": 50.0
+    }
+  },
+  "sum_f_per_injector": {
+    "I-1": 0.8799999999999999,
+    "I-2": 0.8799999999999999,
+    "I-3": 0.88,
+    "I-4": 0.8799999999999999,
+    "I-5": 0.8799999999999999
+  },
+  "sum_f_per_producer": {
+    "P-1": 1.095950228960513,
+    "P-2": 1.1040497710394868,
+    "P-3": 1.1040497710394868,
+    "P-4": 1.095950228960513
+  },
+  "injection_cv": {
+    "I-1": 0.4410347066064052,
+    "I-2": 0.3871878022381955,
+    "I-3": 0.45447799830366326,
+    "I-4": 0.27188370743302204,
+    "I-5": 0.20058725961494162
+  },
+  "tau_over_dt_min": 3.9430449069003286,
+  "identifiability": {
+    "O_d": 20.0,
+    "O_d_basis": "whole field",
+    "O_d_field": 20.0,
+    "points_per_param_crmp": 15.0
+  },
+  "expected_variant": "CRMP",
+  "tournament_notes": [
+    "Monthly-allocated (not metered): \u00a78 says stay monthly and prefer CRMT/CRMP; CRMIP should be excluded or lose.",
+    "Rates are calendar-day (volume \u00f7 days in month); the loader must normalise by days_on (\u00a76).",
+    "Shut-in months exercise days_on=0 handling; they are reporting shut-ins layered on the clean model."
+  ],
+  "noise": {
+    "production_pct": 0.0,
+    "injection_pct": 2.0,
+    "allocation_pct": 8.0
+  },
+  "reporting": {
+    "basis": "monthly_allocated",
+    "shut_in_months": {
+      "P-1": [
+        "2016-07-01"
+      ],
+      "P-2": [
+        "2012-03-01"
+      ],
+      "P-3": [
+        "2012-01-01",
+        "2017-10-01"
+      ],
+      "P-4": [
+        "2012-03-01",
+        "2014-12-01"
+      ]
+    }
+  },
+  "optimizer": {
+    "objective": "max_cumulative_oil",
+    "horizon_months": 24,
+    "total_water_bbl_d": 8089.8168697185465,
+    "bounds_bbl_d": [
+      0.0,
+      3235.9267478874185
+    ],
+    "baseline_equal_split_oil_bbl": 26295.000469704264,
+    "baseline_hold_current_oil_bbl": 25334.49154171558,
+    "optimal_oil_bbl": 27955.91593442312,
+    "optimal_rates_bbl_d": [
+      3235.9267478874185,
+      3235.9267478874185,
+      1617.9633739447786,
+      0.0,
+      3.133758969186055e-10
+    ],
+    "gain_vs_equal_split_pct": 6.316468663434617,
+    "gain_vs_hold_current_pct": 10.347254802375344
+  },
+  "files": {
+    "allocated_noisy/rates.parquet": "636c1c7f823389ecad6567423c681a6b8e81e7af9b408dfda650ca517ac4ba0c",
+    "allocated_noisy/coords.parquet": "b58e4e42984f629a84422126556943a498e4d99fb2f871627c0b395326da8e63",
+    "allocated_noisy/category.parquet": "09eb8c288ae923cd1ad757bf98481ffc0dc89ce8cbacc351df6f99abad3f79de",
+    "allocated_noisy/events.parquet": "d27a082a68bf6efbfc203f22ee4a7ea465878c048b7417a1290b67c5be93a87d"
+  }
+}

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Waterflood App — Data Loader</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#0B121C;--bg2:#0F1826;--panel:#131E2E;--panel2:#17253A;--border:#25344B;--border2:#1C293C;--text:#E8E6DC;--dim:#93A0B4;--faint:#5E6C82;--water:#4C9BD4;--oil:#E0973F;--accent:#5CC2AE;--danger:#D2685A;--good:#7DB88A;--violet:#9F8FD0;--sans:'IBM Plex Sans',sans-serif;--display:'Space Grotesk',sans-serif;--mono:'IBM Plex Mono',monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 26px 70px}
+header{border-bottom:1px solid var(--border2);padding-bottom:16px;margin-bottom:20px}
+.badges{display:flex;gap:8px;margin-bottom:8px}.badge{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--dim)}.badge.a{color:var(--accent);border-color:#2E6459}
+h1{font-family:var(--display);font-size:25px;margin:0 0 6px}header p{color:var(--dim);margin:0;max-width:860px}
+.steps{display:flex;gap:6px;margin:18px 0 22px;flex-wrap:wrap}
+.step{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;font-family:var(--mono);font-size:11.5px;color:var(--faint);display:flex;gap:8px;align-items:center}
+.step b{color:var(--dim);font-weight:500}.step.done{border-color:#2E6459}.step.done b,.step.done{color:var(--accent)}.step.active{border-color:var(--oil)}.step.active b,.step.active{color:var(--oil)}
+h2{font-family:var(--display);font-size:17px;margin:28px 0 8px;display:flex;align-items:center;gap:10px}h2 .n{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+.lead{color:var(--dim);margin:0 0 12px;font-size:13.5px}
+.card{background:var(--panel);border:1px solid var(--border2);border-radius:6px;padding:16px 18px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}@media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.tabs{display:flex;gap:4px;margin-bottom:12px}.tab{padding:7px 14px;border:1px solid var(--border2);border-radius:5px;font-family:var(--mono);font-size:12px;color:var(--dim);cursor:pointer;background:var(--bg2)}.tab.on{border-color:var(--accent);color:var(--accent);background:#14262a}
+label.f{display:block;font-family:var(--mono);font-size:10.5px;color:var(--faint);margin:8px 0 3px}
+input[type=text],input[type=password],input[type=number],select{width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:6px 8px;font-family:var(--mono);font-size:12px}
+select.map{padding:4px 6px}select.map.req-missing{border-color:var(--danger)}select.map.ok{border-color:#2E6459}
+.btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:5px;cursor:pointer}.btn:hover{border-color:var(--accent)}.btn.primary{background:#1e3a34;border-color:var(--accent)}.btn.sm{padding:4px 8px;font-size:11px}.btn:disabled{opacity:.4;cursor:not-allowed}
+.status{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:8px}.status.ok{color:var(--good)}.status.bad{color:var(--danger)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}th{text-align:left;font-family:var(--mono);font-size:10.5px;color:var(--faint);font-weight:500;padding:6px 8px 7px 0;border-bottom:1px solid var(--border2);position:sticky;top:0;background:var(--panel)}
+td{padding:6px 8px 6px 0;border-bottom:1px solid var(--border2);vertical-align:middle;color:var(--dim)}td.k{color:var(--text);font-weight:500}tr:last-child td{border-bottom:none}
+.map-table td{padding:5px 8px 5px 0}.req{color:var(--danger);font-family:var(--mono);font-size:10px}.opt{color:var(--faint);font-family:var(--mono);font-size:10px}
+.tag{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid}.tag.prod{color:var(--oil);border-color:#8A5F2A}.tag.inj{color:var(--water);border-color:#2E5C7C}.tag.mixed{color:var(--violet);border-color:#5f5490}.tag.none{color:var(--faint);border-color:var(--border)}
+.tl{display:flex;height:9px;border-radius:3px;overflow:hidden;background:var(--border2);min-width:160px}.tl i{display:block;height:100%}.tl .p{background:var(--oil)}.tl .i{background:var(--water)}.tl .b{background:var(--violet)}.tl .z{background:transparent}
+.scroll{max-height:420px;overflow:auto;border:1px solid var(--border2);border-radius:5px;padding:0 10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.chip{font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:12px;border:1px solid var(--border);color:var(--dim);cursor:pointer}.chip.on{border-color:var(--accent);color:var(--accent)}
+.kv{background:var(--bg2);border:1px solid var(--border2);border-radius:5px;padding:8px 10px}.kv .k{font-family:var(--mono);font-size:10px;color:var(--faint)}.kv .v{font-family:var(--mono);font-size:14px;font-weight:500;margin-top:2px}.v.ok{color:var(--good)}.v.warn{color:var(--oil)}.v.bad{color:var(--danger)}
+pre{background:var(--bg2);border:1px solid var(--border2);border-radius:5px;padding:12px;font-family:var(--mono);font-size:11px;color:var(--dim);overflow:auto;max-height:260px;margin:0}
+.svgbox{background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:10px}.svgbox svg{width:100%;height:auto;display:block}
+.hidden{display:none}
+.legend{font-family:var(--mono);font-size:10.5px;color:var(--faint);display:flex;gap:14px;margin-top:6px}.legend i{display:inline-block;width:10px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
+</style></head>
+<body><div class="wrap">
+<header>
+  <div class="badges"><span class="badge a">LAYER 1 · DATA LOADER</span><span class="badge">SQL · CSV · Excel</span><span class="badge">demo runs on an in-browser mock database</span></div>
+  <h1>Load production, injection, pressure &amp; well data</h1>
+  <p>Connect to a database or drop files, map columns once per table, filter to the target field from the category table, then pick the wells to analyse. Well type is not taken from any master table — it is derived from where the rates actually are, so converted wells are recognised as <em style="font-style:normal;color:var(--violet)">mixed</em> with their conversion dates.</p>
+</header>
+
+<div class="steps" id="steps">
+  <div class="step active" data-s="1"><b>1</b>Source</div><div class="step" data-s="2"><b>2</b>Tables &amp; column mapping</div><div class="step" data-s="3"><b>3</b>Field filter</div><div class="step" data-s="4"><b>4</b>Well selection</div><div class="step" data-s="5"><b>5</b>Build dataset</div>
+</div>
+
+<div class="svgbox"><svg viewBox="0 0 1180 120" font-family="IBM Plex Sans,sans-serif" font-size="11">
+<defs><marker id="a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7z" fill="#5E6C82"/></marker></defs>
+<g fill="#93A0B4"><rect x="10" y="20" width="120" height="30" rx="5" fill="#131E2E" stroke="#4C9BD4"/><text x="70" y="39" text-anchor="middle" fill="#E8E6DC">SQL database</text>
+<rect x="10" y="60" width="120" height="30" rx="5" fill="#131E2E" stroke="#25344B"/><text x="70" y="79" text-anchor="middle" fill="#E8E6DC">CSV / Excel files</text>
+<line x1="130" y1="35" x2="175" y2="52" stroke="#5E6C82" marker-end="url(#a)"/><line x1="130" y1="75" x2="175" y2="58" stroke="#5E6C82" marker-end="url(#a)"/>
+<rect x="178" y="35" width="150" height="40" rx="5" fill="#131E2E" stroke="#25344B"/><text x="253" y="53" text-anchor="middle" fill="#E8E6DC">4 source tables</text><text x="253" y="67" text-anchor="middle">rates · pressure · coords · category</text>
+<line x1="328" y1="55" x2="368" y2="55" stroke="#5E6C82" marker-end="url(#a)"/>
+<rect x="370" y="35" width="150" height="40" rx="5" fill="#131E2E" stroke="#25344B"/><text x="445" y="53" text-anchor="middle" fill="#E8E6DC">column mapping</text><text x="445" y="67" text-anchor="middle">auto-suggest · required check</text>
+<line x1="520" y1="55" x2="560" y2="55" stroke="#5E6C82" marker-end="url(#a)"/>
+<rect x="562" y="35" width="140" height="40" rx="5" fill="#131E2E" stroke="#25344B"/><text x="632" y="53" text-anchor="middle" fill="#E8E6DC">field / reservoir filter</text><text x="632" y="67" text-anchor="middle">from category table</text>
+<line x1="702" y1="55" x2="742" y2="55" stroke="#5E6C82" marker-end="url(#a)"/>
+<rect x="744" y="35" width="150" height="40" rx="5" fill="#131E2E" stroke="#9F8FD0"/><text x="819" y="53" text-anchor="middle" fill="#E8E6DC">derive well type</text><text x="819" y="67" text-anchor="middle">PROD / INJ / MIXED from rates</text>
+<line x1="894" y1="55" x2="934" y2="55" stroke="#5E6C82" marker-end="url(#a)"/>
+<rect x="936" y="35" width="120" height="40" rx="5" fill="#131E2E" stroke="#25344B"/><text x="996" y="53" text-anchor="middle" fill="#E8E6DC">well multi-select</text><text x="996" y="67" text-anchor="middle">search · by type</text>
+<line x1="1056" y1="55" x2="1096" y2="55" stroke="#5E6C82" marker-end="url(#a)"/>
+<rect x="1098" y="35" width="72" height="40" rx="5" fill="#0F1826" stroke="#5CC2AE"/><text x="1134" y="59" text-anchor="middle" fill="#5CC2AE">dataset</text></g>
+<text x="590" y="108" text-anchor="middle" fill="#5E6C82" font-family="IBM Plex Mono" font-size="10">mapping + filter + well list are saved as a project config → reproducible monthly refresh</text></svg></div>
+
+<!-- ============ STEP 1 ============ -->
+<h2 id="h1"><span class="n">1</span>Data source</h2>
+<div class="card">
+  <div class="tabs"><div class="tab on" data-src="sql">SQL database</div><div class="tab" data-src="csv">CSV files</div><div class="tab" data-src="xlsx">Excel workbook</div></div>
+  <div id="src-sql">
+    <div class="g4">
+      <div><label class="f">DRIVER</label><select id="drv"><option>Oracle (OFM / PDMS)</option><option>SQL Server</option><option>PostgreSQL</option><option>MySQL</option><option>SQLite file</option></select></div>
+      <div><label class="f">HOST / DSN</label><input type="text" id="host" value="prod-db.field.local"></div>
+      <div><label class="f">DATABASE / SCHEMA</label><input type="text" id="dbn" value="OFM_PROD"></div>
+      <div><label class="f">PORT</label><input type="number" id="port" value="1521"></div>
+      <div><label class="f">USER</label><input type="text" id="usr" value="re_reader"></div>
+      <div><label class="f">PASSWORD</label><input type="password" id="pwd" value="••••••••"></div>
+      <div><label class="f">OPTIONAL: SQL VIEW / QUERY OVERRIDE</label><input type="text" id="qry" placeholder="SELECT … (leave blank to browse tables)"></div>
+      <div style="display:flex;align-items:flex-end"><button class="btn primary" id="btn-connect">Connect &amp; list tables</button></div>
+    </div>
+    <div class="status" id="sql-status">Not connected. (Demo: connection is simulated against a mock OFM-style schema.)</div>
+  </div>
+  <div id="src-csv" class="hidden">
+    <p class="lead">Upload one CSV per dataset. Only the rates file is mandatory. Column names can be anything — you map them in step 2.</p>
+    <div class="g4">
+      <div><label class="f">RATES (production / injection) *</label><input type="file" id="f-rates" accept=".csv,.txt"></div>
+      <div><label class="f">PRESSURE</label><input type="file" id="f-press" accept=".csv,.txt"></div>
+      <div><label class="f">WELL COORDINATES</label><input type="file" id="f-coord" accept=".csv,.txt"></div>
+      <div><label class="f">CATEGORY (field / reservoir / block)</label><input type="file" id="f-cat" accept=".csv,.txt"></div>
+    </div>
+    <div class="status" id="csv-status"></div>
+  </div>
+  <div id="src-xlsx" class="hidden">
+    <p class="lead">One workbook; each sheet becomes a candidate table you assign in step 2 (e.g. sheets RATES, PRESSURE, HEADER, CATEGORY).</p>
+    <input type="file" id="f-xlsx" accept=".xlsx,.xlsm,.xls"><div class="status" id="xlsx-status"></div>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:8px;align-items:center"><button class="btn" id="btn-demo">Load demo tables (skip connection)</button><span class="status" style="margin:0">Populates the mock database so every later step is clickable.</span></div>
+</div>
+
+<!-- ============ STEP 2 ============ -->
+<h2 id="h2"><span class="n">2</span>Tables &amp; column mapping</h2>
+<p class="lead">For each dataset choose the source table, then map the app's canonical fields to its columns. Names are auto-suggested from common OFM / PDMS / Excel conventions; red = required field still unmapped. A well may have production <em style="font-style:normal">and</em> injection columns in the same rates table — that is expected and is how mixed wells are detected.</p>
+<div class="g2" id="map-area"></div>
+<div class="status" id="map-status"></div>
+
+<!-- ============ STEP 3 ============ -->
+<h2 id="h3"><span class="n">3</span>Field filter (from category table)</h2>
+<div class="card">
+  <div class="g3" id="filter-area"></div>
+  <div class="status" id="filter-status"></div>
+</div>
+
+<!-- ============ STEP 4 ============ -->
+<h2 id="h4"><span class="n">4</span>Well selection — type derived from rate data</h2>
+<p class="lead">Type rule per time step: production &gt; 0 → P, injection &gt; 0 → I, both → B (simultaneous, flagged). Well type = <span class="tag prod">PROD</span> / <span class="tag inj">INJ</span> if only one mode ever appears, otherwise <span class="tag mixed">MIXED</span> with conversion dates. Mixed wells are split into separate injector and producer roles per period when the dataset is built.</p>
+<div class="card">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+    <input type="text" id="well-search" placeholder="search well…" style="width:200px">
+    <button class="btn sm" data-sel="all">select all</button><button class="btn sm" data-sel="none">clear</button><button class="btn sm" data-sel="PROD">producers</button><button class="btn sm" data-sel="INJ">injectors</button><button class="btn sm" data-sel="MIXED">mixed</button><button class="btn sm" data-sel="active">active in last 12 months</button>
+    <span class="status" id="sel-count" style="margin:0 0 0 auto"></span>
+  </div>
+  <div class="scroll"><table id="well-table"></table></div>
+  <div class="legend"><span><i style="background:var(--oil)"></i>producing</span><span><i style="background:var(--water)"></i>injecting</span><span><i style="background:var(--violet)"></i>both in same step</span><span><i style="background:var(--border2)"></i>no rate</span></div>
+</div>
+
+<!-- ============ STEP 5 ============ -->
+<h2 id="h5"><span class="n">5</span>Build dataset</h2>
+<div class="g2">
+  <div class="card"><div class="g2" id="summary"></div><div style="margin-top:12px;display:flex;gap:8px"><button class="btn primary" id="btn-build">Build dataset &amp; profile</button><button class="btn" id="btn-config">Export project config (JSON)</button></div><div class="status" id="build-status"></div></div>
+  <div class="card"><label class="f">PROJECT CONFIG — saved so monthly refresh reuses mapping, filter and well list</label><pre id="config-out">{ }</pre></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* ---------------- mock database (OFM-style) ---------------- */
+function mulberry(seed){return function(){seed|=0;seed=(seed+0x6D2B79F5)|0;let t=Math.imul(seed^(seed>>>15),1|seed);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function buildMockDB(){
+  const rnd=mulberry(7);const fields=[['ALPHA','A-SAND','BLK-1'],['ALPHA','A-SAND','BLK-2'],['BRAVO','B-SAND','BLK-9']];
+  const wells=[];let n=0;
+  fields.forEach(([f,r,b],fi)=>{const cnt=fi===2?8:9;for(let k=0;k<cnt;k++){n++;const id=`${f.slice(0,1)}-${String(n).padStart(3,'0')}`;
+    const kind=rnd();let type=kind<0.5?'P':kind<0.78?'I':'X';wells.push({id,f,r,b,type,x:Math.round(1000+rnd()*4000),y:Math.round(2000+rnd()*3000),tvd:Math.round(2500+rnd()*300),start:Math.floor(rnd()*30),conv:36+Math.floor(rnd()*40)});}});
+  const rates=[],press=[],hdr=[],cat=[];const months=96;
+  wells.forEach(w=>{hdr.push({WELL_NAME:w.id,X_COORD:w.x,Y_COORD:w.y,TVD_PERF:w.tvd});cat.push({WELL_NAME:w.id,FIELD_NAME:w.f,RESERVOIR:w.r,BLOCK:w.b});
+    for(let m=0;m<months;m++){if(m<w.start)continue;const d=new Date(2018,m,1).toISOString().slice(0,10);
+      let mode= w.type==='P'?'P':w.type==='I'?'I':(m<w.conv?'P':'I'); if(w.type==='X'&&w.id.endsWith('7')&&m>w.conv-3&&m<w.conv)mode='B';
+      const shut=rnd()<0.04;const days=shut?0:Math.round(26+rnd()*4);
+      const oil= (mode==='P'||mode==='B')&&!shut?Math.round((400+rnd()*300)*Math.exp(-m/120)):0;const wat=(mode==='P'||mode==='B')&&!shut?Math.round(200+m*4+rnd()*100):0;
+      const inj=(mode==='I'||mode==='B')&&!shut?Math.round(900+rnd()*500+300*Math.sin(m/6)):0;
+      rates.push({WELL_NAME:w.id,PROD_DATE:d,OIL_VOL:oil,WAT_VOL:wat,GAS_VOL:oil*350,WINJ_VOL:inj,DAYS_ON:days});
+      if((mode==='P'||mode==='B')&&!shut&&rnd()<0.8)press.push({WELL_NAME:w.id,PRESS_DATE:d,FBHP:Math.round(1800-m*3+rnd()*60),WHP:Math.round(250+rnd()*40),SRC:'ESP'});}});
+  return{PROD_INJ_MONTHLY:rates,WELL_PRESSURE:press,WELL_HEADER:hdr,WELL_CATEGORY:cat,WELL_MASTER:hdr.map(h=>({WELL_NAME:h.WELL_NAME,STATUS:'ACTIVE'}))};
+}
+
+/* ---------------- state ---------------- */
+let DB={};        // tableName -> array of row objects
+let SRC='sql';
+const DATASETS={
+  rates:{label:'Rates (production / injection) *',fields:[['well','well id',true],['date','date',true],['q_oil','oil rate / volume',false],['q_water','water rate / volume',false],['q_gas','gas',false],['q_inj','water injection',false],['days_on','days on',false]],hints:{well:['well_name','well','uwi','well_id','wellname'],date:['prod_date','date','month','period'],q_oil:['oil_vol','oil','qo','oil_rate','q_oil'],q_water:['wat_vol','water','qw','water_rate','q_water'],q_gas:['gas_vol','gas','qg'],q_inj:['winj_vol','inj','injection','q_inj','water_inj'],days_on:['days_on','days','prod_days']},extra:'at least one of oil/water or injection must be mapped'},
+  pressure:{label:'Pressure',fields:[['well','well id',true],['date','date',true],['bhp','flowing BHP',false],['whp','WHP',false],['src','source / sensor',false]],hints:{well:['well_name','well','uwi','well_id'],date:['press_date','date','time'],bhp:['fbhp','bhp','pwf','pip','bottom'],whp:['whp','thp','wellhead'],src:['src','source','sensor']}},
+  coords:{label:'Well coordinates',fields:[['well','well id',true],['x','X / easting',true],['y','Y / northing',true],['tvd','TVD perforation',false]],hints:{well:['well_name','well','uwi','well_id'],x:['x_coord','x','east','easting','surf_x'],y:['y_coord','y','north','northing','surf_y'],tvd:['tvd','tvd_perf','depth']}},
+  category:{label:'Category (field / reservoir / block)',fields:[['well','well id',true],['field','field',true],['reservoir','reservoir',false],['block','block / pattern',false]],hints:{well:['well_name','well','uwi','well_id'],field:['field_name','field','asset'],reservoir:['reservoir','res','zone','formation'],block:['block','pattern','sector','area']}}
+};
+let MAP={};       // ds -> {table, cols:{field:col}}
+let FILTER={field:null,reservoir:null,block:null};
+let WELLS=[];     // derived well list
+let SELECTED=new Set();
+
+/* ---------------- step 1 ---------------- */
+function setStep(n){$$('.step').forEach(s=>{const k=+s.dataset.s;s.classList.toggle('done',k<n);s.classList.toggle('active',k===n);});}
+$$('.tab').forEach(t=>t.addEventListener('click',()=>{$$('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');SRC=t.dataset.src;DB={};MAP={};WELLS=[];SELECTED=new Set();$('#map-area').innerHTML='';$('#map-status').textContent='';$('#filter-area').innerHTML='';$('#filter-status').textContent='';$('#well-table').innerHTML='';$('#sel-count').textContent='';$('#summary').innerHTML='';setStep(1);['sql','csv','xlsx'].forEach(k=>$('#src-'+k).classList.toggle('hidden',k!==SRC));}));
+$('#btn-connect').addEventListener('click',()=>{DB=buildMockDB();$('#sql-status').textContent=`Connected to ${$('#dbn').value} @ ${$('#host').value} — ${Object.keys(DB).length} tables found: ${Object.keys(DB).join(', ')}`;$('#sql-status').className='status ok';afterLoad();});
+$('#btn-demo').addEventListener('click',()=>{DB=buildMockDB();$('#sql-status').textContent='Demo tables loaded: '+Object.keys(DB).join(', ');$('#sql-status').className='status ok';afterLoad();});
+
+function parseCSV(text){const lines=text.split(/\r?\n/).filter(l=>l.trim());const sep=lines[0].includes(';')?';':lines[0].includes('\t')?'\t':',';const h=lines[0].split(sep).map(x=>x.trim());return lines.slice(1).map(l=>{const c=l.split(sep);const o={};h.forEach((k,i)=>o[k]=(c[i]||'').trim());return o;});}
+[['f-rates','RATES_CSV'],['f-press','PRESSURE_CSV'],['f-coord','COORDS_CSV'],['f-cat','CATEGORY_CSV']].forEach(([id,name])=>{$('#'+id).addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{DB[name]=parseCSV(r.result);$('#csv-status').textContent=`Loaded ${name} (${DB[name].length} rows). Tables: ${Object.keys(DB).join(', ')}`;$('#csv-status').className='status ok';afterLoad();};r.readAsText(f);});});
+$('#f-xlsx').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;if(typeof XLSX==='undefined'){$('#xlsx-status').textContent='XLSX library not available offline — use CSV.';$('#xlsx-status').className='status bad';return;}const r=new FileReader();r.onload=()=>{const wb=XLSX.read(r.result,{type:'array'});DB={};wb.SheetNames.forEach(sn=>{DB[sn]=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''}).map(row=>{const o={};Object.keys(row).forEach(k=>o[k]=row[k]instanceof Date?row[k].toISOString().slice(0,10):row[k]);return o;});});$('#xlsx-status').textContent=`Workbook loaded — sheets: ${wb.SheetNames.join(', ')}`;$('#xlsx-status').className='status ok';afterLoad();};r.readAsArrayBuffer(f);});
+
+/* ---------------- step 2: mapping ---------------- */
+function cols(t){return DB[t]&&DB[t].length?Object.keys(DB[t][0]):[];}
+function suggestTable(ds){const names=Object.keys(DB);const pref={rates:['prod','inj','rate','monthly','daily'],pressure:['press','bhp','gauge'],coords:['header','coord','master','loc'],category:['cat','field','class','hier']}[ds];return names.find(n=>pref.some(p=>n.toLowerCase().includes(p)))||'';}
+function suggestCol(ds,field,table){const cs=cols(table);const hints=DATASETS[ds].hints[field]||[];for(const h of hints){const hit=cs.find(c=>c.toLowerCase()===h);if(hit)return hit;}for(const h of hints){const hit=cs.find(c=>c.toLowerCase().includes(h));if(hit)return hit;}return '';}
+function renderMapping(){
+  const area=$('#map-area');area.innerHTML='';
+  Object.entries(DATASETS).forEach(([ds,def])=>{
+    if(!MAP[ds])MAP[ds]={table:suggestTable(ds),cols:{}};
+    const m=MAP[ds];if(m.table&&!DB[m.table])m.table='';
+    def.fields.forEach(([f])=>{if(!m.cols[f]&&m.table)m.cols[f]=suggestCol(ds,f,m.table);});
+    const card=document.createElement('div');card.className='card';
+    card.innerHTML=`<h3 style="margin:0 0 6px;font-family:var(--display);font-size:13.5px">${def.label}</h3><label class="f">SOURCE TABLE / SHEET</label><select data-ds="${ds}" class="tbl"><option value="">— none —</option>${Object.keys(DB).map(t=>`<option ${t===m.table?'selected':''}>${t}</option>`).join('')}</select>
+      <table class="map-table" style="margin-top:8px">${def.fields.map(([f,lbl,req])=>`<tr><td class="k" style="width:45%">${lbl} <span class="${req?'req':'opt'}">${req?'required':'optional'}</span></td><td><select class="map ${req&&!m.cols[f]?'req-missing':(m.cols[f]?'ok':'')}" data-ds="${ds}" data-f="${f}" ${m.table?'':'disabled'}><option value="">—</option>${cols(m.table).map(c=>`<option ${c===m.cols[f]?'selected':''}>${c}</option>`).join('')}</select></td></tr>`).join('')}</table>${def.extra?`<div class="status">${def.extra}</div>`:''}`;
+    area.appendChild(card);
+  });
+  $$('select.tbl').forEach(s=>s.addEventListener('change',()=>{MAP[s.dataset.ds]={table:s.value,cols:{}};renderMapping();}));
+  $$('select.map').forEach(s=>s.addEventListener('change',()=>{MAP[s.dataset.ds].cols[s.dataset.f]=s.value;renderMapping();}));
+  const ok=validateMapping();$('#map-status').textContent=ok.msg;$('#map-status').className='status '+(ok.ok?'ok':'bad');
+  if(ok.ok){setStep(3);renderFilter();}
+}
+function validateMapping(){
+  const r=MAP.rates;if(!r||!r.table)return{ok:false,msg:'Rates table not selected.'};
+  if(!r.cols.well||!r.cols.date)return{ok:false,msg:'Rates: well id and date are required.'};
+  if(!(r.cols.q_oil||r.cols.q_water||r.cols.q_inj))return{ok:false,msg:'Rates: map at least oil/water or injection.'};
+  const c=MAP.category;const hasCat=c&&c.table&&c.cols.well&&c.cols.field;
+  const co=MAP.coords;const hasXY=co&&co.table&&co.cols.well&&co.cols.x&&co.cols.y;
+  const p=MAP.pressure;const hasP=p&&p.table&&p.cols.well&&p.cols.date&&(p.cols.bhp||p.cols.whp);
+  return{ok:true,msg:`Rates mapped ✓ · category ${hasCat?'✓':'— (field filter disabled, all wells shown)'} · coordinates ${hasXY?'✓':'— (maps/MPI disabled)'} · pressure ${hasP?'✓':'— (constant-BHP mode)'}`,hasCat,hasXY,hasP};
+}
+
+/* ---------------- step 3: filter ---------------- */
+function catRows(){const c=MAP.category;if(!(c&&c.table&&c.cols.well&&c.cols.field))return null;return DB[c.table].map(r=>({well:String(r[c.cols.well]),field:String(r[c.cols.field]||''),reservoir:c.cols.reservoir?String(r[c.cols.reservoir]||''):'',block:c.cols.block?String(r[c.cols.block]||''):''}));}
+function renderFilter(){
+  const rows=catRows();const area=$('#filter-area');
+  if(!rows){area.innerHTML='<div class="status">No category table mapped — all wells in the rates table are available in step 4.</div>';FILTER={field:null,reservoir:null,block:null};$('#filter-status').textContent='';setStep(4);deriveWells();return;}
+  const uniq=(k,pred)=>[...new Set(rows.filter(pred).map(r=>r[k]).filter(Boolean))].sort();
+  const fields=uniq('field',()=>true);if(!FILTER.field||!fields.includes(FILTER.field))FILTER.field=fields[0]||null;
+  const ress=uniq('reservoir',r=>r.field===FILTER.field);if(FILTER.reservoir&&!ress.includes(FILTER.reservoir))FILTER.reservoir=null;
+  const blocks=uniq('block',r=>r.field===FILTER.field&&(!FILTER.reservoir||r.reservoir===FILTER.reservoir));if(FILTER.block&&!blocks.includes(FILTER.block))FILTER.block=null;
+  const sel=(id,lbl,opts,val,all)=>`<div><label class="f">${lbl}</label><select id="${id}">${all?'<option value="">— all —</option>':''}${opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select></div>`;
+  area.innerHTML=sel('flt-field','FIELD *',fields,FILTER.field,false)+sel('flt-res','RESERVOIR',ress,FILTER.reservoir,true)+sel('flt-block','BLOCK / PATTERN',blocks,FILTER.block,true);
+  $('#flt-field').addEventListener('change',e=>{FILTER.field=e.target.value;FILTER.reservoir=null;FILTER.block=null;renderFilter();});
+  $('#flt-res').addEventListener('change',e=>{FILTER.reservoir=e.target.value||null;FILTER.block=null;renderFilter();});
+  $('#flt-block').addEventListener('change',e=>{FILTER.block=e.target.value||null;renderFilter();});
+  const inScope=rows.filter(r=>r.field===FILTER.field&&(!FILTER.reservoir||r.reservoir===FILTER.reservoir)&&(!FILTER.block||r.block===FILTER.block));
+  $('#filter-status').textContent=`${inScope.length} wells in category scope (${fields.length} fields in table).`;$('#filter-status').className='status ok';
+  setStep(4);deriveWells(new Set(inScope.map(r=>r.well)));
+}
+
+/* ---------------- step 4: derive well types ---------------- */
+function deriveWells(scope){
+  const m=MAP.rates;const rows=DB[m.table];const byWell={};
+  rows.forEach(r=>{const w=String(r[m.cols.well]);if(scope&&!scope.has(w))return;const d=String(r[m.cols.date]).slice(0,10);
+    const prod=(+r[m.cols.q_oil]||0)+(+r[m.cols.q_water]||0);const inj=+r[m.cols.q_inj]||0;
+    (byWell[w]=byWell[w]||[]).push({d,mode:prod>0&&inj>0?'B':prod>0?'P':inj>0?'I':'Z'});});
+  const co=MAP.coords,hasXY=co&&co.table&&co.cols.well&&co.cols.x;const xy={};if(hasXY)DB[co.table].forEach(r=>xy[String(r[co.cols.well])]=1);
+  const pr=MAP.pressure,hasP=pr&&pr.table&&pr.cols.well&&(pr.cols.bhp||pr.cols.whp);const pc={};if(hasP)DB[pr.table].forEach(r=>{const w=String(r[pr.cols.well]);pc[w]=(pc[w]||0)+1;});
+  const allDates=[...new Set(rows.map(r=>String(r[m.cols.date]).slice(0,10)))].sort();const idx={};allDates.forEach((d,i)=>idx[d]=i);
+  WELLS=Object.entries(byWell).map(([id,s])=>{s.sort((a,b)=>a.d<b.d?-1:1);
+    const seq=new Array(allDates.length).fill('Z');s.forEach(p=>seq[idx[p.d]]=p.mode);
+    const modes=new Set(s.map(p=>p.mode).filter(x=>x!=='Z'));const hasP_=modes.has('P')||modes.has('B'),hasI=modes.has('I')||modes.has('B');
+    const type=hasP_&&hasI?'MIXED':hasP_?'PROD':hasI?'INJ':'NONE';
+    const conv=[];let last=null;s.forEach(p=>{if(p.mode==='Z')return;const mm=p.mode==='B'?'B':p.mode;if(last&&mm!==last)conv.push(`${p.d.slice(0,7)}: ${last}→${mm}`);last=mm;});
+    const active=s.filter(p=>p.mode!=='Z');const first=active[0]?active[0].d:'',lastD=active.length?active[active.length-1].d:'';
+    const simult=s.filter(p=>p.mode==='B').length;
+    return{id,type,conv,first,last:lastD,n:active.length,simult,seq,xy:!!xy[id],pn:pc[id]||0};}).sort((a,b)=>a.id<b.id?-1:1);
+  WELLS.allDates=allDates;
+  if(!SELECTED.size||![...SELECTED].some(w=>byWell[w]))SELECTED=new Set(WELLS.filter(w=>w.type!=='NONE').map(w=>w.id));
+  renderWells();
+}
+function tlHTML(seq){const n=seq.length;let out='',cur=seq[0],len=0;const push=()=>{out+=`<i class="${cur==='P'?'p':cur==='I'?'i':cur==='B'?'b':'z'}" style="width:${(len/n*100).toFixed(2)}%"></i>`;};for(let i=0;i<n;i++){if(seq[i]===cur)len++;else{push();cur=seq[i];len=1;}}push();return `<div class="tl">${out}</div>`;}
+function renderWells(){
+  const q=($('#well-search').value||'').toLowerCase();const last12=WELLS.allDates.slice(-12);
+  const rows=WELLS.filter(w=>w.id.toLowerCase().includes(q));
+  $('#well-table').innerHTML=`<tr><th style="width:26px"></th><th>well</th><th>type</th><th>first</th><th>last</th><th>steps</th><th>conversions</th><th>timeline</th><th>xy</th><th>press</th></tr>`+rows.map(w=>`<tr><td><input type="checkbox" data-w="${w.id}" ${SELECTED.has(w.id)?'checked':''} ${w.type==='NONE'?'disabled':''}></td><td class="k">${w.id}</td><td><span class="tag ${w.type.toLowerCase()}">${w.type}</span>${w.simult?` <span class="tag none" title="simultaneous prod+inj steps">B×${w.simult}</span>`:''}</td><td>${w.first.slice(0,7)}</td><td>${w.last.slice(0,7)}</td><td>${w.n}</td><td style="font-family:var(--mono);font-size:10.5px">${w.conv.length?w.conv.join('<br>'):'—'}</td><td>${tlHTML(w.seq)}</td><td>${w.xy?'✓':'<span style="color:var(--danger)">—</span>'}</td><td>${w.pn||'—'}</td></tr>`).join('');
+  $$('#well-table input[type=checkbox]').forEach(c=>c.addEventListener('change',()=>{c.checked?SELECTED.add(c.dataset.w):SELECTED.delete(c.dataset.w);updateCount();}));
+  updateCount();
+  window._last12=last12;
+}
+function updateCount(){const s=WELLS.filter(w=>SELECTED.has(w.id));const c=t=>s.filter(w=>w.type===t).length;$('#sel-count').textContent=`${s.length} selected — ${c('PROD')} PROD · ${c('INJ')} INJ · ${c('MIXED')} MIXED`;setStep(5);renderSummary();}
+$('#well-search').addEventListener('input',renderWells);
+$$('[data-sel]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.sel;if(k==='all')SELECTED=new Set(WELLS.filter(w=>w.type!=='NONE').map(w=>w.id));else if(k==='none')SELECTED=new Set();else if(k==='active'){const l=window._last12||[];SELECTED=new Set(WELLS.filter(w=>w.type!=='NONE'&&l.includes(w.last)||l.some(d=>d>=w.first&&d<=w.last)).map(w=>w.id));}else SELECTED=new Set(WELLS.filter(w=>w.type===k).map(w=>w.id));renderWells();}));
+
+/* ---------------- step 5 ---------------- */
+function renderSummary(){
+  const s=WELLS.filter(w=>SELECTED.has(w.id));if(!s.length){$('#summary').innerHTML='';return;}
+  const dates=WELLS.allDates;const gaps=[];for(let i=1;i<dates.length;i++)gaps.push((Date.parse(dates[i])-Date.parse(dates[i-1]))/864e5);gaps.sort((a,b)=>a-b);const dt=gaps.length?Math.round(gaps[gaps.length>>1]):0;
+  const nI=s.filter(w=>w.type!=='PROD').length,nP=s.filter(w=>w.type!=='INJ').length;const Od=dates.length/(nI+1);
+  const kv=(k,v,c)=>`<div class="kv"><div class="k">${k}</div><div class="v ${c||''}">${v}</div></div>`;
+  $('#summary').innerHTML=kv('WELLS SELECTED',s.length)+kv('INJECTOR ROLES / PRODUCER ROLES',`${nI} / ${nP}`)+kv('TIME STEPS · Δt',`${dates.length} · ${dt} d`)+kv('OVERDETERMINATION O_d',Od.toFixed(1),Od>6?'ok':Od>3?'warn':'bad')+kv('WELLS WITH XY',`${s.filter(w=>w.xy).length}/${s.length}`,s.every(w=>w.xy)?'ok':'warn')+kv('WELLS WITH PRESSURE',`${s.filter(w=>w.pn).length}/${s.length}`)+kv('MIXED (split by period)',s.filter(w=>w.type==='MIXED').length)+kv('SIMULTANEOUS P+I STEPS',s.reduce((a,w)=>a+w.simult,0),s.some(w=>w.simult)?'warn':'ok');
+  $('#config-out').textContent=JSON.stringify(buildConfig(),null,1);
+}
+function buildConfig(){return{source:SRC==='sql'?{type:'sql',driver:$('#drv').value,host:$('#host').value,database:$('#dbn').value,user:$('#usr').value,query_override:$('#qry').value||null}:{type:SRC,files:Object.keys(DB)},mapping:MAP,filter:FILTER,wells:[...SELECTED].sort(),well_type_rule:'derived from rates: P if oil+water>0, I if injection>0, B if both; MIXED wells split into roles per period',time_grid:{resample:'native',align:'days_on'},created:new Date().toISOString().slice(0,10)};}
+$('#btn-build').addEventListener('click',()=>{const s=WELLS.filter(w=>SELECTED.has(w.id));if(!s.length){$('#build-status').textContent='Select at least one well.';$('#build-status').className='status bad';return;}const roles=s.reduce((a,w)=>a+(w.type==='MIXED'?2:1),0);$('#build-status').textContent=`Dataset built: ${roles} well-roles from ${s.length} wells over ${WELLS.allDates.length} steps → ready for QC layer and model tournament.`;$('#build-status').className='status ok';});
+$('#btn-config').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(buildConfig(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='waterflood_project_config.json';a.click();});
+
+function afterLoad(){setStep(2);MAP={};renderMapping();}
+})();
+</script>
+</body></html>

@@ -1,0 +1,165 @@
+{
+  "case": "streak_5x4_noise5",
+  "description": "5 injectors \u00d7 4 producers, one high-permeability streak I-3\u2192P-3 (f=0.75), two barriers",
+  "generator_version": "1.0.0",
+  "seed": 5401,
+  "n_steps": 120,
+  "dt_days_mean": 30.433333333333334,
+  "injectors": [
+    "I-1",
+    "I-2",
+    "I-3",
+    "I-4",
+    "I-5"
+  ],
+  "producers": [
+    "P-1",
+    "P-2",
+    "P-3",
+    "P-4"
+  ],
+  "f_ij": {
+    "I-1": {
+      "P-1": 0.599356,
+      "P-2": 0.300644,
+      "P-3": 0.0,
+      "P-4": 0.0
+    },
+    "I-2": {
+      "P-1": 0.359768,
+      "P-2": 0.359768,
+      "P-3": 0.180464,
+      "P-4": 0.0
+    },
+    "I-3": {
+      "P-1": 0.03756,
+      "P-2": 0.074879,
+      "P-3": 0.75,
+      "P-4": 0.03756
+    },
+    "I-4": {
+      "P-1": 0.0,
+      "P-2": 0.180464,
+      "P-3": 0.359768,
+      "P-4": 0.359768
+    },
+    "I-5": {
+      "P-1": 0.0,
+      "P-2": 0.0,
+      "P-3": 0.300644,
+      "P-4": 0.599356
+    }
+  },
+  "tau_days": {
+    "P-1": 150.0,
+    "P-2": 110.0,
+    "P-3": 95.0,
+    "P-4": 180.0
+  },
+  "q0_bbl_d": {
+    "P-1": 1145.6881309375979,
+    "P-2": 1018.9313379214402,
+    "P-3": 2135.938583845856,
+    "P-4": 873.2685314234045
+  },
+  "oil_cut": {
+    "model": "f_o = 1/(1+alpha*CWI^beta), CWI in Mbbl (Atlas CRMP tab)",
+    "alpha": {
+      "P-1": 0.0035,
+      "P-2": 0.003,
+      "P-3": 0.005,
+      "P-4": 0.0028
+    },
+    "beta": {
+      "P-1": 1.25,
+      "P-2": 1.3,
+      "P-3": 1.2,
+      "P-4": 1.35
+    },
+    "cwi0_mbbl": {
+      "P-1": 50.0,
+      "P-2": 50.0,
+      "P-3": 50.0,
+      "P-4": 50.0
+    }
+  },
+  "sum_f_per_injector": {
+    "I-1": 0.9,
+    "I-2": 0.9,
+    "I-3": 0.9,
+    "I-4": 0.9000000000000001,
+    "I-5": 0.9
+  },
+  "sum_f_per_producer": {
+    "P-1": 0.9966847571795634,
+    "P-2": 0.9157549263875742,
+    "P-3": 1.5908755592532993,
+    "P-4": 0.9966847571795634
+  },
+  "injection_cv": {
+    "I-1": 0.38266925243793165,
+    "I-2": 0.28730656960100603,
+    "I-3": 0.23592874621130386,
+    "I-4": 0.39237348705093894,
+    "I-5": 0.3219527647196019
+  },
+  "tau_over_dt_min": 3.12157721796276,
+  "identifiability": {
+    "O_d": 20.0,
+    "O_d_basis": "whole field",
+    "O_d_field": 20.0,
+    "points_per_param_crmp": 15.0
+  },
+  "expected_variant": "CRMP",
+  "tournament_notes": [
+    "All gates pass (O_d=20, CV>0.15, tau/dt>=3); CRMP beats CRMIP on AICc because the truth is CRMP.",
+    "CRMT eligible but under-fits per-well; aquifer variant not triggered (sum_f per producer < 1.15)."
+  ],
+  "noise": {
+    "production_pct": 5.0,
+    "injection_pct": 1.0,
+    "allocation_pct": 0.0
+  },
+  "streak": {
+    "injector": "I-3",
+    "producer": "P-3",
+    "f_ij": 0.75
+  },
+  "barriers": [
+    [
+      "I-5",
+      "P-1"
+    ],
+    [
+      "I-1",
+      "P-4"
+    ]
+  ],
+  "optimizer": {
+    "objective": "max_cumulative_oil",
+    "horizon_months": 24,
+    "total_water_bbl_d": 9029.075881527591,
+    "bounds_bbl_d": [
+      0.0,
+      3611.6303526110364
+    ],
+    "baseline_equal_split_oil_bbl": 23392.833996337846,
+    "baseline_hold_current_oil_bbl": 23795.234620592204,
+    "optimal_oil_bbl": 24878.2065463084,
+    "optimal_rates_bbl_d": [
+      3611.6303526110364,
+      3611.6303526110364,
+      1805.815176305518,
+      0.0,
+      1.215904671521827e-12
+    ],
+    "gain_vs_equal_split_pct": 6.349690465905455,
+    "gain_vs_hold_current_pct": 4.5512134802781095
+  },
+  "files": {
+    "streak_5x4_noise5/rates.parquet": "c01a9c6bdd178b571f9e6349b4380584c8300345227855dfbec607f996a8f204",
+    "streak_5x4_noise5/coords.parquet": "0f3812a179f40041e790441d5a83dc66cc5004c591b1a1e16880c74e55586baa",
+    "streak_5x4_noise5/category.parquet": "527b1acc88bf2bbc62c75cf38873bce5ba7826b5e20336e0972a21184c98ab9f",
+    "streak_5x4_noise5/events.parquet": "a9f098d8c3eecb03bc0fdaabcfcd90aa453fb55702db3b2729c00036e6a6fc36"
+  }
+}

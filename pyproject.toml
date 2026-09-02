@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "waterflood-optimizer"
+version = "0.0.1"
+description = "CRM-based waterflood injection evaluation and optimization (architecture v2.1)"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "polars>=1.0",
+    "pandas>=2.0",
+    "pyarrow>=15",
+    "pywaterflood>=0.3",
+    "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.5", "mypy>=1.10", "types-PyYAML"]
+
+[tool.setuptools.packages.find]
+include = ["waterflood_app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "ANN", "RUF"]
+# RUF001-003: Greek letters, x-sign and arrows are the domain notation used in equations and section citations
+ignore = ["ANN401", "RUF001", "RUF002", "RUF003"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+files = ["waterflood_app", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
