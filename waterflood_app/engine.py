@@ -26,11 +26,13 @@ from waterflood_app.ingest.welltype import (
     split_roles,
 )
 from waterflood_app.messaging.conditions import ConditionLog
+from waterflood_app.models.aquifer import static_pressure_on_grid
 from waterflood_app.models.base import FitData
 from waterflood_app.models.crmt import CRMT
 from waterflood_app.models.fractional_flow import PowerLawOilCut, cumulative_basis, fit_power_law
 from waterflood_app.models.solver import SolverSettings, fit_field
 from waterflood_app.models.tournament import TournamentResult, run_tournament
+from waterflood_app.models.twophase import RelPerm
 from waterflood_app.prep.clean import clean_grid
 from waterflood_app.prep.events import (
     build_windows,
@@ -137,6 +139,7 @@ def run_engine(
     engine: str = "inhouse",
     variants: list[str] | None = None,
     datum: float | None = None,
+    relperm: RelPerm | None = None,
 ) -> RunResult:
     t0 = time.perf_counter()
     cfg = cfg or load_config()
@@ -194,6 +197,7 @@ def run_engine(
             prof = profile(
                 sgrid,
                 cfg,
+                has_relperm=relperm is not None,
                 events_per_well=max(ev_per_well, float(lift_counts.mean()) if len(lift_counts) else 0.0),
                 tau_estimate_days=tau_est,
                 sum_f_apparent=_sum_f_apparent(sgrid, split.n_train),
@@ -205,7 +209,19 @@ def run_engine(
             if not gates["history_min"]:
                 log.extend(slog)
                 continue
-            tres = run_tournament(data, prof, gates, cfg, slog, seed=seed, engine=engine, variants=variants)
+            sp = static_pressure_on_grid(sgrid, pprep.static_surveys)
+            tres = run_tournament(
+                data,
+                prof,
+                gates,
+                cfg,
+                slog,
+                seed=seed,
+                engine=engine,
+                variants=variants,
+                static_pressure=sp,
+                relperm=relperm,
+            )
             oil_cut, oil_pred = _fit_oil_cut(sgrid, tres, split.n_train)
             log.extend(slog)
             runs.append(SectorRun(wi, sector, sgrid, prof, gates, tres, oil_cut, oil_pred, slog))

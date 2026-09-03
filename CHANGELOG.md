@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0] — 2026-09-03 — Milestone 2: extended models, optimization, workflow
+
+- `models/`: CRM–Aquifer (CRMPA, Fetkovich tank as a tank-driven pseudo-injector), two-phase coupled CRM (Corey fractional flow, τ(t)), crossflow / productivity-coefficient CRM, MPI prior and new-well bridge (§11), forecast continuation with P10/P50/P90 fans, rolling windows and CUSUM change alerts (§10).
+- `optimize/`: objectives (cumulative oil, NPV with price deck, min water for target oil), constraints, postures (aggressive / balanced / robust with no-loss rejection), SLSQP multi-start solver, water-budget / shut-in / new-well / conversion / pattern-balancing scenarios, ramping and the "change this week" action list with revert conditions (§12–§14).
+- `workflow/`: Draft → Reviewed → Approved → Implemented → Evaluated state machine with immutable approved snapshots, separation policy, LOW-confidence override, evaluation records at 3/6 months, the §15 rules table, alerts.
+- `store/`: project store (Parquet snapshots + SQLite), run registry keyed by the reproducibility triple, audit log, validation record.
+- M0 optimizer truth re-frozen (generator 1.1.0, horizon accounting); tournament now fits aquifer, two-phase and crossflow when eligible.
+
 ## [0.1.0] — 2026-09-03 — Milestone 1: engine core
 
 - `ingest/`: canonical schema + Loader-reference auto-mapping (CSV folder, Excel workbook, OFM-style names), units service (unit tags → SI, PVT constants/table, reservoir volumes, free gas, datum), well types from rates (P/I/B per step, PROD/INJ/MIXED with conversion dates, role split, commingled split, ID normalisation).

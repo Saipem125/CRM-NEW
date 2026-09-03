@@ -91,11 +91,14 @@ def test_aquifer_signature_recognised(runs: dict[str, RunResult]) -> None:
     s = runs["aquifer_6x9"].latest()[0]
     assert s.gates["influx"], s.profile.sum_f_apparent
     aq = next(e for e in s.tournament.eligibility if e.variant == "aquifer")
-    assert aq.eligible and not aq.available  # recommended, fitted in Milestone 2
+    assert aq.eligible and aq.available
     assert s.conditions.has(ConditionCode.SUM_F_HIGH)
-    assert s.conditions.has(ConditionCode.VARIANT_NOT_AVAILABLE)
-    # CRMP is the best available model meanwhile and the aquifer support inflates Σ_i f_ij
-    assert s.tournament.winner is not None and s.tournament.winner.variant in ("crmp", "crmip")
+    assert s.tournament.winner is not None and s.tournament.winner.variant == "aquifer", s.tournament.leaderboard
+    aqt = s.tournament.winner.fit.params.extra["aquifer"]
+    truth = suite.load_case("aquifer_6x9").truth["aquifer"]
+    assert abs(aqt["influx_first"] - truth["influx_bbl_d_first"]) / truth["influx_bbl_d_first"] < 0.3
+    # the static surveys loaded with this case give the pressure scale → pore volumes resolvable
+    assert aqt["pv_resolvable"] is True and 0.4 < aqt["ct_v_r"] / truth["ct_V_r_bbl_psi"] < 2.5
 
 
 def test_converted_wells_two_windows(runs: dict[str, RunResult]) -> None:

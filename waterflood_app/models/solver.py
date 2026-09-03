@@ -80,6 +80,7 @@ class SolverSettings:
     n_jobs: int = -1
     joint_sum_bound: float = 1.0
     free_primary: bool = False
+    varpro_only: bool = False  # skip the gradient polish (fast inner loops)
 
     @classmethod
     def from_config(cls, cfg: Config, dt_min: float) -> SolverSettings:
@@ -413,6 +414,8 @@ def fit_producer(d: ProducerData, variant: str, s: SolverSettings, seed: int) ->
     hi = np.array([b[1] for b in bounds])
     starts = _starts(d, variant, s, rng)
     vp = varpro_crmp(d, s)
+    if s.varpro_only and variant != "crmip":
+        return [np.clip(th, lo, hi) for _, th in vp], [v for v, _ in vp]
     if variant == "crmip":
         for _, th in vp:
             f, tau = th[:ni], th[ni]

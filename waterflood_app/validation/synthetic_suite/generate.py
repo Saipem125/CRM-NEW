@@ -47,7 +47,7 @@ import numpy.typing as npt
 import polars as pl
 from scipy.optimize import minimize
 
-GENERATOR_VERSION = "1.0.0"
+GENERATOR_VERSION = "1.1.0"
 SUITE_DIR = Path(__file__).resolve().parent
 START = date(2010, 1, 1)
 MBBL = 1000.0
@@ -303,10 +303,11 @@ def true_optimal_reallocation(
     extra = np.zeros(f.shape[1]) if extra_support is None else extra_support
 
     def cum_oil(x: FArray) -> float:
-        inj = np.tile(x, (horizon_months, 1))
-        support = inj @ f + extra[None, :]
-        q = crmp_forward(inj, f, tau, q_last, dt)
-        # continue the CRMP recursion from the last historical state (q_last)
+        # step 0 of the recursion is the last historical state (q_last, already produced);
+        # the horizon is the next `horizon_months` responding steps (generator v1.1.0)
+        inj = np.tile(x, (horizon_months + 1, 1))
+        support = (inj @ f + extra[None, :])[1:]
+        q = crmp_forward(inj, f, tau, q_last, np.concatenate([[dt[0]], dt]))[1:]
         support_cum = np.cumsum(support * dt[:, None], axis=0) / MBBL
         fo = oil_cut(cwi_last + support_cum, alpha, beta)
         return float((q * fo * dt[:, None]).sum())

@@ -81,3 +81,55 @@ confidence: # §9 badge
 units:
   default_system: field # field | metric
   datum_gradient_psi_per_ft: 0.433
+
+# ---- Milestone 2 -------------------------------------------------------------------------
+aquifer: # §9 CRMPA (Fetkovich tank) fit
+  outer_maxiter: 100
+  we0_fraction_grid: [0.1, 0.3] # initial influx as a fraction of field injection (starts)
+  k_grid_per_day: [5.0e-5, 5.0e-4, 5.0e-3] # tank rate constants (starts)
+
+rolling: # §10
+  window_months: 36
+  step_months: 6
+  min_window_steps: 24
+  blend_by_blind_score: true
+
+cusum: # §10 change alerts
+  shift_multiple_of_spread: 2.0
+  persist_windows: 2
+  min_spread_rel: 0.05 # floor on the multi-start spread used as the CUSUM scale (relative)
+
+optimize: # §12–§14
+  horizon_months: 24
+  n_periods: 1 # decision blocks over the horizon (1 = constant reallocation)
+  injector_max_multiple_of_mean: 2.0 # per-injector upper bound when none is given
+  max_water_cut: null # producer water-cut ceiling; null → not applied unless the user sets one
+  vrr_band: null # VRR band per pattern, e.g. [0.8, 1.2]; null → not applied
+  current_months: 1 # months averaged for the "hold current" base (1 = last set-point)
+  relax_violated_at_base: true # a constraint the base already violates is relaxed to the base level (noted)
+  maxiter: 200
+  multistart: 8
+  posture_default: balanced
+  postures:
+    aggressive: {statistic: mean}
+    balanced: {statistic: mean_minus_k_std, k: 0.5}
+    robust: {statistic: p10, reject_any_loss: true}
+  low_confidence_forces_robust: true
+
+economics: # §12 project-level defaults; scenario overrides allowed
+  oil_price_usd_per_bbl: 70.0
+  water_handling_usd_per_bbl: 1.5
+  injection_usd_per_bbl: 0.8
+  discount_rate_per_year: 0.10
+
+ramping: # §14
+  step_frac_per_week: {HIGH: 0.15, MEDIUM: 0.08, LOW: 0.08}
+  min_change_frac: 0.05
+  meter_resolution_bbl_d: 10.0
+  revert_water_cut_jump: 0.05 # absolute jump in water cut that triggers "revert if"
+  revert_pressure_margin_frac: 0.05
+
+workflow: # §3
+  separation_policy: log # log | enforce
+  evaluation_months: [3, 6]
+  outcome_band: [10, 90] # P10–P90

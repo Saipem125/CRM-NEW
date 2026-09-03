@@ -19,16 +19,19 @@ import numpy as np
 
 from waterflood_app.config import Config
 from waterflood_app.messaging.conditions import ConditionCode, ConditionLog
+from waterflood_app.models.aquifer import CRMPA
 from waterflood_app.models.base import CRMModel, FitData, FitResult, ModelParams
 from waterflood_app.models.crmip import CRMIP
 from waterflood_app.models.crmp import CRMP
 from waterflood_app.models.crmt import CRMT
+from waterflood_app.models.crossflow import CrossflowCRM
 from waterflood_app.models.solver import SolverSettings
+from waterflood_app.models.twophase import RelPerm, TwoPhaseCRM
 from waterflood_app.models.uq import Spread, parameter_spread, select_members
 from waterflood_app.models.verify import VerifyReport, verify
 from waterflood_app.prep.gates import DataProfile
 
-AVAILABLE = {"crmt", "crmp", "crmip"}
+AVAILABLE = {"crmt", "crmp", "crmip", "aquifer", "twophase", "crossflow"}
 ALL_VARIANTS = [
     "mpi",
     "mlr",
@@ -231,7 +234,6 @@ def eligibility(p: DataProfile, gates: dict[str, bool], cfg: Config) -> list[Eli
                 f"water cut {p.mean_water_cut:.2f} still rising → τ varies with mobility; "
                 "power-law oil cut invalid here",
                 0.78,
-                available=False,
             )
         )
     # Crossflow
@@ -261,7 +263,6 @@ def eligibility(p: DataProfile, gates: dict[str, bool], cfg: Config) -> list[Eli
                 f"{p.events_per_well:.0f} shut-ins/chokes per well → allocation weights drift; "
                 "pressure-based formulation is robust to it",
                 0.72,
-                available=False,
             )
         )
     # PINN
@@ -301,6 +302,8 @@ def eligibility(p: DataProfile, gates: dict[str, bool], cfg: Config) -> list[Eli
             available=False,
         )
     )
+    for el in out:
+        el.available = el.variant in AVAILABLE
     return out
 
 
@@ -438,6 +441,24 @@ def confidence_badge(entry: Entry | None, conditions: ConditionLog, cfg: Config)
     return "LOW", reasons
 
 
+def _make_model(
+    v: str, cfg: Config, engine: str, static_pressure: np.ndarray | None, relperm: RelPerm | None
+) -> CRMModel | None:
+    if v == "crmt":
+        return CRMT(cfg)
+    if v == "crmp":
+        return CRMP(cfg, engine)
+    if v == "crmip":
+        return CRMIP(cfg, engine)
+    if v == "aquifer":
+        return CRMPA(cfg, static_pressure)
+    if v == "twophase":
+        return TwoPhaseCRM(cfg, relperm) if relperm is not None else None
+    if v == "crossflow":
+        return CrossflowCRM(cfg)
+    return None
+
+
 def run_tournament(
     data: FitData,
     profile: DataProfile,
@@ -447,6 +468,8 @@ def run_tournament(
     seed: int = 0,
     engine: str = "inhouse",
     variants: list[str] | None = None,
+    static_pressure: np.ndarray | None = None,
+    relperm: RelPerm | None = None,
 ) -> TournamentResult:
     t0 = time.perf_counter()
     grid = data.grid
@@ -460,8 +483,19 @@ def run_tournament(
     settings = SolverSettings.from_config(cfg, float(np.min(grid.dt_days[1:])) if grid.n_steps > 1 else 30.0)
     entries: list[Entry] = []
     for v in to_fit:
-        model: CRMModel = CRMT(cfg) if v == "crmt" else CRMP(cfg, engine) if v == "crmp" else CRMIP(cfg, engine)
-        res = model.fit(data, seed=seed)
+        model = _make_model(v, cfg, engine, static_pressure, relperm)
+        if model is None:
+            log.emit(ConditionCode.VARIANT_NOT_AVAILABLE, variant=LABELS[v])
+            continue
+        try:
+            res = model.fit(data, seed=seed)
+        except (
+            ValueError,
+            np.linalg.LinAlgError,
+            FloatingPointError,
+        ) as exc:  # variant could not be fitted on this data
+            log.emit(ConditionCode.VARIANT_NOT_AVAILABLE, variant=f"{LABELS[v]} ({exc})")
+            continue
         vlog = ConditionLog()
         report = verify(
             grid,

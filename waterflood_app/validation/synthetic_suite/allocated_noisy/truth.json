@@ -1,7 +1,7 @@
 {
   "case": "allocated_noisy",
   "description": "5\u00d74 field, monthly-allocated volumes with days-on (shut-ins, partial months) and 8 % allocation noise",
-  "generator_version": "1.0.0",
+  "generator_version": "1.1.0",
   "seed": 8801,
   "n_steps": 120,
   "dt_days_mean": 30.433333333333334,
@@ -148,18 +148,18 @@
       0.0,
       3235.9267478874185
     ],
-    "baseline_equal_split_oil_bbl": 26295.000469704264,
-    "baseline_hold_current_oil_bbl": 25334.49154171558,
-    "optimal_oil_bbl": 27955.91593442312,
+    "baseline_equal_split_oil_bbl": 26366.30637208585,
+    "baseline_hold_current_oil_bbl": 25348.684179381977,
+    "optimal_oil_bbl": 28171.656021524384,
     "optimal_rates_bbl_d": [
       3235.9267478874185,
-      3235.9267478874185,
-      1617.9633739447786,
+      3235.926747887417,
+      1617.9633739442424,
       0.0,
-      3.133758969186055e-10
+      1.3496031249808507e-10
     ],
-    "gain_vs_equal_split_pct": 6.316468663434617,
-    "gain_vs_hold_current_pct": 10.347254802375344
+    "gain_vs_equal_split_pct": 6.847184523919004,
+    "gain_vs_hold_current_pct": 11.13656165410963
   },
   "files": {
     "allocated_noisy/rates.parquet": "636c1c7f823389ecad6567423c681a6b8e81e7af9b408dfda650ca517ac4ba0c",

@@ -1,5 +1,5 @@
 {
-  "generator_version": "1.0.0",
+  "generator_version": "1.1.0",
   "files": {
     "streak_5x4/rates.parquet": "1592f4e4b99df077cff80cab6349cdf36d8eedf79609f9f55a30b1b5f688c734",
     "streak_5x4/coords.parquet": "0f3812a179f40041e790441d5a83dc66cc5004c591b1a1e16880c74e55586baa",

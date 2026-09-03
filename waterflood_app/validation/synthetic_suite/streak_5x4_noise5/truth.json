@@ -1,7 +1,7 @@
 {
   "case": "streak_5x4_noise5",
   "description": "5 injectors \u00d7 4 producers, one high-permeability streak I-3\u2192P-3 (f=0.75), two barriers",
-  "generator_version": "1.0.0",
+  "generator_version": "1.1.0",
   "seed": 5401,
   "n_steps": 120,
   "dt_days_mean": 30.433333333333334,
@@ -143,18 +143,18 @@
       0.0,
       3611.6303526110364
     ],
-    "baseline_equal_split_oil_bbl": 23392.833996337846,
-    "baseline_hold_current_oil_bbl": 23795.234620592204,
-    "optimal_oil_bbl": 24878.2065463084,
+    "baseline_equal_split_oil_bbl": 23478.793003684135,
+    "baseline_hold_current_oil_bbl": 23910.484488420952,
+    "optimal_oil_bbl": 25117.184965346034,
     "optimal_rates_bbl_d": [
-      3611.6303526110364,
-      3611.6303526110364,
-      1805.815176305518,
+      3611.630352611036,
+      3611.630352611036,
+      1805.815176305521,
       0.0,
-      1.215904671521827e-12
+      7.486075741695468e-12
     ],
-    "gain_vs_equal_split_pct": 6.349690465905455,
-    "gain_vs_hold_current_pct": 4.5512134802781095
+    "gain_vs_equal_split_pct": 6.978177972797891,
+    "gain_vs_hold_current_pct": 5.046742057901195
   },
   "files": {
     "streak_5x4_noise5/rates.parquet": "c01a9c6bdd178b571f9e6349b4380584c8300345227855dfbec607f996a8f204",

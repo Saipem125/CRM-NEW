@@ -1,7 +1,7 @@
 {
   "case": "converted_wells",
   "description": "4 injectors \u00d7 6 producers; P-5 and P-6 converted to injection at month 48 (window break)",
-  "generator_version": "1.0.0",
+  "generator_version": "1.1.0",
   "seed": 4801,
   "n_steps": 96,
   "dt_days_mean": 30.4375,
@@ -298,19 +298,19 @@
       0.0,
       2932.856980806038
     ],
-    "baseline_equal_split_oil_bbl": 47904.60789144304,
-    "baseline_hold_current_oil_bbl": 47798.259148815894,
-    "optimal_oil_bbl": 48745.40933867722,
+    "baseline_equal_split_oil_bbl": 47930.287084367505,
+    "baseline_hold_current_oil_bbl": 47816.227475609034,
+    "optimal_oil_bbl": 48827.38508532001,
     "optimal_rates_bbl_d": [
-      1883.8144324573475,
-      0.0,
-      2932.856980806038,
-      2932.856980806038,
-      0.0,
-      1049.042548348683
+      1852.6194714237179,
+      3.9749295707516334e-11,
+      2932.8569808059647,
+      2932.8569808057305,
+      1.6848305412606806e-12,
+      1080.2375093824257
     ],
-    "gain_vs_equal_split_pct": 1.7551577692474343,
-    "gain_vs_hold_current_pct": 1.9815579201586708
+    "gain_vs_equal_split_pct": 1.871672496710535,
+    "gain_vs_hold_current_pct": 2.1146745845367425
   },
   "files": {
     "converted_wells/rates.parquet": "58cc630da13b3eeba78fc8ddb2262dfecb85658a67a5e6f06c5cdfdd3f7001d5",

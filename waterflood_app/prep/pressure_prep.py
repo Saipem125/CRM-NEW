@@ -128,11 +128,12 @@ def prepare_pressure(
         hw = has_whp_col and sub.get_column("whp").drop_nulls().len() > 0
         per_well_src[w] = classify_source(src, hb, hw)
 
-    static_rows = (
-        pressure.filter(pl.col("well").is_in([w for w, s in per_well_src.items() if s == "static"]))
-        if src_col
-        else None
-    )
+    static_rows = None
+    if src_col:
+        flags = [
+            classify_source(v, has_bhp_col, has_whp_col) == "static" for v in pressure.get_column(src_col).to_list()
+        ]
+        static_rows = pressure.filter(pl.Series(flags)) if any(flags) else None
     bhp = _to_grid(pressure, "bhp", grid, wells) if has_bhp_col else np.full((grid.n_steps, len(wells)), np.nan)
     whp = _to_grid(pressure, "whp", grid, wells) if has_whp_col else None
     window = int(cfg["pressure.esp_hampel_window"])

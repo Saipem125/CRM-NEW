@@ -1,7 +1,7 @@
 {
   "case": "aquifer_6x9",
   "description": "6 injectors \u00d7 9 producers with a finite Fetkovich aquifer on the east edge (partial water drive)",
-  "generator_version": "1.0.0",
+  "generator_version": "1.1.0",
   "seed": 6901,
   "n_steps": 160,
   "dt_days_mean": 30.43125,
@@ -225,19 +225,19 @@
       0.0,
       2812.053041886045
     ],
-    "baseline_equal_split_oil_bbl": 36038.734661198454,
-    "baseline_hold_current_oil_bbl": 35609.282571473945,
-    "optimal_oil_bbl": 41250.76251143778,
+    "baseline_equal_split_oil_bbl": 35501.48630848173,
+    "baseline_hold_current_oil_bbl": 35048.005378591784,
+    "optimal_oil_bbl": 41045.86830465922,
     "optimal_rates_bbl_d": [
       2812.053041886045,
       0.0,
       2812.053041886045,
-      0.0,
+      4.4917669583810493e-10,
       2812.053041886045,
       0.0
     ],
-    "gain_vs_equal_split_pct": 14.462294248779274,
-    "gain_vs_hold_current_pct": 15.842722831161838
+    "gain_vs_equal_split_pct": 15.617323590344629,
+    "gain_vs_hold_current_pct": 17.11327894776883
   },
   "files": {
     "aquifer_6x9/rates.parquet": "fc54ce7b6a66a2febb0ca2db3d3cd3c2f88ba3059894106f60e9fd14f712cfc7",

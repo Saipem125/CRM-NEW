@@ -74,15 +74,21 @@ def test_streak_tau_in_steps_convention(ext_runs: dict[str, RunResult]) -> None:
 def test_aquifer_9x9_flank_signature(ext_runs: dict[str, RunResult]) -> None:
     s = ext_runs["aquifer_9x9"].latest()[0]
     t = truth("aquifer_9x9")
-    p = s.tournament.winner.fit.params  # type: ignore[union-attr]
-    sums = dict(zip(s.grid.producers, p.sum_f_per_producer, strict=True))
+    sums = s.profile.sum_f_per_producer  # quick unconstrained CRMP: the apparent-support diagnostic
     flank = [sums[w] for w in ("P-1", "P-2", "P-3")]
     interior = [sums[w] for w in s.grid.producers if w not in ("P-1", "P-2", "P-3")]
     assert np.median(flank) / np.median(interior) >= t["acceptance"]["flank_over_interior_median_ratio_min"], (
         flank,
         interior,
     )
+    assert max(flank) >= t["acceptance"]["flank_apparent_sum_f_min"]
     assert s.gates["influx"] and s.conditions.has(ConditionCode.SUM_F_HIGH)
+    # the aquifer variant is fitted and has the best blind R²; the composite winner is CRMP by ~0.01
+    # (parsimony and runtime terms outweigh a +0.02 blind-R² gain on this fixture) — see DECISIONS.md M2
+    entries = {e.variant: e for e in s.tournament.entries}
+    assert "aquifer" in entries and entries["aquifer"].rank <= 2
+    assert entries["aquifer"].report.blind_r2_field >= max(e.report.blind_r2_field for e in s.tournament.entries) - 1e-9
+    assert s.tournament.winner is not None and s.tournament.winner.variant in ("aquifer", "crmp")
 
 
 def test_converted_wells_external(ext_runs: dict[str, RunResult]) -> None:

@@ -36,10 +36,11 @@ class PowerLawOilCut:
     alpha: float
     beta: float
     basis: str = "allocated_water"  # | "liquid_produced"
+    offset: float = 0.0  # cumulative volume before the history starts (same unit as CWI)
     r2_log: float = 0.0
 
     def oil_cut(self, cwi: FArray) -> FArray:
-        return 1.0 / (1.0 + self.alpha * np.power(np.maximum(cwi, 1e-9), self.beta))
+        return 1.0 / (1.0 + self.alpha * np.power(np.maximum(self.offset + cwi, 1e-9), self.beta))
 
 
 def cumulative_basis(liq_pred: FArray, support: FArray, dt: FArray, basis: str, offset: float = 0.0) -> FArray:
@@ -48,30 +49,67 @@ def cumulative_basis(liq_pred: FArray, support: FArray, dt: FArray, basis: str, 
     return offset + np.cumsum(np.asarray(x, dtype=np.float64) * np.asarray(dt, dtype=np.float64))
 
 
+def _loglinear(cwi: FArray, fo: FArray, ok: npt.NDArray[np.bool_], offset: float) -> tuple[float, float, float, float]:
+    """Least squares of ln(1/f_o − 1) on ln(offset + CWI). Returns (alpha, beta, sse, ss_tot)."""
+    y = np.log(1.0 / fo[ok] - 1.0)
+    x = np.log(offset + cwi[ok])
+    A = np.column_stack([np.ones_like(x), x])
+    coef, *_ = np.linalg.lstsq(A, y, rcond=None)
+    pred = A @ coef
+    return (
+        float(np.exp(coef[0])),
+        float(coef[1]),
+        float(((y - pred) ** 2).sum()),
+        float(((y - y.mean()) ** 2).sum()) or 1.0,
+    )
+
+
 def fit_power_law(
     cwi: FArray,
     oil: FArray,
     liq: FArray,
     mask: npt.NDArray[np.bool_],
     basis: str = "allocated_water",
+    fit_offset: bool = True,
 ) -> PowerLawOilCut:
-    """Least squares on ln(WOR) vs ln(CWI) over masked steps with 0 < f_o < 1."""
+    """Fit α, β (and the pre-history cumulative offset C0) on masked steps with 0 < f_o < 1.
+
+    ln(1/f_o − 1) = ln α + β ln(C0 + CWI): linear in (ln α, β) for fixed C0, so C0 is searched on
+    a log grid and refined with a bounded scalar minimiser (variable projection).
+    """
     with np.errstate(divide="ignore", invalid="ignore"):
         fo = np.where(liq > 0, oil / np.where(liq > 0, liq, 1.0), np.nan)
-    ok = mask & np.isfinite(fo) & (fo > 1e-4) & (fo < 1 - 1e-4) & (cwi > 0)
+    ok = mask & np.isfinite(fo) & (fo > 1e-4) & (fo < 1 - 1e-4) & (cwi >= 0)
     if ok.sum() < 3:
         mean_fo = float(np.nanmean(fo[mask])) if np.isfinite(fo[mask]).any() else 0.5
         mean_fo = min(max(mean_fo, 1e-3), 1 - 1e-3)
         return PowerLawOilCut(alpha=(1 / mean_fo - 1), beta=0.0, basis=basis)
-    y = np.log(1.0 / fo[ok] - 1.0)
-    x = np.log(cwi[ok])
-    A = np.column_stack([np.ones_like(x), x])
-    coef, *_ = np.linalg.lstsq(A, y, rcond=None)
-    pred = A @ coef
-    ss_res = float(((y - pred) ** 2).sum())
-    ss_tot = float(((y - y.mean()) ** 2).sum()) or 1.0
-    beta = float(max(coef[1], 0.0))
-    return PowerLawOilCut(alpha=float(np.exp(coef[0])), beta=beta, basis=basis, r2_log=1.0 - ss_res / ss_tot)
+    cmax = float(np.nanmax(cwi[ok])) or 1.0
+    ok = ok & (cwi > 0) if not fit_offset else ok
+    best: tuple[float, float, float, float, float] | None = None  # (sse, offset, alpha, beta, ss_tot)
+    offsets = (
+        [0.0] if not fit_offset else [0.0, *np.logspace(np.log10(cmax * 1e-3), np.log10(cmax * 50.0), 24).tolist()]
+    )
+    for c0 in offsets:
+        if (c0 + cwi[ok] <= 0).any():
+            continue
+        alpha, beta, sse, ss_tot = _loglinear(cwi, fo, ok, c0)
+        if best is None or sse < best[0]:
+            best = (sse, c0, alpha, beta, ss_tot)
+    assert best is not None
+    if fit_offset and best[1] > 0:
+        from scipy.optimize import minimize_scalar
+
+        lo, hi = best[1] / 3.0, best[1] * 3.0
+        res = minimize_scalar(
+            lambda z: _loglinear(cwi, fo, ok, float(np.exp(z)))[2], bounds=(np.log(lo), np.log(hi)), method="bounded"
+        )
+        c0 = float(np.exp(res.x))
+        alpha, beta, sse, ss_tot = _loglinear(cwi, fo, ok, c0)
+        if sse <= best[0]:
+            best = (sse, c0, alpha, beta, ss_tot)
+    sse, c0, alpha, beta, ss_tot = best
+    return PowerLawOilCut(alpha=alpha, beta=max(beta, 0.0), basis=basis, offset=c0, r2_log=1.0 - sse / ss_tot)
 
 
 # --------------------------------------------------------------------------------------
