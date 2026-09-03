@@ -1,0 +1,109 @@
+{
+ "case": "converted_wells",
+ "n_months": 96,
+ "conversion_month_index": 48,
+ "conversion_date": "2020-01-01",
+ "converted_wells": {
+  "P-2": "producer->injector",
+  "P-5": "producer->injector"
+ },
+ "expected_well_types": {
+  "I-1": "INJ",
+  "I-2": "INJ",
+  "P-1": "PROD",
+  "P-3": "PROD",
+  "P-4": "PROD",
+  "P-2": "MIXED",
+  "P-5": "MIXED"
+ },
+ "phase_A": {
+  "injectors": [
+   "I-1",
+   "I-2"
+  ],
+  "producers": [
+   "P-1",
+   "P-2",
+   "P-3",
+   "P-4",
+   "P-5"
+  ],
+  "f_ij": {
+   "I-1": {
+    "P-1": 0.3103,
+    "P-2": 0.3103,
+    "P-3": 0.1552,
+    "P-4": 0.0621,
+    "P-5": 0.0621
+   },
+   "I-2": {
+    "P-1": 0.0621,
+    "P-2": 0.0621,
+    "P-3": 0.1552,
+    "P-4": 0.3103,
+    "P-5": 0.3103
+   }
+  },
+  "tau_days": {
+   "P-1": 30.0,
+   "P-2": 32.0,
+   "P-3": 25.0,
+   "P-4": 31.0,
+   "P-5": 33.0
+  }
+ },
+ "phase_B": {
+  "injectors": [
+   "I-1",
+   "I-2",
+   "P-2",
+   "P-5"
+  ],
+  "producers": [
+   "P-1",
+   "P-3",
+   "P-4"
+  ],
+  "f_ij": {
+   "I-1": {
+    "P-1": 0.5294,
+    "P-3": 0.2647,
+    "P-4": 0.1059
+   },
+   "I-2": {
+    "P-1": 0.1059,
+    "P-3": 0.2647,
+    "P-4": 0.5294
+   },
+   "P-2": {
+    "P-1": 0.2571,
+    "P-3": 0.5143,
+    "P-4": 0.1286
+   },
+   "P-5": {
+    "P-1": 0.1286,
+    "P-3": 0.5143,
+    "P-4": 0.2571
+   }
+  },
+  "tau_days": {
+   "P-1": 26.0,
+   "P-3": 20.0,
+   "P-4": 27.0
+  }
+ },
+ "pvt": {
+  "Bo": 1.25,
+  "Bw": 1.02,
+  "ct_per_psi": 1.2e-05,
+  "mu_o_cp": 1.8,
+  "mu_w_cp": 0.5
+ },
+ "bhp_available": true,
+ "expected_behaviour": "loader derives MIXED with conversion at 2020-01; engine splits history at that date and fits two windows",
+ "acceptance": {
+  "well_type_exact": true,
+  "window_split_exact": true,
+  "phase_B_f_ij_tolerance_pct": 15
+ }
+}

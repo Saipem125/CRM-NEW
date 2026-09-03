@@ -1,0 +1,4 @@
+well_id,date,type,note
+P-2,2021-01-01,ESP_FREQ,frequency 52->58 Hz
+P-4,2023-02-01,CHOKE,choke 40->32/64
+I-3,2019-05-01,WORKOVER,acid stimulation

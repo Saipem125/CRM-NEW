@@ -63,9 +63,7 @@ class Case:
     def producers(self) -> list[str]:
         return list(self.truth["producers"])
 
-    def f_matrix(
-        self, injectors: list[str] | None = None, producers: list[str] | None = None
-    ) -> FArray:
+    def f_matrix(self, injectors: list[str] | None = None, producers: list[str] | None = None) -> FArray:
         """True f_ij as an (Ni, Np) array in the given (default: truth) well order."""
         inj = injectors or self.injectors
         prod = producers or self.producers
@@ -86,9 +84,7 @@ def load_case(name: str) -> Case:
         raise KeyError(f"unknown synthetic case {name!r}; known: {CASES}")
     d = case_dir(name)
     truth = json.loads((d / "truth.json").read_text(encoding="utf-8"))
-    pressure = (
-        pl.read_parquet(d / "pressure.parquet") if (d / "pressure.parquet").exists() else None
-    )
+    pressure = pl.read_parquet(d / "pressure.parquet") if (d / "pressure.parquet").exists() else None
     extra = {
         p.stem: pl.read_parquet(p)
         for p in d.glob("*.parquet")

@@ -1,0 +1,180 @@
+# Plain-language messaging map — architecture §17.
+# Every technical condition the engine can emit has exactly one user-facing sentence and one
+# suggested action. Keys are ConditionCode members (waterflood_app/messaging/conditions.py);
+# tests/test_condition_map.py asserts the two stay in sync. `{placeholders}` are filled from
+# Condition.context (well, value, threshold, ...). `severity` is the default; the emitter may raise it.
+version: 1
+
+# ---- the twelve rows of §17, in the table's order ---------------------------------------
+OD_LOW:
+  technical: "O_d < 6"
+  severity: warning
+  message: "History is too short for the number of injectors — results are indicative only."
+  action: "Extend the history or analyse a smaller group of wells."
+CRMIP_DATA_LOW:
+  technical: "CRMIP data/params < 2"
+  severity: info
+  message: "Not enough data for pair-level detail; using producer-level model."
+  action: "None needed."
+INJ_CV_LOW:
+  technical: "injection CV < 0.15"
+  severity: warning
+  message: "Injection rates barely change, so the reservoir's response cannot be separated well."
+  action: "Include periods with rate changes, or consider a short injection test."
+TAU_DT_LOW:
+  technical: "τ/Δt < 3"
+  severity: warning
+  message: "The reservoir responds faster than the data are sampled."
+  action: "Use daily metered data if available; otherwise treat time constants as approximate."
+SUM_F_HIGH:
+  technical: "Σf_ij > 1.15"
+  severity: info
+  message: "Producers receive more support than injection explains — likely aquifer support."
+  action: "Aquifer model applied automatically; confirm with pressure surveys if available."
+NO_BHP_EVENTS_HIGH:
+  technical: "no BHP, events ≥ 4/well"
+  severity: warning
+  message: "Frequent lift/choke changes without pressure data may be read as connectivity changes."
+  action: "Load ESP/gauge pressure or an events log."
+SIMULTANEOUS_PI:
+  technical: "simultaneous P+I steps"
+  severity: warning
+  message: "Well {well} reports production and injection in the same month."
+  action: "Check allocation for that month; the app treats it as a conversion month."
+GOR_ABOVE_RS:
+  technical: "GOR > R_s"
+  severity: warning
+  message: "Free gas is present; water-only balance is less reliable."
+  action: "Results marked reduced confidence; gas handling arrives in the next release."
+MULTISTART_SPREAD_HIGH:
+  technical: "multi-start spread > 30 %"
+  severity: warning
+  message: "Several different connectivity patterns fit equally well."
+  action: "Recommendation uses the robust posture; add data or pressure to resolve."
+FORECAST_OUT_OF_BAND_DQ_CHANGED:
+  technical: "forecast outside band, DQ changed"
+  severity: warning
+  message: "Well {well}'s recent data looks inconsistent with earlier records (possible meter/allocation issue)."
+  action: "Verify with production accounting before acting."
+CUSUM_SHIFT:
+  technical: "CUSUM shift in f_ij"
+  severity: info
+  message: "Connection between {injector} and {producer} has {direction} since {since}."
+  action: "Review for breakthrough; plan updated automatically."
+CONFIDENCE_LOW:
+  technical: "confidence LOW"
+  severity: warning
+  message: "Screening result — not for approval."
+  action: "See Details for what limits confidence."
+
+# ---- additional conditions emitted by L1/L2/L3 (§5, §6, §7, §8, §9) ------------------------
+UNMATCHED_WELL_IDS:
+  technical: "well IDs in one dataset absent from the rates table (§6 naming)"
+  severity: warning
+  message: "{count} well name(s) in the {dataset} table do not match any well in the rates table: {examples}."
+  action: "Check spelling or add the names to the alias table; these rows are ignored, not dropped silently."
+UNMAPPED_REQUIRED_COLUMN:
+  technical: "required column not mapped (§5)"
+  severity: error
+  message: "The {dataset} table has no column for '{field}'."
+  action: "Pick the column in the mapping step."
+UNPARSEABLE_DATES:
+  technical: "dates that could not be parsed (§5)"
+  severity: error
+  message: "{count} row(s) in the {dataset} table have dates that could not be read: {examples}."
+  action: "Use ISO dates (YYYY-MM-DD) or set the date format in the mapping step."
+PVT_CONSTANTS_ASSUMED:
+  technical: "constant Bo/Bw/Rs used instead of a PVT table (§6)"
+  severity: info
+  message: "Reservoir-volume conversion uses constant formation-volume factors (Bo = {bo}, Bw = {bw})."
+  action: "Load a PVT table if formation volume factors change with pressure."
+COMMINGLED_EQUAL_SPLIT:
+  technical: "commingled well split equally between reservoirs (§5)"
+  severity: warning
+  message: "Well {well} produces from {count} reservoirs with no allocation factor; its rates were split equally."
+  action: "Enter allocation factors in the category table or in advanced mode."
+PRESSURE_WHP_ONLY:
+  technical: "only wellhead pressure available (§8)"
+  severity: warning
+  message: "Only wellhead pressure is available for {well}; calculated bottom-hole pressure is approximate."
+  action: "Constant-pressure mode is used unless wellhead pressure varies strongly; load gauge or ESP data if possible."
+PRESSURE_STATIC_ONLY:
+  technical: "static surveys only, no flowing pressure (§8)"
+  severity: info
+  message: "Only static pressure surveys are available; they are used to check the model, not as flowing pressure."
+  action: "None needed; load gauge or ESP intake pressure to model lift changes explicitly."
+NO_PRESSURE:
+  technical: "no producer pressure (§8)"
+  severity: info
+  message: "No flowing pressure data; lift or choke changes must be in the events table."
+  action: "Load ESP/gauge pressure or an events log if lift settings changed during the history."
+OUTLIERS_REMOVED:
+  technical: "Hampel/MAD outliers replaced (§7)"
+  severity: info
+  message: "{count} unusual rate value(s) for {well} were replaced by a local median; the raw values are kept."
+  action: "None needed; see the data-quality report to review them."
+NEGATIVE_RATES_CAPPED:
+  technical: "negative or impossible rates capped at physical limits (§7)"
+  severity: warning
+  message: "{count} rate value(s) for {well} were below zero or above physical limits and were capped."
+  action: "Check the source data for sign or unit errors."
+HISTORY_SHORT:
+  technical: "fewer than 36 time steps (§8)"
+  severity: warning
+  message: "Only {steps} months of history are available; at least 36 are needed for a reliable result."
+  action: "Extend the history before acting on the recommendation."
+HISTORY_TOO_SHORT:
+  technical: "fewer than 8 time steps — nothing can be fitted (§9)"
+  severity: error
+  message: "Only {steps} time steps are available; no model can be fitted."
+  action: "Load a longer history."
+POINTS_PER_PARAM_LOW:
+  technical: "rate points < 4× parameters (§7)"
+  severity: warning
+  message: "The data are thin for the level of detail requested ({ratio:.1f} points per parameter)."
+  action: "Analyse a smaller group of wells or use a simpler model; the app has done this automatically."
+DATUM_DEPTH_MISSING:
+  technical: "no perforation depth for datum shift (§6)"
+  severity: warning
+  message: "Pressure for {well} could not be shifted to the project datum because its depth is unknown."
+  action: "Add the perforation depth to the coordinates table."
+MISSING_COORDINATES:
+  technical: "wells without coordinates (§5)"
+  severity: warning
+  message: "{count} well(s) have no coordinates: {examples}. Maps and distance-based checks exclude them."
+  action: "Add the wells to the coordinates table."
+CONVERSION_DETECTED:
+  technical: "well type MIXED with conversion date (§5)"
+  severity: info
+  message: "Well {well} changed from {from_role} to {to_role} in {when}; it is modelled as two wells around that date."
+  action: "None needed; confirm the date in the events table if it differs."
+LONG_SHUTIN:
+  technical: "shut-in longer than the threshold splits the history (§7)"
+  severity: info
+  message: "Well {well} was shut in for {months} months from {when}; the history is split there."
+  action: "None needed."
+TAU_AT_BOUND:
+  technical: "fitted τ at a bound (§9 plausibility)"
+  severity: warning
+  message: "The response time fitted for {well} sits at the limit of what the data can resolve."
+  action: "Treat the time constant as approximate; finer sampling or more history would resolve it."
+VARIANT_NOT_AVAILABLE:
+  technical: "eligible variant not implemented in this release"
+  severity: info
+  message: "The {variant} model would suit this data but is not available in this release."
+  action: "None needed; the next best available model was used."
+RESIDUAL_AUTOCORRELATED:
+  technical: "residual lag-1 autocorrelation > threshold (§9)"
+  severity: info
+  message: "The model misses some slow trends for {well}; forecasts may drift."
+  action: "None needed for screening; a residual correction is considered when history exceeds 120 months."
+BLIND_FIT_POOR:
+  technical: "blind-test R² below floor (§9, §16)"
+  severity: warning
+  message: "The model does not predict the held-out months well for {well}."
+  action: "Check recent events for that well; the recommendation excludes it."
+SUM_F_CONSTRAINT_ACTIVE:
+  technical: "Σ_j f_ij = 1 for an injector after joint refinement (§9)"
+  severity: info
+  message: "All of injector {well}'s water is accounted for by the connected producers."
+  action: "None needed."

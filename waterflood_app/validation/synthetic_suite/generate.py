@@ -271,8 +271,7 @@ def _events_frame(rows: list[dict[str, Any]]) -> pl.DataFrame:
 
 def _f_dict(inj_ids: list[str], prod_ids: list[str], f: FArray) -> dict[str, dict[str, float]]:
     return {
-        inj_ids[i]: {prod_ids[j]: round(float(f[i, j]), 6) for j in range(len(prod_ids))}
-        for i in range(len(inj_ids))
+        inj_ids[i]: {prod_ids[j]: round(float(f[i, j]), 6) for j in range(len(prod_ids))} for i in range(len(inj_ids))
     }
 
 
@@ -447,9 +446,7 @@ def build_streak_5x4(noise_pct: float = 0.0) -> SyntheticCase:
     prod_ids = [f"P-{k}" for k in range(1, 5)]
     xy_inj = np.array([[0.0, 0.0], [500.0, 0.0], [1000.0, 0.0], [1500.0, 0.0], [2000.0, 0.0]])
     xy_prod = np.array([[250.0, 600.0], [750.0, 600.0], [1250.0, 600.0], [1750.0, 600.0]])
-    f = distance_allocation(
-        xy_inj, xy_prod, length_scale=450.0, per_injector_sum=0.9, cutoff=1300.0
-    )
+    f = distance_allocation(xy_inj, xy_prod, length_scale=450.0, per_injector_sum=0.9, cutoff=1300.0)
     # streak: I-3 sends 75 % of its water to P-3; its other pairs share the remaining 15 %
     others = f[2].copy()
     others[2] = 0.0
@@ -483,10 +480,8 @@ def build_streak_5x4(noise_pct: float = 0.0) -> SyntheticCase:
         beta,
         expected_variant="CRMP",
         notes=[
-            "All gates pass (O_d=20, CV>0.15, tau/dt>=3); CRMP beats CRMIP on AICc because the "
-            "truth is CRMP.",
-            "CRMT eligible but under-fits per-well; aquifer variant not triggered (sum_f per "
-            "producer < 1.15).",
+            "All gates pass (O_d=20, CV>0.15, tau/dt>=3); CRMP beats CRMIP on AICc because the truth is CRMP.",
+            "CRMT eligible but under-fits per-well; aquifer variant not triggered (sum_f per producer < 1.15).",
         ],
     )
     truth["noise"]["production_pct"] = noise_pct
@@ -530,9 +525,7 @@ def build_aquifer_6x9(
             [1000.0, -600.0],
         ]
     )
-    f = distance_allocation(
-        xy_inj, xy_prod, length_scale=600.0, per_injector_sum=0.92, cutoff=1600.0
-    )
+    f = distance_allocation(xy_inj, xy_prod, length_scale=600.0, per_injector_sum=0.92, cutoff=1600.0)
     tau = rng.uniform(100.0, 220.0, size=9)
     alpha = rng.uniform(0.002, 0.005, size=9)
     beta = rng.uniform(1.15, 1.4, size=9)
@@ -579,8 +572,7 @@ def build_aquifer_6x9(
     }
     truth = _common_truth(
         "aquifer_6x9",
-        "6 injectors × 9 producers with a finite Fetkovich aquifer on the east edge (partial "
-        "water drive)",
+        "6 injectors × 9 producers with a finite Fetkovich aquifer on the east edge (partial water drive)",
         seed,
         sim,
         inj_ids,
@@ -591,15 +583,12 @@ def build_aquifer_6x9(
         beta,
         expected_variant="CRMPA",
         notes=[
-            "A plain CRMP fit sees per-producer sum_f well above 1.15 → aquifer gate fires → "
-            "CRMPA expected.",
-            "Static pressure surveys (quarterly) are provided to validate the aquifer/reservoir "
-            "pore volumes.",
+            "A plain CRMP fit sees per-producer sum_f well above 1.15 → aquifer gate fires → CRMPA expected.",
+            "Static pressure surveys (quarterly) are provided to validate the aquifer/reservoir pore volumes.",
         ],
     )
     truth["aquifer"] = {
-        "model": "Fetkovich tank: We'=J_aq(p_aq-p_r); dp_aq/dt=-We'/(ct*V_aq); "
-        "ct*V_r*dp_r/dt=We'+i-q",
+        "model": "Fetkovich tank: We'=J_aq(p_aq-p_r); dp_aq/dt=-We'/(ct*V_aq); ct*V_r*dp_r/dt=We'+i-q",
         "J_aq_bbl_d_psi": j_aq,
         "ct_V_aq_bbl_psi": ct_v_aq,
         "ct_V_r_bbl_psi": ct_v_r,
@@ -657,21 +646,15 @@ def build_converted_wells() -> SyntheticCase:
     n_steps, t_conv = 96, 48
     dates, dt = month_grid(n_steps)
     # window 1: 4 injectors → 6 producers
-    f1 = distance_allocation(
-        xy_inj, xy_prod, length_scale=550.0, per_injector_sum=0.9, cutoff=1500.0
-    )
+    f1 = distance_allocation(xy_inj, xy_prod, length_scale=550.0, per_injector_sum=0.9, cutoff=1500.0)
     tau1 = np.array([120.0, 130.0, 100.0, 140.0, 160.0, 170.0])
     alpha = np.array([0.003, 0.0032, 0.0028, 0.0035, 0.004, 0.0038])
     beta = np.array([1.25, 1.2, 1.3, 1.25, 1.2, 1.3])
     inj1 = injection_signal(rng, n_steps, 4, base=1300.0)
     # window 2: 6 injectors (I-1..4 + P-5, P-6 as injectors) → 4 producers
     xy_inj2 = np.vstack([xy_inj, xy_prod[4:]])
-    f2 = distance_allocation(
-        xy_inj2, xy_prod[:4], length_scale=550.0, per_injector_sum=0.9, cutoff=1500.0
-    )
-    f2[:4] = (
-        f1[:, :4] / f1[:, :4].sum(axis=1, keepdims=True) * 0.9
-    )  # same neighbours, re-normalised
+    f2 = distance_allocation(xy_inj2, xy_prod[:4], length_scale=550.0, per_injector_sum=0.9, cutoff=1500.0)
+    f2[:4] = f1[:, :4] / f1[:, :4].sum(axis=1, keepdims=True) * 0.9  # same neighbours, re-normalised
     tau2 = tau1[:4]
     inj_conv = injection_signal(rng, n_steps, 2, base=1100.0)
     inj_conv[:t_conv] = 0.0
@@ -701,9 +684,7 @@ def build_converted_wells() -> SyntheticCase:
     days_on_prod[t_conv, 4:] = 10.0
     days_on_prod[t_conv + 1 :, 4:] = 0.0
     # rates frame: P-5/P-6 carry both production (before) and injection (after) under one well_id
-    rates = _rates_frame(
-        dates, dt, inj_ids, prod_ids, inj1, q_oil, q_water, days_on_prod=days_on_prod
-    )
+    rates = _rates_frame(dates, dt, inj_ids, prod_ids, inj1, q_oil, q_water, days_on_prod=days_on_prod)
     conv_rows = pl.DataFrame(
         {
             "well_id": ["P-5"] * n_steps + ["P-6"] * n_steps,
@@ -830,9 +811,7 @@ def build_allocated_noisy() -> SyntheticCase:
     prod_ids = [f"P-{k}" for k in range(1, 5)]
     xy_inj = np.array([[0.0, 0.0], [600.0, 0.0], [1200.0, 0.0], [1800.0, 0.0], [2400.0, 0.0]])
     xy_prod = np.array([[300.0, 700.0], [900.0, 700.0], [1500.0, 700.0], [2100.0, 700.0]])
-    f = distance_allocation(
-        xy_inj, xy_prod, length_scale=500.0, per_injector_sum=0.88, cutoff=1400.0
-    )
+    f = distance_allocation(xy_inj, xy_prod, length_scale=500.0, per_injector_sum=0.88, cutoff=1400.0)
     tau = np.array([130.0, 160.0, 120.0, 190.0])
     alpha = np.array([0.003, 0.0034, 0.0029, 0.0031])
     beta = np.array([1.25, 1.2, 1.3, 1.25])
@@ -871,8 +850,7 @@ def build_allocated_noisy() -> SyntheticCase:
     inj = sim["inj"] * np.exp(0.02 * arng.standard_normal(sim["inj"].shape) - 0.5 * 0.02**2)
     truth = _common_truth(
         "allocated_noisy",
-        "5×4 field, monthly-allocated volumes with days-on (shut-ins, partial months) and 8 % "
-        "allocation noise",
+        "5×4 field, monthly-allocated volumes with days-on (shut-ins, partial months) and 8 % allocation noise",
         seed,
         sim,
         inj_ids,
@@ -885,10 +863,8 @@ def build_allocated_noisy() -> SyntheticCase:
         notes=[
             "Monthly-allocated (not metered): §8 says stay monthly and prefer CRMT/CRMP; CRMIP "
             "should be excluded or lose.",
-            "Rates are calendar-day (volume ÷ days in month); the loader must normalise by "
-            "days_on (§6).",
-            "Shut-in months exercise days_on=0 handling; they are reporting shut-ins layered on "
-            "the clean model.",
+            "Rates are calendar-day (volume ÷ days in month); the loader must normalise by days_on (§6).",
+            "Shut-in months exercise days_on=0 handling; they are reporting shut-ins layered on the clean model.",
         ],
     )
     truth["noise"] = {
@@ -900,9 +876,7 @@ def build_allocated_noisy() -> SyntheticCase:
     truth["optimizer"] = true_optimal_reallocation(
         f, tau, sim["q_liq"][-1], sim["cwi"][-1], alpha, beta, sim["inj"][-1]
     )
-    rates = _rates_frame(
-        sim["dates"], dt, inj_ids, prod_ids, inj, q_oil, q_water, days_on_prod=days_on
-    )
+    rates = _rates_frame(sim["dates"], dt, inj_ids, prod_ids, inj, q_oil, q_water, days_on_prod=days_on)
     ids = inj_ids + prod_ids
     coords = _coords_frame(ids, np.vstack([xy_inj, xy_prod]))
     category = _category_frame(ids, ["B1"] * len(ids), "ALLOC")
@@ -959,8 +933,7 @@ def build_sectored_60() -> SyntheticCase:
     sim = _simulate_crmp_case(rng, n_steps, inj_ids, prod_ids, f, tau, alpha, beta, inj_base=900.0)
     truth = _common_truth(
         "sectored_60",
-        "60 wells: two sealed sectors (A west, B east) separated by a fault at x=3000 m; 24 "
-        "injectors, 36 producers",
+        "60 wells: two sealed sectors (A west, B east) separated by a fault at x=3000 m; 24 injectors, 36 producers",
         seed,
         sim,
         inj_ids,
@@ -973,8 +946,7 @@ def build_sectored_60() -> SyntheticCase:
         notes=[
             "Sectorization (§7) must split A and B; any cross-fault f_ij > 0.02 is a failure.",
             "Runtime case: full tournament per sector should run in parallel (joblib).",
-            "O_d is 4.8 for the whole field (fails the gate) but 9.2 per sector (passes) — "
-            "sectorization is required.",
+            "O_d is 4.8 for the whole field (fails the gate) but 9.2 per sector (passes) — sectorization is required.",
         ],
         n_inj_per_sector=12,
     )

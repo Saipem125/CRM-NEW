@@ -1,0 +1,100 @@
+{
+ "case": "streak_5x4_noisy",
+ "n_months": 120,
+ "injectors": [
+  "I-1",
+  "I-2",
+  "I-3",
+  "I-4",
+  "I-5"
+ ],
+ "producers": [
+  "P-1",
+  "P-2",
+  "P-3",
+  "P-4"
+ ],
+ "f_ij": {
+  "I-1": {
+   "P-1": 0.5641,
+   "P-2": 0.217,
+   "P-3": 0.0762,
+   "P-4": 0.0627
+  },
+  "I-2": {
+   "P-1": 0.2123,
+   "P-2": 0.5519,
+   "P-3": 0.0613,
+   "P-4": 0.0746
+  },
+  "I-3": {
+   "P-1": 0.1056,
+   "P-2": 0.1056,
+   "P-3": 0.1056,
+   "P-4": 0.6333
+  },
+  "I-4": {
+   "P-1": 0.0729,
+   "P-2": 0.06,
+   "P-3": 0.5396,
+   "P-4": 0.2075
+  },
+  "I-5": {
+   "P-1": 0.0634,
+   "P-2": 0.0771,
+   "P-3": 0.2193,
+   "P-4": 0.5703
+  }
+ },
+ "tau_days": {
+  "P-1": 28.0,
+  "P-2": 35.0,
+  "P-3": 22.0,
+  "P-4": 9.0
+ },
+ "J_bbl_d_psi": {
+  "P-1": 1.1,
+  "P-2": 0.9,
+  "P-3": 1.3,
+  "P-4": 1.6
+ },
+ "oilcut": {
+  "model": "power_law_WOR_CWI",
+  "alpha": [
+   2.5e-07,
+   3e-07,
+   2e-07,
+   4e-07
+  ],
+  "beta": [
+   1.5,
+   1.55,
+   1.5,
+   1.6
+  ]
+ },
+ "streak": "I-3 -> P-4 (f=0.63, tau_P4=9 d)",
+ "pvt": {
+  "Bo": 1.25,
+  "Bw": 1.02,
+  "ct_per_psi": 1.2e-05,
+  "mu_o_cp": 1.8,
+  "mu_w_cp": 0.5
+ },
+ "bhp_available": true,
+ "noise": {
+  "production_pct": 5.0,
+  "allocation_pct": 0.0
+ },
+ "expected_tournament_winner": "CRMP",
+ "expected_runner_up": "CRMIP",
+ "acceptance": {
+  "streak_pair_must_be_largest_f_into_P4": true,
+  "tau_tolerance_pct": 35,
+  "blind_MAPE_max_pct": 7,
+  "note": "blind R2 is informational only when noise ~ signal variance in the blind window; evaluate on producing days (days_on>0) with per-producing-day rates"
+ },
+ "optimizer_check": {
+  "note": "moving water from I-1/I-2 toward I-3 should raise oil; proportional->optimized gain expected 6-12% over 12 months at constant total injection"
+ }
+}

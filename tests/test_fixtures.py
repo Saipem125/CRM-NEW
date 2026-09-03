@@ -100,14 +100,10 @@ def test_pywaterflood_recovers_streak_5x4() -> None:
     big = f_true >= F_SMALL
     rel = np.abs(f_hat[big] - f_true[big]) / f_true[big]
     absd = np.abs(f_hat[~big] - f_true[~big])
-    assert rel.max() <= F_REL_TOL, (
-        f"f_ij relative error {rel.max():.3f} > {F_REL_TOL}\n{f_hat}\n{f_true}"
-    )
+    assert rel.max() <= F_REL_TOL, f"f_ij relative error {rel.max():.3f} > {F_REL_TOL}\n{f_hat}\n{f_true}"
     assert absd.max() <= F_ABS_TOL, f"barrier pairs not recovered: {absd.max():.3f}"
     tau_rel = np.abs(tau - tau_true) / tau_true
-    assert tau_rel.max() <= TAU_REL_TOL, (
-        f"τ relative error {tau_rel.max():.3f} > {TAU_REL_TOL}\n{tau}\n{tau_true}"
-    )
+    assert tau_rel.max() <= TAU_REL_TOL, f"τ relative error {tau_rel.max():.3f} > {TAU_REL_TOL}\n{tau}\n{tau_true}"
     streak = case.truth["streak"]
     i, j = (
         case.injectors.index(streak["injector"]),

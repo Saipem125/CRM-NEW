@@ -1,0 +1,83 @@
+# Engine thresholds — architecture §7, §8, §9, §16. Nothing in code; everything here.
+# The SHA-256 of this file (plus any project overrides) is the "config hash" stored with every run.
+version: 1
+
+gates: # §7 identifiability gates and §9 eligibility
+  od_min: 6.0 # O_d = M / (I + 1)
+  od_regression_floor: 3.0 # below this even MLR is hopeless (Tournament Selector)
+  points_per_param_min: 4.0 # rate points ≥ 4× parameters
+  points_per_param_floor: 2.0 # absolute floor (CRMIP excluded below)
+  inj_cv_min: 0.15 # injection-signal coefficient of variation
+  tau_over_dt_min: 3.0 # §8: τ/Δt ≥ 3 minimum
+  tau_over_dt_preferred: 5.0 # §8: Δt ≤ τ/5 preferred
+  sum_f_aquifer: 1.15 # field support ratio ΣQ/ΣI > 1.15 → aquifer variant eligible
+  injector_sum_f_max: 1.15 # unconstrained quick-CRMP Σ_j f_ij for any injector above this → external support
+  flank_sum_f_min: 1.15 # informational: per-producer apparent Σ_i f_ij above this ...
+  flank_over_median_min: 1.3 # ... and above this × the median of the others → named as flank wells
+  events_per_well_crossflow: 4 # events ≥ 4/well → crossflow variant
+  history_ml_min: 120 # history ≥ 120 steps → ML residual layer
+  water_cut_two_phase_max: 0.5 # mean water cut < 0.5 → two-phase coupled
+  min_steps: 36 # §8: minimum history for a reliable result
+  min_steps_hard: 8 # below this nothing can be fitted
+
+split: # §7 train / blind
+  blind_fraction: 0.2 # last 20–25 % of each window held out
+  min_blind_steps: 6
+
+cleaning: # §7 Hampel / MAD
+  hampel_window: 7 # odd, in time steps
+  hampel_k: 5.0 # MAD multiples (5: only gross spikes; allocation noise must survive)
+  hampel_min_rel_dev: 0.25 # and the spike must deviate ≥ 25 % from the local median
+  max_water_cut: 1.0
+  long_shutin_months: 6 # a shut-in at least this long splits the history
+
+events:
+  window_break_types: [WORKOVER, CONVERSION, INFILL, RECOMPLETION]
+  min_window_steps: 24
+
+sectors: # §7 distance graph
+  auto_above_wells: 40
+  distance_cutoff_factor: 2.5 # × median nearest injector–producer distance
+  respect_blocks: true # a category "block" boundary is a hard boundary
+
+pressure: # §8
+  esp_hampel_window: 5
+  whp_variation_min_frac: 0.15 # WHP-only used as pwf only if it varies more than this
+  mixture_gradient_psi_per_ft: {water: 0.433, oil: 0.35}
+
+solver: # §9 in-house CRM solver
+  multistart: 8
+  tau_min_dt_multiple: 1.0 # τ ≥ Δt_min × this
+  tau_max_days: 3650
+  sparsity_lambda: 0.0 # L1 penalty on f_ij, in units of (rate²) × f
+  distance_cutoff_factor: null # null → no distance mask; else × median I–P distance
+  maxiter: 400
+  ftol: 1.0e-10
+  joint_refine_if_sum_f_exceeds: 1.0 # per-injector Σ_j f_ij bound
+  free_primary: false # false: Atlas form q(t0)e^(-t/τ); true: fitted g_p, τ_p (pywaterflood form)
+  quick_fit_distance_factor: 2.5 # quick-CRMP diagnostic mask: pairs farther than this × median nearest I–P distance are off
+  n_jobs: -1 # joblib per-sector / per-producer parallelism
+
+uq: # §9, §13
+  ensemble_keep_within: 0.05 # keep starts with SSE ≤ (1 + this) × best
+  spread_warn: 0.30 # §17 row "multi-start spread > 30 %"
+
+verify: # §9
+  blind_r2_floor_noise_free: 0.90
+  blind_r2_floor_noisy: 0.75
+  autocorr_lag1_warn: 0.5
+  blind_mape_poor_pct: 15.0 # per-producer BLIND_FIT_POOR when blind MAPE exceeds this and blind R² < 0.5
+  mape_producing_days_only: true
+
+tournament: # §9 composite score, weights sum to 1
+  weights: {blind_r2: 0.35, mape: 0.15, aicc: 0.20, stability: 0.15, plausibility: 0.10, runtime: 0.05}
+  ensemble_top_n: 3
+  ensemble_if_score_gap_below: 0.03 # score-weighted ensemble when the top models are this close
+
+confidence: # §9 badge
+  high: {blind_r2_min: 0.85, spread_max: 0.15, max_warnings: 0}
+  medium: {blind_r2_min: 0.70, max_warnings: 1}
+
+units:
+  default_system: field # field | metric
+  datum_gradient_psi_per_ft: 0.433
