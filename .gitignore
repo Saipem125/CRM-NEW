@@ -10,3 +10,12 @@ dist/
 .env
 *.sqlite
 node_modules/
+
+# UI / tooling
+ui/node_modules/
+ui/dist/
+ui/playwright-report/
+ui/test-results/
+../tools/
+wfo_store/
+wfo_store_dev/

@@ -260,6 +260,19 @@ def test_run_results_and_scenarios(client: TestClient, people: dict[str, dict[st
         client.get("/runs", params={"project_id": run["pid"]}, headers=people["view"]).json()[0]["id"] == run["run_id"]
     )
     assert client.get(f"/runs/{run['run_id']}", headers=people["other"]).status_code == 403
+    det = client.get(f"/runs/{run['run_id']}/details", headers=people["view"]).json()
+    sec = det["sectors"][0]
+    assert det["confidence"] == "HIGH" and det["data_quality"]["traffic_light"] in ("green", "amber")
+    assert len(sec["producers"]) == 4 and len(sec["producers"][0]["model"]) == len(sec["dates"]) == 120
+    assert (
+        sec["model"]["variant"] == "crmp"
+        and len(sec["model"]["f_ij"]) == 5
+        and len(sec["model"]["pair_confidence"]) == 5
+    )
+    assert sec["forecast"]["plan"]["p50"] and len(sec["forecast"]["dates"]) == 24
+    assert sec["blind_start_index"] == 96 and sec["dt_tau"]["tau_over_dt"] > 3
+    assert sec["recommendation"]["actions"] and sec["forecast"]["injector_efficiency"]["injectors"]
+    assert client.get("/runs/nope/details", headers=people["view"]).status_code == 404
     sc = client.post(
         "/scenarios",
         json={"run_id": run["run_id"], "kind": "shut_in", "params": {"injector": "I-3"}},

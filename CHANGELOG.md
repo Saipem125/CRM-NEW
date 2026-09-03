@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.0] — 2026-09-03 — Milestone 4: UI
+
+- `ui/`: Vite + React 18 + TypeScript app with the seven screens (Loader, Run, Result, Details drawer, Workflow, Admin, Advanced), §4.1 design tokens, one Plotly template (forecast fan, history match with residuals, Δt/τ, leaderboard, injector efficiency, tornado), D3 well map with connectivity arrows and connectivity matrix, pipeline and state-machine schematics, virtualised sortable tables, plain-language errors from the messaging map, Playwright end-to-end tests with committed screenshots.
+- API: `GET /runs/{id}/details` result bundle; display-unit conversion at the edge.
+
 ## [0.3.0] — 2026-09-03 — Milestone 3: API and users
 
 - `api/`: FastAPI application (`/auth`, `/users`, `/projects`, `/connections`, `/mapping`, `/wells`, `/runs` with async jobs, `/scenarios`, `/recommendations/{id}` transitions, `/evaluations`, `/admin/thresholds`, `/admin/audit`, `/webhooks`, `/health`), bearer-token auth with roles, acting-role header, SSO pass-through, bootstrap admin, persistent job runner, signed webhooks.

@@ -63,6 +63,9 @@ CREATE TABLE IF NOT EXISTS webhooks (
 CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY, value_json TEXT, updated_at TEXT
 );
+CREATE TABLE IF NOT EXISTS bundles (
+    run_id TEXT PRIMARY KEY, bundle_json TEXT, created_at TEXT
+);
 """
 
 

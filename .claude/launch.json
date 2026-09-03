@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "api", "runtimeExecutable": "python", "runtimeArgs": ["scripts/dev_api.py"], "port": 8000 },
+    { "name": "ui", "runtimeExecutable": "C:/code/test/tools/node/node.exe", "runtimeArgs": ["ui/node_modules/vite/bin/vite.js", "--config", "ui/vite.config.ts", "--port", "5173", "--strictPort"], "port": 5173 }
+  ]
+}

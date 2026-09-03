@@ -126,6 +126,19 @@ class RunRegistry:
             for r in rows
         ]
 
+    # ---- result bundles (what the UI draws) --------------------------------------------
+    def save_bundle(self, run_id: str, bundle: dict[str, Any]) -> None:
+        with self.store.conn() as c:
+            c.execute(
+                "INSERT OR REPLACE INTO bundles VALUES (?,?,?)",
+                (run_id, json.dumps(bundle, default=str), datetime.now(UTC).isoformat()),
+            )
+
+    def bundle(self, run_id: str) -> dict[str, Any] | None:
+        with self.store.conn() as c:
+            row = c.execute("SELECT bundle_json FROM bundles WHERE run_id=?", (run_id,)).fetchone()
+        return None if row is None else dict(json.loads(row[0]))
+
     # ---- recommendations ---------------------------------------------------------------
     def save_recommendation(
         self, rec_id: str, project_id: str, run_id: str, state: str, payload: dict[str, Any]

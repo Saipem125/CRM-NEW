@@ -233,6 +233,10 @@ def create_app(root: Path | str | None = None, cfg: Config | None = None, sync_j
     def run_result(run_id: str, p: P) -> dict[str, Any]:
         return svc.run_result(p, run_id)
 
+    @app.get("/runs/{run_id}/details", tags=["runs"], summary="Everything the Result and Details screens draw (§2, §9)")
+    def run_details(run_id: str, p: P) -> dict[str, Any]:
+        return svc.run_details(p, run_id)
+
     # ---- scenarios ---------------------------------------------------------------------------
     @app.post("/scenarios", tags=["scenarios"])
     def scenario(body: S.ScenarioRequest, p: P) -> dict[str, Any]:

@@ -21,6 +21,7 @@ import numpy as np
 import polars as pl
 
 from waterflood_app.api.auth import AuthError, Principal, TokenService, UserStore, require
+from waterflood_app.api.bundle import Display, build_bundle, display_recommendation
 from waterflood_app.api.jobs import JobHandle, JobRunner
 from waterflood_app.config import Config, load_config
 from waterflood_app.engine import RunResult, run_engine
@@ -496,6 +497,10 @@ class Service:
         summary["recommendations"] = {sid: (r.to_dict() if r is not None else None) for sid, r in recs.items()}
         summary["optimizer_errors"] = run.meta.get("optimizer_errors", {})
         self.registry.register(run_id, pid, run.data_hash, run.config_hash, run.seed, summary, version=code_version())
+        h.progress(0.9, "preparing results")
+        self.registry.save_bundle(
+            run_id, build_bundle(run, recs, cfg, pid, {**dict(req), "unit_system": proj.get("unit_system", "field")})
+        )
         for s in run.sectors:
             w = s.tournament.winner
             if w is not None:
@@ -531,6 +536,16 @@ class Service:
             raise NotFoundError("run not found")
         self._project(p, str(r["project_id"]))
         return r
+
+    def run_details(self, p: Principal, run_id: str) -> dict[str, Any]:
+        r = self.registry.get(run_id)
+        if r is None:
+            raise NotFoundError("run not found")
+        self._project(p, str(r["project_id"]))
+        b = self.registry.bundle(run_id)
+        if b is None:
+            raise NotFoundError("no result bundle for this run")
+        return b
 
     def list_runs(self, p: Principal, project_id: str) -> list[dict[str, Any]]:
         self._project(p, project_id)
@@ -665,10 +680,16 @@ class Service:
     def get_recommendation(self, p: Principal, rid: str) -> dict[str, Any]:
         rec, row = self._load_rec(rid)
         self._project(p, str(row["project_id"]))
+        d = Display(str(self.store.project_config(str(row["project_id"])).get("unit_system", "field")))
         out = dict(row["payload"])
         out.update(rec.to_dict())
         out["project_id"] = row["project_id"]
         out["run_id"] = row["run_id"]
+        out["units"] = d.units
+        out["recommended_rates"] = {w: float(v) * d.rate for w, v in rec.recommended_rates.items()}
+        out["implemented_rates"] = {w: float(v) * d.rate for w, v in rec.implemented_rates.items()}
+        if out.get("recommendation"):
+            out["recommendation"] = display_recommendation(out["recommendation"], d)
         return out
 
     def list_recommendations(self, p: Principal, project_id: str) -> list[dict[str, Any]]:
@@ -708,7 +729,8 @@ class Service:
         elif action == "implement":
             if not actual_rates:
                 raise WorkflowError("implement needs the actual rates set in the field")
-            rec.implement(actor, actual_rates, implemented_at, note)
+            d = Display(str(self.store.project_config(str(row["project_id"])).get("unit_system", "field")))
+            rec.implement(actor, {w: float(v) / d.rate for w, v in actual_rates.items()}, implemented_at, note)
         else:
             raise WorkflowError(f"unknown action {action!r}")
         self._save_rec(rec, row)
@@ -746,6 +768,8 @@ class Service:
         if rec.state not in (State.IMPLEMENTED, State.EVALUATED):
             raise WorkflowError("evaluations need an implemented recommendation")
         members = np.asarray(row["payload"].get("members_cum_oil_plan") or [0.0], dtype=float)
+        d = Display(str(self.store.project_config(str(row["project_id"])).get("unit_system", "field")))
+        realised_oil = float(realised_oil) / d.volume  # display volume → internal
         # scale the horizon cumulative oil to the evaluation window (proportional share of the horizon)
         horizon = int(self.effective_config(str(row["project_id"])).get("optimize.horizon_months", 24))
         members_window = members * min(months_after / horizon, 1.0)

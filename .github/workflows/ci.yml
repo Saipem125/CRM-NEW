@@ -15,3 +15,16 @@ jobs:
       - run: ruff check .
       - run: mypy
       - run: pytest
+
+  ui-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: npm, cache-dependency-path: ui/package-lock.json }
+      - run: npm ci
+        working-directory: ui
+      - run: npx tsc -b
+        working-directory: ui
+      - run: npx vite build
+        working-directory: ui
