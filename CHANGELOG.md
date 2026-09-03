@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.0] — 2026-09-03 — Milestone 3: API and users
+
+- `api/`: FastAPI application (`/auth`, `/users`, `/projects`, `/connections`, `/mapping`, `/wells`, `/runs` with async jobs, `/scenarios`, `/recommendations/{id}` transitions, `/evaluations`, `/admin/thresholds`, `/admin/audit`, `/webhooks`, `/health`), bearer-token auth with roles, acting-role header, SSO pass-through, bootstrap admin, persistent job runner, signed webhooks.
+- `ingest/sql.py`: SQLAlchemy connectors (SQLite, PostgreSQL, SQL Server, Oracle, MySQL), secrets store, audited query override.
+- Store schema extended (users, connections, mappings, jobs, webhooks, settings); project-level and global threshold overrides.
+
 ## [0.2.0] — 2026-09-03 — Milestone 2: extended models, optimization, workflow
 
 - `models/`: CRM–Aquifer (CRMPA, Fetkovich tank as a tank-driven pseudo-injector), two-phase coupled CRM (Corey fractional flow, τ(t)), crossflow / productivity-coefficient CRM, MPI prior and new-well bridge (§11), forecast continuation with P10/P50/P90 fans, rolling windows and CUSUM change alerts (§10).

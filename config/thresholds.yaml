@@ -129,6 +129,13 @@ ramping: # §14
   revert_water_cut_jump: 0.05 # absolute jump in water cut that triggers "revert if"
   revert_pressure_margin_frac: 0.05
 
+api: # §18
+  jwt_expires_hours: 8
+  sso_header: X-SSO-User # trusted only when WFO_SSO_TRUST=1 (corporate SSO pass-through)
+  bootstrap_admin_user: admin # first start only; password from WFO_ADMIN_PASSWORD or generated and printed once
+  job_workers: 2
+  webhook_timeout_s: 5
+
 workflow: # §3
   separation_policy: log # log | enforce
   evaluation_months: [3, 6]

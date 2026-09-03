@@ -43,6 +43,26 @@ CREATE TABLE IF NOT EXISTS audit (
 CREATE TABLE IF NOT EXISTS validation (
     id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, at TEXT, payload_json TEXT
 );
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY, username TEXT UNIQUE, display_name TEXT, pw_hash TEXT,
+    roles_json TEXT, assets_json TEXT, active INTEGER, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS connections (
+    id TEXT PRIMARY KEY, project_id TEXT, spec_json TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS mappings (
+    project_id TEXT PRIMARY KEY, connection_id TEXT, mapping_json TEXT, updated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS jobs (
+    id TEXT PRIMARY KEY, kind TEXT, status TEXT, progress REAL, message TEXT,
+    created_at TEXT, updated_at TEXT, result_id TEXT, error TEXT, payload_json TEXT
+);
+CREATE TABLE IF NOT EXISTS webhooks (
+    id TEXT PRIMARY KEY, url TEXT, events_json TEXT, secret TEXT, active INTEGER, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY, value_json TEXT, updated_at TEXT
+);
 """
 
 
@@ -74,6 +94,27 @@ class ProjectStore:
                 "INSERT OR REPLACE INTO projects VALUES (?,?,?,?)",
                 (project_id, asset, _now(), json.dumps(config, sort_keys=True, default=str)),
             )
+
+    def update_project_config(self, project_id: str, config: dict[str, Any]) -> None:
+        with self.conn() as c:
+            c.execute(
+                "UPDATE projects SET config_json=? WHERE id=?",
+                (json.dumps(config, sort_keys=True, default=str), project_id),
+            )
+
+    def list_projects(self) -> list[dict[str, Any]]:
+        with self.conn() as c:
+            rows = c.execute("SELECT id, asset, created_at, config_json FROM projects ORDER BY created_at").fetchall()
+        return [{"id": r[0], "asset": r[1], "created_at": r[2], "config": json.loads(r[3])} for r in rows]
+
+    def get_setting(self, key: str, default: Any = None) -> Any:
+        with self.conn() as c:
+            row = c.execute("SELECT value_json FROM settings WHERE key=?", (key,)).fetchone()
+        return default if row is None else json.loads(row[0])
+
+    def set_setting(self, key: str, value: Any) -> None:
+        with self.conn() as c:
+            c.execute("INSERT OR REPLACE INTO settings VALUES (?,?,?)", (key, json.dumps(value, default=str), _now()))
 
     def project_config(self, project_id: str) -> dict[str, Any]:
         with self.conn() as c:
