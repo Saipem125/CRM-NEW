@@ -13,8 +13,12 @@ export interface Job { id: string; kind: string; status: "queued" | "running" | 
 export interface Condition { code: string; severity: "info" | "warning" | "error"; scope: string; message: string; action: string; technical: string; context: Record<string, unknown> }
 
 export interface ActionItem { well: string; facility: string | null; rate_from: number; rate_to: number; step_this_week: number; weeks_to_target: number; target_date: string; setting_hint: string; expected_oil_gain: number; revert_if: string; marginal_value: number }
+export interface TornadoItem { label: string; low: number; high: number }
+export interface Writeback { id: string; recommendation_id: string; project_id: string; connection_id: string; target: string; kind: string; n_rows: number; table: string; effective_date: string; actor: string; acting_role: string; created_at: string; rows: Array<Record<string, unknown>>; note: string }
+export interface Ready { status: string; ok: boolean; version: string; code_version: string; uptime_s: number; writeback_enabled: boolean; checks: Record<string, Record<string, unknown>> }
 export interface Recommendation {
   sector: string; confidence: Confidence; posture: string; posture_note: string | null;
+  tornado?: { unit: string; base: number; items: TornadoItem[] };
   optimization: { objective: string; posture: string; value_plan: number; value_base: number; gain_vs_base_pct: number; gain_vs_equal_split_pct: number; rates: Record<string, number[]>; base_rates: Record<string, number>; marginal_value: Record<string, number>; converged: boolean; notes: string[] };
   actions: ActionItem[]; cum_oil_plan_p10_p50_p90: number[]; cum_oil_base_p10_p50_p90: number[]; notes: string[];
 }

@@ -16,6 +16,8 @@ export default function RunScreen() {
   const [objective, setObjective] = useState<"oil" | "npv" | "min_water">("oil");
   const [posture, setPosture] = useState<"aggressive" | "balanced" | "robust">("balanced");
   const [horizon, setHorizon] = useState(24);
+  const [econ, setEcon] = useState({ oil_price_usd_per_bbl: "70", water_handling_usd_per_bbl: "1.5", injection_usd_per_bbl: "0.8", discount_rate_per_year: "0.10" });
+  const [targetOil, setTargetOil] = useState("");
   const [job, setJob] = useState<Job | null>(null);
   const [err, setErr] = useState<{ message: string; action: string } | null>(null);
   const [runs, setRuns] = useState<RunRow[]>([]);
@@ -31,6 +33,8 @@ export default function RunScreen() {
     setErr(null);
     try {
       const body: Record<string, unknown> = { project_id: project.id, wells, objective, posture, horizon_months: horizon };
+      if (objective === "npv") body.economics = Object.fromEntries(Object.entries(econ).map(([k, v]) => [k, Number(v)]));
+      if (objective === "min_water" && targetOil) body.target_oil = Number(targetOil);
       if (advanced && canAct(role, "reviewer")) Object.assign(body, advanced);
       const j = await api.runs.submit(body);
       setJob(j);
@@ -65,6 +69,17 @@ export default function RunScreen() {
           <button className="primary" onClick={start} disabled={!!running || !canAct(role, "engineer", "reviewer")} style={{ padding: "10px 22px", fontSize: 15 }} data-testid="run-button">{running ? "Running…" : "Run"}</button>
         </div>
         <div className="sub">Balanced optimises expected oil minus half a standard deviation across the model ensemble; robust maximises the worst case and never accepts a plan that loses oil in any realization (§13). LOW confidence forces robust.</div>
+        {objective === "npv" && (
+          <div className="row" style={{ gap: 16, flexWrap: "wrap" }} data-testid="economics">
+            {([["oil_price_usd_per_bbl", "Oil price [USD/bbl]"], ["water_handling_usd_per_bbl", "Water handling [USD/bbl]"], ["injection_usd_per_bbl", "Injection cost [USD/bbl]"], ["discount_rate_per_year", "Discount rate [1/yr]"]] as const).map(([k, label]) => (
+              <label key={k} className="field"><span className="f">{label}</span><input className="mono" style={{ width: 110 }} value={econ[k]} onChange={(e) => setEcon({ ...econ, [k]: e.target.value })} inputMode="decimal" /></label>
+            ))}
+            <span className="sub">Used by the NPV objective and the sensitivity tornado in the report (§12).</span>
+          </div>
+        )}
+        {objective === "min_water" && (
+          <label className="field"><span className="f">Target cumulative oil over the horizon [{project.unit_system === "metric" ? "m³" : "bbl"}]</span><input className="mono" style={{ width: 160 }} value={targetOil} onChange={(e) => setTargetOil(e.target.value)} inputMode="decimal" placeholder="hold-current oil if empty" /></label>
+        )}
       </section>
       {(job || err) && (
         <section className="card stack" aria-label="Progress" aria-live="polite">

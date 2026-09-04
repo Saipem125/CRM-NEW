@@ -16,6 +16,7 @@ from waterflood_app.optimize.economics import Economics
 from waterflood_app.optimize.objectives import Objective, make_objective
 from waterflood_app.optimize.posture import effective_posture
 from waterflood_app.optimize.ramping import RampPlan
+from waterflood_app.optimize.sensitivity import economic_tornado, oil_tornado
 from waterflood_app.optimize.solvers import OptimizationResult, optimize_plan
 
 
@@ -50,6 +51,7 @@ class SectorRecommendation:
     fan_plan: dict[str, Any]
     fan_base: dict[str, Any]
     notes: list[str] = field(default_factory=list)
+    tornado: dict[str, Any] = field(default_factory=dict)  # §12 economic sensitivity (report tornado)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -70,6 +72,7 @@ class SectorRecommendation:
                 self.fan_base["cum_oil_p90"],
             ],
             "notes": self.notes,
+            "tornado": self.tornado,
         }
 
 
@@ -91,11 +94,8 @@ def optimize_sector(
         raise RuntimeError("no fitted model in this sector")
     conf = run.tournament.confidence
     post, note = effective_posture(posture, conf, cfg)
-    obj = (
-        objective
-        if isinstance(objective, Objective)
-        else make_objective(objective, economics or Economics.from_config(cfg), target_oil)
-    )
+    econ = economics or Economics.from_config(cfg)
+    obj = objective if isinstance(objective, Objective) else make_objective(objective, econ, target_oil)
     current = models[0].current_injection(int(cfg.get("optimize.current_months", 1)))
     cons = constraints or PlanConstraints.from_config(current, cfg)
     res = optimize_plan(
@@ -108,6 +108,11 @@ def optimize_sector(
     }
     actions, rp = build_action_list(res, run.grid.injectors, conf, cfg, start or run.grid.dates[-1], facilities, wc_now)
     notes = list(res.notes)
+    tornado = (
+        economic_tornado(econ, res.forecasts_plan, res.forecasts_base, post, cfg, weights)
+        if obj.unit == "currency"
+        else oil_tornado(res.forecasts_plan, res.forecasts_base, post, cfg)
+    )
     if conf == "LOW":
         notes.append("screening only — LOW confidence, cannot be approved without reviewer override")
     return SectorRecommendation(
@@ -123,4 +128,80 @@ def optimize_sector(
         fan_plan=fan(res.forecasts_plan),
         fan_base=fan(res.forecasts_base),
         notes=notes + ([f"wells: {', '.join(wells)}"] if wells != list(run.grid.injectors) else []),
+        tornado=tornado,
     )
+
+
+def optimize_sectors(
+    runs: list[SectorRun],
+    cfg: Config,
+    objective: str = "oil",
+    posture: str | None = None,
+    horizon_months: int | None = None,
+    economics: Economics | None = None,
+    target_oil: float | None = None,
+    seed: int = 0,
+) -> tuple[dict[str, SectorRecommendation], dict[str, str]]:
+    """Optimize every sector, in parallel processes when there are several (large fields).
+
+    Returns the recommendations by sector id and, separately, the plain error text of sectors whose
+    optimisation failed (a failed sector never blocks the others).
+    """
+    import os
+
+    from joblib import Parallel, delayed
+
+    def one(run: SectorRun) -> tuple[str, SectorRecommendation | None, str | None]:
+        try:
+            return (
+                run.sector.id,
+                optimize_sector(
+                    run, cfg, objective, posture, horizon_months, economics=economics, target_oil=target_oil, seed=seed
+                ),
+                None,
+            )
+        except Exception as exc:
+            return run.sector.id, None, f"{type(exc).__name__}: {exc}"
+
+    # Sequential by default: with the forecast continuing from the cached history state a sector
+    # optimises in seconds, and a loky pool per sector was measured slower (pickling + cold caches).
+    if bool(cfg.get("solver.sector_parallel", False)) and len(runs) > 1:
+        n_jobs = int(cfg.get("solver.n_jobs", -1) or -1)
+        n_workers = min(len(runs), (os.cpu_count() or 1) if n_jobs < 0 else n_jobs)
+        inner = cfg.with_overrides({"solver": {"n_jobs": 1}})
+        results = Parallel(n_jobs=n_workers, prefer="processes")(
+            delayed(_optimize_one)(r, inner, objective, posture, horizon_months, economics, target_oil, seed)
+            for r in runs
+        )
+    else:
+        results = [_optimize_one(r, cfg, objective, posture, horizon_months, economics, target_oil, seed) for r in runs]
+    recs: dict[str, SectorRecommendation] = {}
+    errors: dict[str, str] = {}
+    for sid, rec, err in results:
+        if rec is not None:
+            recs[sid] = rec
+        if err is not None:
+            errors[sid] = err
+    return recs, errors
+
+
+def _optimize_one(
+    run: SectorRun,
+    cfg: Config,
+    objective: str,
+    posture: str | None,
+    horizon_months: int | None,
+    economics: Economics | None,
+    target_oil: float | None,
+    seed: int,
+) -> tuple[str, SectorRecommendation | None, str | None]:
+    try:
+        return (
+            run.sector.id,
+            optimize_sector(
+                run, cfg, objective, posture, horizon_months, economics=economics, target_oil=target_oil, seed=seed
+            ),
+            None,
+        )
+    except Exception as exc:
+        return run.sector.id, None, f"{type(exc).__name__}: {exc}"

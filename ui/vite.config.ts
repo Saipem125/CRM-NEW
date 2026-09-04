@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    proxy: { "/api": { target: process.env.WFO_API ?? "http://127.0.0.1:8000", changeOrigin: true, rewrite: (p) => p.replace(/^\/api/, "") } },
+    proxy: { "/api": { target: process.env.WFO_API ?? process.env.VITE_API_PROXY ?? "http://127.0.0.1:8000", changeOrigin: true, rewrite: (p) => p.replace(/^\/api/, "") } },
   },
   build: { outDir: "dist", emptyOutDir: true, sourcemap: false, chunkSizeWarningLimit: 4500 },
 });

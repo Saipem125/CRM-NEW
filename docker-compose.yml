@@ -1,0 +1,137 @@
+# Waterflood Optimizer — Docker Compose profiles (prompt M5; architecture §18 deployment).
+#
+#   docker compose --profile dev     up --build   # API with live-reload + Vite dev server (http://localhost:5173)
+#   docker compose --profile prod    up --build   # nginx UI (http://localhost:8080) → API, persistent store, backups
+#   docker compose --profile offline up --build   # ONE container: API + built UI + SQLite + in-process worker (http://localhost:8000)
+#
+# Copy .env.example to .env first (admin password, JWT secret, ports).
+#
+# Store: SQLite + Parquet snapshots on the named volume `wfo_store` (the M2/M3 store decision; a PostgreSQL
+# swap is a store-layer change, see docs/DECISIONS.md M5). Jobs run in the API process' thread pool
+# (WFO_JOB_WORKERS); an external queue (RQ/Celery) is a JobRunner backend swap, not part of these profiles.
+
+x-api-env: &api-env
+  WFO_STORE: /data/store
+  WFO_ADMIN_USER: ${WFO_ADMIN_USER:-admin}
+  WFO_ADMIN_PASSWORD: ${WFO_ADMIN_PASSWORD:?set WFO_ADMIN_PASSWORD in .env}
+  WFO_JWT_SECRET: ${WFO_JWT_SECRET:-}
+  WFO_JOB_WORKERS: ${WFO_JOB_WORKERS:-2}
+  WFO_SSO_TRUST: ${WFO_SSO_TRUST:-0}
+  LOKY_MAX_CPU_COUNT: ${WFO_CORES:-8}
+  OMP_NUM_THREADS: "1"
+
+services:
+  # ---------------------------------------------------------------- dev: bind-mounted source, reload
+  api-dev:
+    profiles: ["dev"]
+    build: { context: ., target: api }
+    image: wfo-api:dev
+    environment:
+      <<: *api-env
+      WFO_JOBS_SYNC: "0"
+    command: ["uvicorn", "waterflood_app.api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/waterflood_app"]
+    volumes:
+      - ./waterflood_app:/app/waterflood_app:ro
+      - ./config:/app/config:ro
+      - wfo_store_dev:/data/store
+      - ./data:/data/sources:ro          # drop CSV/XLSX/Parquet folders here and connect to /data/sources/<folder>
+    ports: ["8000:8000"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  ui-dev:
+    profiles: ["dev"]
+    image: node:22-bookworm-slim
+    working_dir: /ui
+    command: sh -c "npm ci --no-audit --no-fund && npx vite --host 0.0.0.0 --port 5173 --strictPort"
+    environment:
+      VITE_API_PROXY: http://api-dev:8000
+    volumes:
+      - ./ui:/ui
+      - ui_node_modules:/ui/node_modules
+    ports: ["5173:5173"]
+    depends_on:
+      api-dev: { condition: service_healthy }
+
+  # ---------------------------------------------------------------- prod: nginx + api + backup sidecar
+  api:
+    profiles: ["prod"]
+    build: { context: ., target: api }
+    image: wfo-api:${WFO_TAG:-0.5.0}
+    restart: unless-stopped
+    environment:
+      <<: *api-env
+      WFO_JOBS_SYNC: "0"
+    volumes:
+      - wfo_store:/data/store
+      - ${WFO_SOURCES:-./data}:/data/sources:ro
+    expose: ["8000"]
+    deploy:
+      resources:
+        limits: { cpus: "${WFO_CORES:-8}", memory: 8g }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health/ready"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+  ui:
+    profiles: ["prod"]
+    build: { context: ./ui }
+    image: wfo-ui:${WFO_TAG:-0.5.0}
+    restart: unless-stopped
+    ports: ["${WFO_UI_PORT:-8080}:80"]
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  backup:
+    # nightly consistent backup of the store (SQLite online backup + Parquet snapshots), 14 archives kept
+    profiles: ["prod"]
+    image: wfo-api:${WFO_TAG:-0.5.0}
+    restart: unless-stopped
+    environment: { WFO_STORE: /data/store }
+    volumes:
+      - wfo_store:/data/store:ro
+      - ${WFO_BACKUPS:-./backups}:/backups
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        while true; do
+          python scripts/backup.py backup --store /data/store --out /backups --retain ${WFO_BACKUP_RETAIN:-14} || echo "backup failed"
+          sleep ${WFO_BACKUP_INTERVAL_S:-86400}
+        done
+    depends_on:
+      api: { condition: service_healthy }
+
+  # ---------------------------------------------------------------- offline: single node, one container
+  wfo:
+    profiles: ["offline"]
+    build: { context: ., target: offline }
+    image: wfo-offline:${WFO_TAG:-0.5.0}
+    restart: unless-stopped
+    environment:
+      <<: *api-env
+      WFO_JOBS_SYNC: "0"
+      WFO_UI_DIST: /app/ui/dist
+    volumes:
+      - wfo_store:/data/store
+      - ${WFO_SOURCES:-./data}:/data/sources:ro
+      - ${WFO_BACKUPS:-./backups}:/backups
+    ports: ["${WFO_PORT:-8000}:8000"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/health/ready"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  wfo_store:
+  wfo_store_dev:
+  ui_node_modules:

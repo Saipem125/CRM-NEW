@@ -1,0 +1,39 @@
+/* Print stylesheet for the report (paper palette; semantic colours from the design tokens). */
+@page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+html, body { margin: 0; padding: 0; background: #FFFFFF; color-scheme: light; }
+body { font-family: "IBM Plex Sans", "Segoe UI", Arial, Helvetica, sans-serif; font-size: 9.5pt; color: #0B121C; line-height: 1.35; }
+.mono, td.mono, .kv td.mono { font-family: "IBM Plex Mono", Consolas, "Courier New", monospace; }
+.small { font-size: 8pt; }
+.dim { color: #5E6C82; }
+h1 { font-family: "Space Grotesk", "Segoe UI", Arial, sans-serif; font-size: 20pt; margin: 4pt 0 2pt 0; font-weight: 600; }
+h2 { font-family: "Space Grotesk", "Segoe UI", Arial, sans-serif; font-size: 13.5pt; margin: 14pt 0 5pt 0; padding-bottom: 3pt; border-bottom: 1px solid #25344B; page-break-after: avoid; }
+h3 { font-size: 11pt; margin: 11pt 0 4pt 0; page-break-after: avoid; }
+section { page-break-inside: auto; }
+.cover { margin-bottom: 10pt; }
+.brand { font-family: "Space Grotesk", Arial, sans-serif; font-weight: 600; color: #5E6C82; font-size: 9pt; letter-spacing: 0.04em; }
+.mark { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: linear-gradient(135deg, #4C9BD4, #5CC2AE); margin-right: 4px; vertical-align: -1px; }
+.sub { margin: 0 0 6pt 0; color: #5E6C82; }
+.badge-row { display: flex; align-items: center; gap: 10pt; }
+.badge { display: inline-block; color: #fff; font-weight: 600; padding: 2pt 8pt; border-radius: 6px; font-size: 10pt; letter-spacing: 0.02em; }
+.badge.small { font-size: 8pt; padding: 1pt 6pt; }
+.meta { color: #5E6C82; }
+.flag { margin: 6pt 0 0 0; padding: 4pt 8pt; border: 1px solid #D2685A; border-radius: 6px; color: #D2685A; font-weight: 600; }
+table { border-collapse: collapse; width: 100%; margin: 4pt 0 8pt 0; page-break-inside: auto; }
+tr { page-break-inside: avoid; }
+th, td { text-align: left; vertical-align: top; padding: 2.5pt 5pt; border-bottom: 1px solid #D5DBE4; }
+thead th { background: #F3F5F8; font-weight: 600; font-size: 8.5pt; border-bottom: 1px solid #25344B; }
+.data td, .data th { font-size: 8.5pt; }
+.compact td, .compact th { padding: 1.5pt 4pt; font-size: 8pt; }
+.num { text-align: right; font-family: "IBM Plex Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+.kv th { width: 34%; color: #5E6C82; font-weight: 500; background: none; }
+td.ok { color: #3F8A55; font-weight: 600; }
+td.bad, .bad { color: #D2685A; font-weight: 600; }
+td.warning { color: #B8730F; font-weight: 600; }
+td.error { color: #D2685A; font-weight: 600; }
+td.info { color: #5E6C82; }
+.light { display: inline-block; padding: 1pt 7pt; border-radius: 6px; color: #fff; font-weight: 600; }
+.light.green { background: #7DB88A; } .light.amber { background: #E0973F; } .light.red { background: #D2685A; }
+figure { margin: 4pt 0 8pt 0; page-break-inside: avoid; }
+figure svg { max-width: 100%; height: auto; }
+.watermark { position: fixed; bottom: -12mm; left: 0; right: 0; text-align: center; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 6.5pt; color: #93A0B4; }
+@media screen { body { max-width: 820px; margin: 0 auto; padding: 24px; } .watermark { position: static; margin-bottom: 12px; } }

@@ -63,6 +63,10 @@ CREATE TABLE IF NOT EXISTS webhooks (
 CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY, value_json TEXT, updated_at TEXT
 );
+CREATE TABLE IF NOT EXISTS writebacks (
+  id TEXT PRIMARY KEY, recommendation_id TEXT, project_id TEXT, connection_id TEXT, target TEXT,
+  n_rows INTEGER, actor TEXT, acting_role TEXT, created_at TEXT, payload_json TEXT
+);
 CREATE TABLE IF NOT EXISTS bundles (
     run_id TEXT PRIMARY KEY, bundle_json TEXT, created_at TEXT
 );

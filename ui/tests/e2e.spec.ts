@@ -1,5 +1,6 @@
 /* §4.6 — Playwright: primary path (load → run → result → workflow) and failure paths per screen.
    Needs the API (uvicorn) and the UI dev server running; see docs/milestone_4_report.md. */
+import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 
 const ADMIN = { user: process.env.WFO_ADMIN_USER ?? "admin", pw: process.env.WFO_ADMIN_PASSWORD ?? "admin-pass-123" };
@@ -7,6 +8,8 @@ const FIXTURE = process.env.WFO_FIXTURE_PATH ?? "C:\\code\\test\\waterflood-opti
 
 const SHOTS = process.env.WFO_SHOTS ?? "../docs/screens";
 const shot = (page: Page, name: string) => page.screenshot({ path: `${SHOTS}/m4_${name}.png`, fullPage: false });
+const shot5 = (page: Page, name: string) => page.screenshot({ path: `${SHOTS}/m5_${name}.png`, fullPage: false });
+const WRITEBACK_DIR = process.env.WFO_WRITEBACK_DIR ?? "C:/code/test/waterflood-optimizer/ui/test-results/surveillance";
 
 async function login(page: Page, user = ADMIN.user, pw = ADMIN.pw) {
   await page.goto("/");
@@ -29,6 +32,7 @@ test("login failure shows a plain-language message, not a stack trace", async ({
 });
 
 test("primary path: load → map → wells → run → result → recommendation → workflow", async ({ page }) => {
+  test.setTimeout(420_000); // full engine run + report downloads (PDF render) + writeback
   await login(page);
   await page.goto("/load");
   // project
@@ -62,6 +66,10 @@ test("primary path: load → map → wells → run → result → recommendation
   await page.getByRole("button", { name: /Save project config/ }).click();
   // run
   await expect(page).toHaveURL(/\/run/);
+  await page.getByRole("radio", { name: "Max NPV" }).click();
+  await expect(page.getByTestId("economics")).toBeVisible();
+  await shot5(page, "03_run_npv_economics");
+  await page.getByRole("radio", { name: "Max oil" }).click();
   await page.getByTestId("run-button").click();
   await expect(page.getByRole("region", { name: "Progress" })).toBeVisible();
   await shot(page, "03_run_progress");
@@ -73,6 +81,14 @@ test("primary path: load → map → wells → run → result → recommendation
   await expect(page.getByTestId("plot-forecast-Field")).toBeVisible();
   await page.waitForTimeout(1500);
   await shot(page, "04_result");
+  // M5: downloads (report + tables) are real files with the run id in the name
+  for (const kind of ["xlsx", "json", "docx"] as const) {
+    const dl = page.waitForEvent("download");
+    await page.getByTestId(`dl-${kind}`).click();
+    const file = await dl;
+    expect(file.suggestedFilename()).toMatch(new RegExp(`^wfo_run_.*\.${kind}$`));
+  }
+  await shot5(page, "01_result_downloads");
   // details drawer: tabs
   await page.getByTestId("open-details").click();
   await expect(page.getByRole("dialog", { name: "Details" })).toBeVisible();
@@ -103,6 +119,26 @@ test("primary path: load → map → wells → run → result → recommendation
   await expect(page.getByRole("img", { name: /Workflow state APPROVED/ })).toBeVisible();
   await shot(page, "08_workflow_approved");
   await expect(page.getByText("approved by originator", { exact: true }).first()).toBeVisible(); // same person ran and approved: logged, visible
+  // M5: recommendation report download and approver-gated writeback to a flagged connection
+  const pdf = page.waitForEvent("download");
+  await page.getByTestId("wf-dl-pdf").click();
+  expect((await pdf).suggestedFilename()).toMatch(/^wfo_recommendation_.*\.pdf$/);
+  mkdirSync(WRITEBACK_DIR, { recursive: true });
+  const recId = page.url().split("/workflow/")[1];
+  const created = await page.evaluate(async ({ rid, dir }) => {
+    const auth = { Authorization: `Bearer ${sessionStorage.getItem("wfo_token")}` };
+    const rec = await (await fetch(`/api/recommendations/${rid}`, { headers: auth })).json();
+    const r = await fetch("/api/connections", { method: "POST", headers: { "Content-Type": "application/json", ...auth }, body: JSON.stringify({ project_id: rec.project_id, kind: "files", database: dir, options: { wfo_writeback: "1" } }) });
+    return { status: r.status, text: await r.text() };
+  }, { rid: recId, dir: WRITEBACK_DIR });
+  expect(created.status, created.text).toBe(201);
+  await page.reload();
+  await expect(page.getByRole("img", { name: /Workflow state APPROVED/ })).toBeVisible();
+  await page.getByTestId("wb-connection").selectOption({ index: 1 });
+  await page.getByTestId("btn-writeback").click();
+  await expect(page.getByText(/targets written to/)).toBeVisible();
+  await expect(page.getByTestId("writeback-list").locator("tbody tr")).toHaveCount(1);
+  await shot5(page, "02_workflow_writeback");
   await page.locator("#role").selectOption("operations");
   await page.getByTestId("btn-implement").click();
   await expect(page.getByRole("img", { name: /Workflow state IMPLEMENTED/ })).toBeVisible();

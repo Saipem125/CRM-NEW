@@ -35,6 +35,32 @@ async function req<R>(method: string, path: string, body?: unknown, query?: Reco
   return data as R;
 }
 
+/** Authenticated file download: fetch with the bearer token, then hand the blob to the browser. */
+export async function download(path: string): Promise<{ name: string; size: number; type: string }> {
+  const url = new URL(BASE + path, window.location.origin);
+  const headers: Record<string, string> = {};
+  if (session.token) headers.Authorization = `Bearer ${session.token}`;
+  if (session.actingRole) headers["X-Acting-Role"] = session.actingRole;
+  const res = await fetch(url.toString(), { headers });
+  if (!res.ok) {
+    const text = await res.text();
+    let detail: unknown = text;
+    try { detail = JSON.parse(text)?.detail ?? text; } catch { /* plain text */ }
+    throw new ApiError(res.status, detail);
+  }
+  const blob = await res.blob();
+  const cd = res.headers.get("content-disposition") ?? "";
+  const name = /filename="([^"]+)"/.exec(cd)?.[1] ?? path.split("/").pop() ?? "download";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+  return { name, size: blob.size, type: blob.type };
+}
+
 export const api = {
   login: (username: string, password: string) => req<T.Token>("POST", "/auth/login", { username, password }),
   me: () => req<T.User>("GET", "/auth/me"),
@@ -60,6 +86,8 @@ export const api = {
     list: (project_id: string) => req<T.RunRow[]>("GET", "/runs", undefined, { project_id }),
     get: (id: string) => req<T.RunResult>("GET", `/runs/${id}`),
     details: (id: string) => req<T.Bundle>("GET", `/runs/${id}/details`),
+    report: (id: string, fmt: "pdf" | "docx" | "html") => download(`/runs/${id}/report.${fmt}`),
+    export: (id: string, fmt: "xlsx" | "csv" | "json") => download(`/runs/${id}/export.${fmt}`),
   },
   scenarios: (b: Record<string, unknown>) => req<Record<string, unknown>>("POST", "/scenarios", b),
   recommendations: {
@@ -67,6 +95,10 @@ export const api = {
     list: (project_id: string) => req<T.RecommendationRecord[]>("GET", "/recommendations", undefined, { project_id }),
     get: (id: string) => req<T.RecommendationRecord>("GET", `/recommendations/${id}`),
     transition: (id: string, action: "review" | "approve" | "reject" | "implement", b: Record<string, unknown> = {}) => req<T.RecommendationRecord>("POST", `/recommendations/${id}/${action}`, b),
+    report: (id: string, fmt: "pdf" | "docx" | "html") => download(`/recommendations/${id}/report.${fmt}`),
+    export: (id: string, fmt: "xlsx" | "csv" | "json") => download(`/recommendations/${id}/export.${fmt}`),
+    writeback: (id: string, b: { connection_id: string; table?: string; effective_date?: string; note?: string }) => req<T.Writeback>("POST", `/recommendations/${id}/writeback`, b),
+    writebacks: (id: string) => req<T.Writeback[]>("GET", `/recommendations/${id}/writebacks`),
   },
   evaluations: { add: (b: Record<string, unknown>) => req<Record<string, unknown>>("POST", "/evaluations", b), list: (recommendation_id: string) => req<Array<Record<string, unknown>>>("GET", "/evaluations", undefined, { recommendation_id }), calibration: () => req<Record<string, { n: number; within_band: number; better: number; worse: number }>>("GET", "/evaluations/calibration") },
   admin: {
@@ -76,7 +108,8 @@ export const api = {
     audit: (q: { object_id?: string; actor?: string; limit?: number } = {}) => req<T.AuditEntry[]>("GET", "/admin/audit", undefined, q),
   },
   webhooks: { list: () => req<T.Webhook[]>("GET", "/webhooks"), add: (b: Record<string, unknown>) => req<T.Webhook>("POST", "/webhooks", b), deactivate: (id: string) => req<T.Webhook>("POST", `/webhooks/${id}/deactivate`) },
-  health: () => req<{ status: string; version: string }>("GET", "/health"),
+  health: () => req<{ status: string; version: string; code_version?: string }>("GET", "/health"),
+  ready: () => req<T.Ready>("GET", "/health/ready"),
 };
 
 /** Plain-language rendering of an API failure (§17): never a stack trace. */

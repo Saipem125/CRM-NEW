@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ "Waterflood injection recommendation" if recommendation else "Waterflood evaluation run" }} — {{ project.name or project.id }}</title>
+<style>{{ css }}</style>
+</head>
+<body>
+<div class="watermark">Waterflood Optimizer {{ app_version }} · {{ watermark }} · generated {{ generated_at }}{% if generated_by %} by {{ generated_by }}{% endif %}</div>
+
+<header class="cover">
+  <div class="brand"><span class="mark"></span> Waterflood Optimizer</div>
+  <h1>{{ "Waterflood injection recommendation" if recommendation else "Waterflood evaluation run" }}</h1>
+  <p class="sub">{{ project.name or project.id }} · asset <span class="mono">{{ project.asset }}</span> · unit system <span class="mono">{{ project.unit_system }}</span></p>
+  <div class="badge-row">
+    <span class="badge" style="background: {{ badge_colour[confidence] }}">{{ confidence }} confidence</span>
+    <span class="meta">objective: {{ objective }} · posture: {{ request.posture or "balanced" }} · horizon: {{ request.horizon_months or 24 }} months</span>
+  </div>
+  {% if recommendation and recommendation.approved_by_originator %}
+  <p class="flag">Approved by originator — the person who ran this recommendation also approved it (separation policy: log).</p>
+  {% endif %}
+</header>
+
+{% for s in sectors %}
+{% set figs = figures[s.id] %}
+{% set r = s.recommendation or {} %}
+{% set opt = r.optimization or {} %}
+{% set m = s.model or {} %}
+<section>
+  <h2>Sector {{ s.id }} — summary</h2>
+  <table class="kv">
+    <tr><th>confidence</th><td><span class="badge small" style="background: {{ badge_colour[s.confidence] }}">{{ s.confidence }}</span> {{ s.confidence_reasons | join("; ") }}</td></tr>
+    <tr><th>method</th><td>{{ m.label or "—" }} <span class="dim">({{ m.n_params or "—" }} parameters)</span></td></tr>
+    <tr><th>blind-test R² / MAPE</th><td class="mono">{{ fmt(m.blind_r2, 3) }} / {{ fmt(m.blind_mape, 1) }} %</td></tr>
+    {% if r %}
+    <tr><th>gain vs hold-current</th><td class="mono">{{ pct(opt.gain_vs_base_pct) }}</td></tr>
+    <tr><th>gain vs equal split</th><td class="mono">{{ pct(opt.gain_vs_equal_split_pct) }}</td></tr>
+    <tr><th>plan cumulative oil P10 / P50 / P90</th><td class="mono">{% for v in r.cum_oil_plan_p10_p50_p90 %}{{ fmt(v) }}{% if not loop.last %} / {% endif %}{% endfor %} {{ units.volume }}</td></tr>
+    <tr><th>hold-current P10 / P50 / P90</th><td class="mono">{% for v in r.cum_oil_base_p10_p50_p90 %}{{ fmt(v) }}{% if not loop.last %} / {% endif %}{% endfor %} {{ units.volume }}</td></tr>
+    <tr><th>posture</th><td>{{ r.posture }}{% if r.posture_note %} — {{ r.posture_note }}{% endif %}</td></tr>
+    {% if r.notes %}<tr><th>notes</th><td>{{ r.notes | join("; ") }}</td></tr>{% endif %}
+    {% else %}
+    <tr><th>plan</th><td>No plan for this sector (optimizer not run or not eligible).</td></tr>
+    {% endif %}
+  </table>
+
+  {% if r.actions %}
+  <h3>Change list — this week</h3>
+  <table class="data">
+    <thead><tr><th>injector</th><th class="num">from [{{ units.rate }}]</th><th class="num">to [{{ units.rate }}]</th><th class="num">step this week</th><th>target date</th><th>setting hint</th><th class="num">expected oil [{{ units.volume }}]</th><th>revert if</th></tr></thead>
+    <tbody>
+    {% for a in r.actions %}
+    <tr><td class="mono">{{ a.well }}</td><td class="num">{{ fmt(a.rate_from) }}</td><td class="num">{{ fmt(a.rate_to) }}</td><td class="num">{{ fmt(a.step_this_week) }}</td><td class="mono">{{ a.target_date }}</td><td>{{ a.setting_hint }}</td><td class="num">{{ fmt(a.expected_oil_gain) }}</td><td class="small">{{ a.revert_if }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if figs.outcome %}<figure>{{ figs.outcome | svg }}</figure>{% endif %}
+  {% if figs.tornado %}<figure>{{ figs.tornado | svg }}</figure>{% endif %}
+
+  <h3>Connectivity</h3>
+  <figure>{{ figs.well_map | svg }}</figure>
+  <figure>{{ figs.matrix | svg }}</figure>
+
+  <h3>Forecast and injector efficiency</h3>
+  <figure>{{ figs.fan | svg }}</figure>
+  <figure>{{ figs.efficiency | svg }}</figure>
+
+  <h3>Which method won</h3>
+  <figure>{{ figs.leaderboard | svg }}</figure>
+  <table class="data compact">
+    <thead><tr><th>gate</th><th>result</th><th>gate</th><th>result</th></tr></thead>
+    <tbody>
+    {% set gates = s.gates.items() | list %}
+    {% for i in range(0, gates | length, 2) %}
+    <tr>
+      <td>{{ gates[i][0] }}</td><td class="{{ 'ok' if gates[i][1] else 'bad' }}">{{ "pass" if gates[i][1] else "fail / n.a." }}</td>
+      {% if i + 1 < gates | length %}<td>{{ gates[i+1][0] }}</td><td class="{{ 'ok' if gates[i+1][1] else 'bad' }}">{{ "pass" if gates[i+1][1] else "fail / n.a." }}</td>{% else %}<td></td><td></td>{% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% set excluded = s.eligibility | rejectattr("eligible") | list %}
+  {% if excluded %}
+  <p class="small"><strong>Excluded methods:</strong> {% for e in excluded %}{{ e.variant }} — {{ e.reason }}{% if not loop.last %}; {% endif %}{% endfor %}</p>
+  {% endif %}
+
+  <h3>History match per well</h3>
+  <figure>{{ figs.fits | svg }}</figure>
+
+  <h3>Sampling and pressure</h3>
+  <figure>{{ figs.dt_tau | svg }}</figure>
+  <p class="small">Δt = {{ fmt(s.dt_tau.dt_days) }} d · τ estimate = {{ fmt(s.dt_tau.tau_estimate_days) }} d · τ/Δt = {{ fmt(s.dt_tau.tau_over_dt, 1) }} · O<sub>d</sub> = {{ fmt(s.dt_tau.od, 1) }}{% if s.dt_tau.monthly_allocated %} · monthly allocated data{% endif %} · field pressure source: {{ pressure.field_source or "—" }}</p>
+</section>
+{% endfor %}
+
+{% if earlier_windows %}
+<section>
+  <h2>Earlier windows</h2>
+  <table class="data compact">
+    <thead><tr><th>window</th><th>sector</th><th>method</th><th class="num">blind R²</th><th>confidence</th></tr></thead>
+    <tbody>{% for s in earlier_windows %}<tr><td class="mono">{{ s.key }}</td><td>{{ s.id }}</td><td>{{ (s.model or {}).label or "—" }}</td><td class="num">{{ fmt((s.model or {}).blind_r2, 3) }}</td><td>{{ s.confidence }}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+{% endif %}
+
+<section>
+  <h2>Data quality</h2>
+  <p>Traffic light: <span class="light {{ data_quality.traffic_light }}">{{ data_quality.traffic_light }}</span> · steps {{ data_quality.n_steps }} · outliers removed {{ data_quality.outliers_removed }} · simultaneous P+I steps {{ data_quality.simultaneous_pi_steps }} · unmatched IDs {{ data_quality.unmatched_ids }} · warnings {{ data_quality.n_warnings }} · errors {{ data_quality.n_errors }}</p>
+  <table class="data compact">
+    <thead><tr><th>well</th><th>type</th><th class="num">coverage %</th><th>pressure</th><th>conversions</th></tr></thead>
+    <tbody>{% for w in wells %}<tr><td class="mono">{{ w.well }}</td><td>{{ w.type }}</td><td class="num">{{ fmt(w.coverage_pct) }}</td><td>{{ w.pressure }}</td><td class="small">{{ w.conversions }}</td></tr>{% endfor %}</tbody>
+  </table>
+  <h3>Conditions (plain language)</h3>
+  <table class="data">
+    <thead><tr><th>severity</th><th>what it means</th><th>suggested action</th><th>scope</th></tr></thead>
+    <tbody>
+    {% for c in conditions %}<tr><td class="{{ c.severity }}">{{ c.severity }}</td><td>{{ c.message }}</td><td>{{ c.action }}</td><td class="mono small">{{ c.scope }}</td></tr>{% else %}<tr><td colspan="4">No conditions raised.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if recommendation %}
+<section>
+  <h2>Workflow</h2>
+  <table class="kv">
+    <tr><th>recommendation</th><td class="mono">{{ recommendation.id }}</td></tr>
+    <tr><th>state</th><td>{{ recommendation.state }}</td></tr>
+    <tr><th>originator</th><td class="mono">{{ recommendation.originator }}</td></tr>
+    <tr><th>approved by originator</th><td>{% if recommendation.approved_by_originator %}<strong class="bad">YES — same person ran and approved</strong>{% else %}no{% endif %}</td></tr>
+    <tr><th>override reason</th><td>{{ recommendation.override_reason or "—" }}</td></tr>
+    <tr><th>advanced overrides</th><td class="mono small">{{ recommendation.advanced_overrides or "none" }}</td></tr>
+    <tr><th>snapshot digest</th><td class="mono small">{{ (recommendation.snapshot or {}).digest or "—" }}</td></tr>
+    <tr><th>implemented at</th><td class="mono">{{ recommendation.implemented_at or "—" }}</td></tr>
+  </table>
+  <table class="data compact">
+    <thead><tr><th>when</th><th>action</th><th>actor</th><th>acting role</th><th>from → to</th><th>note</th></tr></thead>
+    <tbody>{% for h in recommendation.history %}<tr><td class="mono">{{ h.at[:16] | replace("T", " ") }}</td><td>{{ h.action }}</td><td class="mono">{{ h.actor }}</td><td>{{ h.acting_role }}</td><td class="mono">{{ h.from_state }} → {{ h.to_state }}</td><td>{{ h.note }}</td></tr>{% else %}<tr><td colspan="6">Draft — no actions yet.</td></tr>{% endfor %}</tbody>
+  </table>
+  <table class="data compact">
+    <thead><tr><th>injector</th><th class="num">recommended [{{ units.rate }}]</th><th class="num">implemented [{{ units.rate }}]</th></tr></thead>
+    <tbody>{% for w, v in recommendation.recommended_rates.items() %}<tr><td class="mono">{{ w }}</td><td class="num">{{ fmt(v) }}</td><td class="num">{{ fmt((recommendation.implemented_rates or {}).get(w)) }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% if recommendation.evaluations %}
+  <table class="data compact">
+    <thead><tr><th class="num">months</th><th>date</th><th class="num">P10</th><th class="num">P50</th><th class="num">P90</th><th class="num">realised</th><th>outcome</th></tr></thead>
+    <tbody>{% for e in recommendation.evaluations %}<tr><td class="num">{{ e.months_after }}</td><td class="mono">{{ e.evaluated_on }}</td><td class="num">{{ fmt(e.forecast_p10) }}</td><td class="num">{{ fmt(e.forecast_p50) }}</td><td class="num">{{ fmt(e.forecast_p90) }}</td><td class="num">{{ fmt(e.realised) }}</td><td>{{ e.outcome }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% endif %}
+</section>
+{% endif %}
+
+<section>
+  <h2>Reproducibility</h2>
+  <table class="kv">
+    <tr><th>run id</th><td class="mono">{{ run.id }}</td></tr>
+    <tr><th>data snapshot hash</th><td class="mono small">{{ run.data_hash }}</td></tr>
+    <tr><th>config hash</th><td class="mono small">{{ run.config_hash }}</td></tr>
+    <tr><th>code version</th><td class="mono">{{ run.code_version }}</td></tr>
+    <tr><th>seed</th><td class="mono">{{ seed }}</td></tr>
+    <tr><th>engine runtime</th><td class="mono">{{ fmt(runtime_s, 1) }} s</td></tr>
+    <tr><th>windows</th><td class="small">{% for w in windows %}{{ w.start }} → {{ w.end }} ({{ w.reason }}){% if not loop.last %}; {% endif %}{% endfor %}</td></tr>
+    <tr><th>application</th><td>Waterflood Optimizer {{ app_version }} — CRM-based waterflood evaluation and optimization (architecture v2.1)</td></tr>
+  </table>
+</section>
+</body>
+</html>

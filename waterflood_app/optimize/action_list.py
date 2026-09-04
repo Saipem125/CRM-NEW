@@ -80,9 +80,22 @@ def build_action_list(
                 break
         else:
             weeks[k] = len(rp.weekly)
-    total_gain = max(result.value_plan - result.value_base, 0.0)
+    # expected oil gain is always a volume (the objective may be NPV): mean over the forecast ensemble
+    if result.forecasts_plan and result.forecasts_base:
+        total_gain = max(
+            float(
+                np.mean(
+                    [p.cum_oil - b.cum_oil for p, b in zip(result.forecasts_plan, result.forecasts_base, strict=False)]
+                )
+            ),
+            0.0,
+        )
+    else:
+        total_gain = max(result.value_plan - result.value_base, 0.0)
     delta = rp.target - cur
     share = np.abs(delta) * np.maximum(result.marginal_value, 0.0) if len(result.marginal_value) else np.abs(delta)
+    if share.sum() <= 0:
+        share = np.abs(delta)
     share = share / share.sum() if share.sum() > 0 else np.zeros_like(share)
     wc_jump = float(r["revert_water_cut_jump"])
     items: list[ActionItem] = []

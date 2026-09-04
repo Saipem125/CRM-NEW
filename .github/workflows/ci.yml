@@ -12,6 +12,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -e ".[dev]"
+      - run: sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libcairo2 && python -m pip install weasyprint
       - run: ruff check .
       - run: mypy
       - run: pytest
@@ -28,3 +29,15 @@ jobs:
         working-directory: ui
       - run: npx vite build
         working-directory: ui
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --target api -t wfo-api:ci .
+      - run: docker build --target offline -t wfo-offline:ci .
+      - run: docker build -t wfo-ui:ci ui
+      - run: docker compose --profile offline config -q
+      - run: docker compose --profile prod config -q
+      - run: docker compose --profile dev config -q
+        env: { WFO_ADMIN_PASSWORD: ci-pass }

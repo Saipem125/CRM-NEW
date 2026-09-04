@@ -56,7 +56,8 @@ solver: # §9 in-house CRM solver
   joint_refine_if_sum_f_exceeds: 1.0 # per-injector Σ_j f_ij bound
   free_primary: false # false: Atlas form q(t0)e^(-t/τ); true: fitted g_p, τ_p (pywaterflood form)
   quick_fit_distance_factor: 2.5 # quick-CRMP diagnostic mask: pairs farther than this × median nearest I–P distance are off
-  n_jobs: -1 # joblib per-sector / per-producer parallelism
+  n_jobs: -1 # joblib per-producer parallelism inside a fit
+  sector_parallel: false # one process per sector instead (measured no faster on 8 cores; see DECISIONS M5)
 
 uq: # §9, §13
   ensemble_keep_within: 0.05 # keep starts with SSE ≤ (1 + this) × best
@@ -140,3 +141,9 @@ workflow: # §3
   separation_policy: log # log | enforce
   evaluation_months: [3, 6]
   outcome_band: [10, 90] # P10–P90
+
+integration: # §18 Integration — optional, approver-gated writeback of injection targets
+  writeback_enabled: true # false → POST /recommendations/{id}/writeback answers 409
+  writeback_table: wfo_injection_targets # created on first write (SQL targets); CSV of the same name for file targets
+  report_pdf_renderer: auto # auto | weasyprint | chromium | none  (auto: WeasyPrint if importable, else a headless Chromium/Edge)
+  chromium_path: null # explicit browser binary for the chromium renderer; null → search PATH and the usual locations

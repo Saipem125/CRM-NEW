@@ -1,0 +1,17 @@
+.git
+.github
+**/__pycache__
+**/*.pyc
+.mypy_cache
+.ruff_cache
+.pytest_cache
+wfo_store*/
+backups/
+ui/node_modules
+ui/dist
+ui/playwright-report
+ui/test-results
+ui/public/_preview.html
+docs/screens
+docs/spec
+*.log

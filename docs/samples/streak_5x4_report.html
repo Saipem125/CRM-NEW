@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Waterflood injection recommendation — streak_5x4 sample</title>
+<style>/* Print stylesheet for the report (paper palette; semantic colours from the design tokens). */
+@page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+html, body { margin: 0; padding: 0; background: #FFFFFF; color-scheme: light; }
+body { font-family: &#34;IBM Plex Sans&#34;, &#34;Segoe UI&#34;, Arial, Helvetica, sans-serif; font-size: 9.5pt; color: #0B121C; line-height: 1.35; }
+.mono, td.mono, .kv td.mono { font-family: &#34;IBM Plex Mono&#34;, Consolas, &#34;Courier New&#34;, monospace; }
+.small { font-size: 8pt; }
+.dim { color: #5E6C82; }
+h1 { font-family: &#34;Space Grotesk&#34;, &#34;Segoe UI&#34;, Arial, sans-serif; font-size: 20pt; margin: 4pt 0 2pt 0; font-weight: 600; }
+h2 { font-family: &#34;Space Grotesk&#34;, &#34;Segoe UI&#34;, Arial, sans-serif; font-size: 13.5pt; margin: 14pt 0 5pt 0; padding-bottom: 3pt; border-bottom: 1px solid #25344B; page-break-after: avoid; }
+h3 { font-size: 11pt; margin: 11pt 0 4pt 0; page-break-after: avoid; }
+section { page-break-inside: auto; }
+.cover { margin-bottom: 10pt; }
+.brand { font-family: &#34;Space Grotesk&#34;, Arial, sans-serif; font-weight: 600; color: #5E6C82; font-size: 9pt; letter-spacing: 0.04em; }
+.mark { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: linear-gradient(135deg, #4C9BD4, #5CC2AE); margin-right: 4px; vertical-align: -1px; }
+.sub { margin: 0 0 6pt 0; color: #5E6C82; }
+.badge-row { display: flex; align-items: center; gap: 10pt; }
+.badge { display: inline-block; color: #fff; font-weight: 600; padding: 2pt 8pt; border-radius: 6px; font-size: 10pt; letter-spacing: 0.02em; }
+.badge.small { font-size: 8pt; padding: 1pt 6pt; }
+.meta { color: #5E6C82; }
+.flag { margin: 6pt 0 0 0; padding: 4pt 8pt; border: 1px solid #D2685A; border-radius: 6px; color: #D2685A; font-weight: 600; }
+table { border-collapse: collapse; width: 100%; margin: 4pt 0 8pt 0; page-break-inside: auto; }
+tr { page-break-inside: avoid; }
+th, td { text-align: left; vertical-align: top; padding: 2.5pt 5pt; border-bottom: 1px solid #D5DBE4; }
+thead th { background: #F3F5F8; font-weight: 600; font-size: 8.5pt; border-bottom: 1px solid #25344B; }
+.data td, .data th { font-size: 8.5pt; }
+.compact td, .compact th { padding: 1.5pt 4pt; font-size: 8pt; }
+.num { text-align: right; font-family: &#34;IBM Plex Mono&#34;, Consolas, monospace; font-variant-numeric: tabular-nums; }
+.kv th { width: 34%; color: #5E6C82; font-weight: 500; background: none; }
+td.ok { color: #3F8A55; font-weight: 600; }
+td.bad, .bad { color: #D2685A; font-weight: 600; }
+td.warning { color: #B8730F; font-weight: 600; }
+td.error { color: #D2685A; font-weight: 600; }
+td.info { color: #5E6C82; }
+.light { display: inline-block; padding: 1pt 7pt; border-radius: 6px; color: #fff; font-weight: 600; }
+.light.green { background: #7DB88A; } .light.amber { background: #E0973F; } .light.red { background: #D2685A; }
+figure { margin: 4pt 0 8pt 0; page-break-inside: avoid; }
+figure svg { max-width: 100%; height: auto; }
+.watermark { position: fixed; bottom: -12mm; left: 0; right: 0; text-align: center; font-family: &#34;IBM Plex Mono&#34;, Consolas, monospace; font-size: 6.5pt; color: #93A0B4; }
+@media screen { body { max-width: 820px; margin: 0 auto; padding: 24px; } .watermark { position: static; margin-bottom: 12px; } }
+</style>
+</head>
+<body>
+<div class="watermark">Waterflood Optimizer 0.5.0 · run f1f43bbedd07 · data f7fda78b31f7 · config 7f90028e1dc1 · code cbb7eec · generated 2026-09-04 08:22 UTC by admin</div>
+
+<header class="cover">
+  <div class="brand"><span class="mark"></span> Waterflood Optimizer</div>
+  <h1>Waterflood injection recommendation</h1>
+  <p class="sub">streak_5x4 sample · asset <span class="mono">SAMPLE</span> · unit system <span class="mono">field</span></p>
+  <div class="badge-row">
+    <span class="badge" style="background: #7DB88A">HIGH confidence</span>
+    <span class="meta">objective: maximum NPV · posture: balanced · horizon: 24 months</span>
+  </div>
+  
+  <p class="flag">Approved by originator — the person who ran this recommendation also approved it (separation policy: log).</p>
+  
+</header>
+
+
+
+
+
+
+<section>
+  <h2>Sector S1 — summary</h2>
+  <table class="kv">
+    <tr><th>confidence</th><td><span class="badge small" style="background: #7DB88A">HIGH</span> blind R² 1.00; parameter spread 0%; no gate warnings</td></tr>
+    <tr><th>method</th><td>CRMP (producer) <span class="dim">(24 parameters)</span></td></tr>
+    <tr><th>blind-test R² / MAPE</th><td class="mono">1.000 / 0.0 %</td></tr>
+    
+    <tr><th>gain vs hold-current</th><td class="mono">+1.1 %</td></tr>
+    <tr><th>gain vs equal split</th><td class="mono">+1.3 %</td></tr>
+    <tr><th>plan cumulative oil P10 / P50 / P90</th><td class="mono">24,393 / 24,393 / 24,393 bbl</td></tr>
+    <tr><th>hold-current P10 / P50 / P90</th><td class="mono">23,925 / 23,925 / 23,925 bbl</td></tr>
+    <tr><th>posture</th><td>balanced</td></tr>
+    
+    
+  </table>
+
+  
+  <h3>Change list — this week</h3>
+  <table class="data">
+    <thead><tr><th>injector</th><th class="num">from [bbl/d]</th><th class="num">to [bbl/d]</th><th class="num">step this week</th><th>target date</th><th>setting hint</th><th class="num">expected oil [bbl]</th><th>revert if</th></tr></thead>
+    <tbody>
+    
+    <tr><td class="mono">I-3</td><td class="num">1,841</td><td class="num">0</td><td class="num">-276</td><td class="mono">2023-01-15</td><td>target 0; set choke / pump frequency to reach it, field to confirm the setting</td><td class="num">124</td><td class="small">water cut of any connected producer rises by more than 5%</td></tr>
+    
+    <tr><td class="mono">I-4</td><td class="num">1,646</td><td class="num">0</td><td class="num">-247</td><td class="mono">2023-01-08</td><td>target 0; set choke / pump frequency to reach it, field to confirm the setting</td><td class="num">111</td><td class="small">water cut of any connected producer rises by more than 5%</td></tr>
+    
+    <tr><td class="mono">I-1</td><td class="num">2,310</td><td class="num">3,612</td><td class="num">346</td><td class="mono">2019-12-29</td><td>target 3612; set choke / pump frequency to reach it, field to confirm the setting</td><td class="num">87</td><td class="small">water cut of any connected producer rises by more than 5%</td></tr>
+    
+    <tr><td class="mono">I-5</td><td class="num">1,450</td><td class="num">2,695</td><td class="num">217</td><td class="mono">2020-01-05</td><td>target 2695; set choke / pump frequency to reach it, field to confirm the setting</td><td class="num">84</td><td class="small">water cut of any connected producer rises by more than 5%</td></tr>
+    
+    <tr><td class="mono">I-2</td><td class="num">1,782</td><td class="num">2,722</td><td class="num">267</td><td class="mono">2019-12-29</td><td>target 2722; set choke / pump frequency to reach it, field to confirm the setting</td><td class="num">63</td><td class="small">water cut of any connected producer rises by more than 5%</td></tr>
+    
+    </tbody>
+  </table>
+  
+
+  <figure><svg xmlns="http://www.w3.org/2000/svg" width="620" height="150" viewBox="0 0 620 150" role="img" aria-label="Outcome range">
+<rect x="0" y="0" width="620" height="150" fill="#FFFFFF"/>
+<text x="20.00" y="22.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#0B121C" text-anchor="start">Cumulative oil over the horizon: plan vs hold-current (P10 – P50 – P90)</text>
+<text x="140.00" y="62.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#0B121C" text-anchor="end">plan</text>
+<rect x="544.17" y="50.00" width="0.00" height="18.00" rx="3" fill="#5CC2AE" stroke="none" stroke-width="1.0" opacity="0.350"/>
+<polyline points="544.17,48.00 544.17,70.00" fill="none" stroke="#5CC2AE" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="540.17" y="63.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="end">24k</text>
+<text x="548.17" y="63.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="start">24k</text>
+<text x="140.00" y="96.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#0B121C" text-anchor="end">hold-current</text>
+<rect x="185.83" y="84.00" width="0.00" height="18.00" rx="3" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.350"/>
+<polyline points="185.83,82.00 185.83,104.00" fill="none" stroke="#93A0B4" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="181.83" y="97.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="end">24k</text>
+<text x="189.83" y="97.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="start">24k</text>
+<text x="20.00" y="140.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="start">[bbl]; bars span P10–P90, the tick is P50</text>
+</svg></figure>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" width="620" height="230" viewBox="0 0 620 230" role="img" aria-label="Sensitivity of the gain over hold-current">
+<rect x="0" y="0" width="620" height="230" fill="#FFFFFF"/>
+<text x="20.00" y="22.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#0B121C" text-anchor="start">Sensitivity of the gain over hold-current</text>
+<polyline points="400.00,40.00 400.00,200.00" fill="none" stroke="#5E6C82" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="400.00" y="36.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="middle">base 126k USD</text>
+<text x="212.00" y="59.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">Water handling cost +50 % / −50 %</text>
+<rect x="400.00" y="49.00" width="180.00" height="18.00" rx="0.0" fill="#7DB88A" stroke="none" stroke-width="1.0" opacity="0.800"/>
+<rect x="220.00" y="49.00" width="180.00" height="18.00" rx="0.0" fill="#D2685A" stroke="none" stroke-width="1.0" opacity="0.800"/>
+<text x="216.00" y="60.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="end">78k</text>
+<text x="584.00" y="60.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="start">174k</text>
+<text x="212.00" y="87.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">Oil price −30 % / +30 %</text>
+<rect x="366.57" y="77.00" width="33.43" height="18.00" rx="0.0" fill="#D2685A" stroke="none" stroke-width="1.0" opacity="0.800"/>
+<rect x="400.00" y="77.00" width="33.43" height="18.00" rx="0.0" fill="#7DB88A" stroke="none" stroke-width="1.0" opacity="0.800"/>
+<text x="362.57" y="88.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="end">117k</text>
+<text x="437.43" y="88.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="start">135k</text>
+<text x="212.00" y="115.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">Discount rate +5 pts / −5 pts</text>
+<rect x="385.37" y="105.00" width="14.63" height="18.00" rx="0.0" fill="#D2685A" stroke="none" stroke-width="1.0" opacity="0.800"/>
+<rect x="400.00" y="105.00" width="16.03" height="18.00" rx="0.0" fill="#7DB88A" stroke="none" stroke-width="1.0" opacity="0.800"/>
+<text x="381.37" y="116.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="end">122k</text>
+<text x="420.03" y="116.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="start">130k</text>
+<text x="212.00" y="143.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">Injection cost +50 % / −50 %</text>
+<rect x="400.00" y="133.00" width="1.00" height="18.00" rx="0.0" fill="#7DB88A" stroke="none" stroke-width="1.0" opacity="0.800"/>
+<rect x="400.00" y="133.00" width="1.00" height="18.00" rx="0.0" fill="#7DB88A" stroke="none" stroke-width="1.0" opacity="0.800"/>
+<text x="396.00" y="144.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="end">126k</text>
+<text x="404.00" y="144.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="start">126k</text>
+<text x="212.00" y="171.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">Forecast range (P10 / P90)</text>
+<rect x="400.00" y="161.00" width="1.00" height="18.00" rx="0.0" fill="#7DB88A" stroke="none" stroke-width="1.0" opacity="0.800"/>
+<rect x="400.00" y="161.00" width="1.00" height="18.00" rx="0.0" fill="#7DB88A" stroke="none" stroke-width="1.0" opacity="0.800"/>
+<text x="396.00" y="172.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="end">126k</text>
+<text x="404.00" y="172.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="start">126k</text>
+<text x="20.00" y="220.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="start">objective value [USD] under each perturbation; bar length = change from base</text>
+</svg></figure>
+
+  <h3>Connectivity</h3>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" width="620" height="460" viewBox="0 0 620 460" role="img" aria-label="Well map with connectivity">
+<rect x="0" y="0" width="620" height="460" fill="#FFFFFF"/>
+<rect x="40.00" y="30.00" width="560.00" height="370.00" rx="0.0" fill="#F3F5F8" stroke="#D5DBE4" stroke-width="1.0"/>
+<polyline points="76.68,281.54 131.74,149.39" fill="none" stroke="#4C9BD4" stroke-width="4.795494328779674" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="131.74,149.39 132.28,157.20 125.82,154.50" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="79.85,283.92 251.37,146.70" fill="none" stroke="#4C9BD4" stroke-width="2.7045060049487706" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="251.37,146.70 248.09,153.81 243.72,148.34" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="193.72,281.54 138.66,149.39" fill="none" stroke="#4C9BD4" stroke-width="3.118377184810766" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="138.66,149.39 144.58,154.50 138.12,157.20" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="199.88,281.54 254.94,149.39" fill="none" stroke="#4C9BD4" stroke-width="3.118377130821742" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="254.94,149.39 255.48,157.20 249.02,154.50" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="203.05,283.92 374.57,146.70" fill="none" stroke="#4C9BD4" stroke-width="1.8632457902510429" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="374.57,146.70 371.29,153.81 366.92,148.34" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="313.75,283.92 142.23,146.70" fill="none" stroke="#4C9BD4" stroke-width="0.8629218665755933" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="142.23,146.70 149.88,148.34 145.51,153.81" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="316.92,281.54 261.86,149.39" fill="none" stroke="#4C9BD4" stroke-width="1.1241556023405657" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="261.86,149.39 267.78,154.50 261.32,157.20" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="323.08,281.54 378.14,149.39" fill="none" stroke="#4C9BD4" stroke-width="5.849999848323753" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="378.14,149.39 378.68,157.20 372.22,154.50" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="326.25,283.92 497.77,146.70" fill="none" stroke="#4C9BD4" stroke-width="0.8629222139386556" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="497.77,146.70 494.49,153.81 490.12,148.34" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="436.95,283.92 265.43,146.70" fill="none" stroke="#4C9BD4" stroke-width="1.8632457406476681" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="265.43,146.70 273.08,148.34 268.71,153.81" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="440.12,281.54 385.06,149.39" fill="none" stroke="#4C9BD4" stroke-width="3.1183771597200574" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="385.06,149.39 390.98,154.50 384.52,157.20" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="446.28,281.54 501.34,149.39" fill="none" stroke="#4C9BD4" stroke-width="3.1183771467508916" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="501.34,149.39 501.88,157.20 495.42,154.50" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="560.15,283.92 388.63,146.70" fill="none" stroke="#4C9BD4" stroke-width="2.7045061243783004" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="388.63,146.70 396.28,148.34 391.91,153.81" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<polyline points="563.32,281.54 508.26,149.39" fill="none" stroke="#4C9BD4" stroke-width="4.795493971302046" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="508.26,149.39 514.18,154.50 507.72,157.20" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<circle cx="135.20" cy="141.08" r="6.00" fill="#E0973F" stroke="#FFFFFF" stroke-width="1.2"/>
+<text x="143.20" y="145.08" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#0B121C" text-anchor="start">P-1</text>
+<circle cx="258.40" cy="141.08" r="6.00" fill="#E0973F" stroke="#FFFFFF" stroke-width="1.2"/>
+<text x="266.40" y="145.08" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#0B121C" text-anchor="start">P-2</text>
+<circle cx="381.60" cy="141.08" r="6.00" fill="#E0973F" stroke="#FFFFFF" stroke-width="1.2"/>
+<text x="389.60" y="145.08" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#0B121C" text-anchor="start">P-3</text>
+<circle cx="504.80" cy="141.08" r="6.00" fill="#E0973F" stroke="#FFFFFF" stroke-width="1.2"/>
+<text x="512.80" y="145.08" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#0B121C" text-anchor="start">P-4</text>
+<polygon points="67.10,283.42 80.10,283.42 73.60,295.42" fill="#4C9BD4" stroke="#FFFFFF" stroke-width="1.2"/>
+<text x="81.60" y="292.92" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#0B121C" text-anchor="start">I-1</text>
+<polygon points="190.30,283.42 203.30,283.42 196.80,295.42" fill="#4C9BD4" stroke="#FFFFFF" stroke-width="1.2"/>
+<text x="204.80" y="292.92" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#0B121C" text-anchor="start">I-2</text>
+<polygon points="313.50,283.42 326.50,283.42 320.00,295.42" fill="#4C9BD4" stroke="#FFFFFF" stroke-width="1.2"/>
+<text x="328.00" y="292.92" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#0B121C" text-anchor="start">I-3</text>
+<polygon points="436.70,283.42 449.70,283.42 443.20,295.42" fill="#4C9BD4" stroke="#FFFFFF" stroke-width="1.2"/>
+<text x="451.20" y="292.92" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#0B121C" text-anchor="start">I-4</text>
+<polygon points="559.90,283.42 572.90,283.42 566.40,295.42" fill="#4C9BD4" stroke="#FFFFFF" stroke-width="1.2"/>
+<text x="574.40" y="292.92" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#0B121C" text-anchor="start">I-5</text>
+<polyline points="52.00,386.00 132.84,386.00" fill="none" stroke="#0B121C" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="52.00" y="381.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="start">100 m</text>
+<polygon points="582.00,42.00 577.00,60.00 587.00,60.00" fill="#0B121C" stroke="none" stroke-width="1.0"/>
+<text x="582.00" y="71.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9" font-weight="bold" fill="#5E6C82" text-anchor="middle">N</text>
+<polygon points="43.00,437.00 53.00,437.00 48.00,447.00" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<text x="61.00" y="446.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">injector</text>
+<circle cx="132.60" cy="442.00" r="4.00" fill="#E0973F" stroke="none" stroke-width="1.0"/>
+<text x="145.60" y="446.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">producer</text>
+<circle cx="217.20" cy="442.00" r="4.00" fill="#9F8FD0" stroke="none" stroke-width="1.0"/>
+<text x="230.20" y="446.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">mixed</text>
+<polyline points="275.20,442.00 291.20,442.00" fill="none" stroke="#4C9BD4" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="296.20" y="446.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">f_ij (width ∝ f, opacity ∝ confidence)</text>
+</svg></figure>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" width="620" height="220" viewBox="0 0 620 220" role="img" aria-label="Connectivity matrix f_ij">
+<rect x="0" y="0" width="620" height="220" fill="#FFFFFF"/>
+<text x="70.00" y="18.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#0B121C" text-anchor="start">Connectivity f_ij (rows: injectors, columns: producers)</text>
+<text x="93.00" y="34.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="middle">P-1</text>
+<text x="139.00" y="34.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="middle">P-2</text>
+<text x="185.00" y="34.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="middle">P-3</text>
+<text x="231.00" y="34.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#5E6C82" text-anchor="middle">P-4</text>
+<text x="64.00" y="55.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="end">I-1</text>
+<rect x="70.00" y="40.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.999"/>
+<text x="93.00" y="55.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#FFFFFF" text-anchor="middle">0.60</text>
+<rect x="116.00" y="40.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.541"/>
+<text x="139.00" y="55.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#0B121C" text-anchor="middle">0.30</text>
+<rect x="162.00" y="40.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.080"/>
+<rect x="208.00" y="40.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.080"/>
+<text x="64.00" y="79.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="end">I-2</text>
+<rect x="70.00" y="64.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.632"/>
+<text x="93.00" y="79.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#FFFFFF" text-anchor="middle">0.36</text>
+<rect x="116.00" y="64.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.632"/>
+<text x="139.00" y="79.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#FFFFFF" text-anchor="middle">0.36</text>
+<rect x="162.00" y="64.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.357"/>
+<text x="185.00" y="79.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#0B121C" text-anchor="middle">0.18</text>
+<rect x="208.00" y="64.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.080"/>
+<text x="64.00" y="103.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="end">I-3</text>
+<rect x="70.00" y="88.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.138"/>
+<text x="93.00" y="103.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#0B121C" text-anchor="middle">0.04</text>
+<rect x="116.00" y="88.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.195"/>
+<text x="139.00" y="103.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#0B121C" text-anchor="middle">0.07</text>
+<rect x="162.00" y="88.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<text x="185.00" y="103.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#FFFFFF" text-anchor="middle">0.75</text>
+<rect x="208.00" y="88.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.138"/>
+<text x="231.00" y="103.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#0B121C" text-anchor="middle">0.04</text>
+<text x="64.00" y="127.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="end">I-4</text>
+<rect x="70.00" y="112.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.080"/>
+<rect x="116.00" y="112.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.357"/>
+<text x="139.00" y="127.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#0B121C" text-anchor="middle">0.18</text>
+<rect x="162.00" y="112.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.632"/>
+<text x="185.00" y="127.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#FFFFFF" text-anchor="middle">0.36</text>
+<rect x="208.00" y="112.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.632"/>
+<text x="231.00" y="127.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#FFFFFF" text-anchor="middle">0.36</text>
+<text x="64.00" y="151.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="end">I-5</text>
+<rect x="70.00" y="136.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.080"/>
+<rect x="116.00" y="136.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.080"/>
+<rect x="162.00" y="136.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.541"/>
+<text x="185.00" y="151.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#0B121C" text-anchor="middle">0.30</text>
+<rect x="208.00" y="136.00" width="45.00" height="23.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.999"/>
+<text x="231.00" y="151.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#FFFFFF" text-anchor="middle">0.60</text>
+<text x="64.00" y="177.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="end">τ [d]</text>
+<text x="93.00" y="177.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#5E6C82" text-anchor="middle">150</text>
+<text x="139.00" y="177.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#5E6C82" text-anchor="middle">110</text>
+<text x="185.00" y="177.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#5E6C82" text-anchor="middle">95</text>
+<text x="231.00" y="177.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="7.5" font-weight="normal" fill="#5E6C82" text-anchor="middle">180</text>
+<text x="70.00" y="210.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="start">Σ_j f_ij per injector: I-1 0.90, I-2 0.90, I-3 0.90, I-4 0.90, I-5 0.90</text>
+</svg></figure>
+
+  <h3>Forecast and injector efficiency</h3>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" width="620" height="300" viewBox="0 0 620 300" role="img" aria-label="Forecast fan">
+<rect x="0" y="0" width="620" height="300" fill="#FFFFFF"/>
+<rect x="60.00" y="30.00" width="540.00" height="210.00" rx="0.0" fill="#FFFFFF" stroke="#D5DBE4" stroke-width="1.0"/>
+<polyline points="60.00,240.00 600.00,240.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="243.50" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">0</text>
+<polyline points="60.00,191.90 600.00,191.90" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="195.40" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">25</text>
+<polyline points="60.00,143.80 600.00,143.80" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="147.30" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">50</text>
+<polyline points="60.00,95.70 600.00,95.70" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="99.20" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">75</text>
+<polyline points="60.00,47.60 600.00,47.60" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="51.10" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">100</text>
+<polyline points="60.00,30.00 60.00,240.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="60.00" y="254.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2014-01</text>
+<polyline points="133.89,30.00 133.89,240.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="133.89" y="254.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2015-02</text>
+<polyline points="207.79,30.00 207.79,240.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="207.79" y="254.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2016-03</text>
+<polyline points="281.68,30.00 281.68,240.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="281.68" y="254.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2017-04</text>
+<polyline points="355.58,30.00 355.58,240.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="355.58" y="254.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2018-05</text>
+<polyline points="429.47,30.00 429.47,240.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="429.47" y="254.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2019-06</text>
+<polyline points="503.37,30.00 503.37,240.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="503.37" y="254.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2020-07</text>
+<polyline points="577.26,30.00 577.26,240.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="577.26" y="254.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2021-08</text>
+<text x="330.00" y="270.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="10" font-weight="normal" fill="#5E6C82" text-anchor="middle">month</text>
+<text x="16.00" y="135.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="10" font-weight="normal" fill="#5E6C82" text-anchor="middle" transform="rotate(-90 16.00 135.00)">field oil rate [bbl/d]</text>
+<text x="60.00" y="22.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#0B121C" text-anchor="start">Field oil rate: history and forecast</text>
+<rect x="332.84" y="30.00" width="130.74" height="210.00" rx="0.0" fill="#9F8FD0" stroke="none" stroke-width="1.0" opacity="0.120"/>
+<text x="335.84" y="42.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="start">blind test</text>
+<polyline points="463.58,30.00 463.58,240.00" fill="none" stroke="#5E6C82" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3,3"/>
+<polygon points="463.58,172.06 469.26,171.43 474.95,171.08 480.63,170.94 486.32,170.99 492.00,171.21 497.68,171.56 503.37,172.03 509.05,172.59 514.74,173.20 520.42,173.88 526.11,174.58 531.79,175.33 537.47,176.10 543.16,176.80 548.84,177.58 554.53,178.34 560.21,179.12 565.89,179.87 571.58,180.63 577.26,181.39 582.95,182.11 588.63,182.84 594.32,183.53 594.32,183.53 588.63,182.84 582.95,182.11 577.26,181.39 571.58,180.63 565.89,179.87 560.21,179.12 554.53,178.34 548.84,177.58 543.16,176.80 537.47,176.10 531.79,175.33 526.11,174.58 520.42,173.88 514.74,173.20 509.05,172.59 503.37,172.03 497.68,171.56 492.00,171.21 486.32,170.99 480.63,170.94 474.95,171.08 469.26,171.43 463.58,172.06" fill="#5CC2AE" stroke="none" stroke-width="1.0" opacity="0.180"/>
+<polyline points="60.00,45.56 65.68,52.38 71.37,57.48 77.05,63.09 82.74,68.11 88.42,77.67 94.11,84.15 99.79,90.11 105.47,95.13 111.16,99.72 116.84,103.95 122.53,106.18 128.21,111.18 133.89,117.69 139.58,122.42 145.26,126.74 150.95,127.97 156.63,132.72 162.32,136.42 168.00,138.07 173.68,139.63 179.37,141.15 185.05,140.51 190.74,140.88 196.42,144.55 202.11,147.62 207.79,146.86 213.47,146.54 219.16,146.73 224.84,147.16 230.53,145.35 236.21,144.95 241.89,145.11 247.58,145.66 253.26,143.67 258.95,143.46 264.63,143.85 270.32,142.56 276.00,144.72 281.68,147.06 287.37,149.35 293.05,151.28 298.74,148.75 304.42,146.86 310.11,146.05 315.79,146.39 321.47,147.01 327.16,149.67 332.84,154.24 338.53,157.90 344.21,160.68 349.89,163.96 355.58,166.59 361.26,169.26 366.95,171.54 372.63,170.71 378.32,173.42 384.00,175.61 389.68,177.44 395.37,179.14 401.05,178.82 406.74,177.52 412.42,175.44 418.11,174.49 423.79,173.43 429.47,172.69 435.16,172.29 440.84,172.33 446.53,172.52 452.21,173.44 457.89,174.08 463.58,172.98" fill="none" stroke="#5E6C82" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="463.58,172.06 469.26,171.43 474.95,171.08 480.63,170.94 486.32,170.99 492.00,171.21 497.68,171.56 503.37,172.03 509.05,172.59 514.74,173.20 520.42,173.88 526.11,174.58 531.79,175.33 537.47,176.10 543.16,176.80 548.84,177.58 554.53,178.34 560.21,179.12 565.89,179.87 571.58,180.63 577.26,181.39 582.95,182.11 588.63,182.84 594.32,183.53" fill="none" stroke="#5CC2AE" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="463.58,172.29 469.26,171.96 474.95,171.90 480.63,172.04 486.32,172.32 492.00,172.73 497.68,173.20 503.37,173.76 509.05,174.37 514.74,174.99 520.42,175.65 526.11,176.31 531.79,176.99 537.47,177.68 543.16,178.30 548.84,178.99 554.53,179.65 560.21,180.32 565.89,180.96 571.58,181.62 577.26,182.26 582.95,182.88 588.63,183.50 594.32,184.10" fill="none" stroke="#E0973F" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5,4"/>
+<polyline points="60.00,286.00 76.00,286.00" fill="none" stroke="#5E6C82" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="81.00" y="290.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">history</text>
+<polyline points="138.40,286.00 154.40,286.00" fill="none" stroke="#5CC2AE" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="159.40" y="290.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">plan P50</text>
+<rect x="223.00" y="282.00" width="16.00" height="9.00" rx="0.0" fill="#5CC2AE" stroke="none" stroke-width="1.0" opacity="0.350"/>
+<text x="244.00" y="290.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">plan P10–P90</text>
+<polyline points="332.40,286.00 348.40,286.00" fill="none" stroke="#E0973F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4,3"/>
+<text x="353.40" y="290.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">hold-current P50</text>
+</svg></figure>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" width="620" height="280" viewBox="0 0 620 280" role="img" aria-label="Injector efficiency">
+<rect x="0" y="0" width="620" height="280" fill="#FFFFFF"/>
+<rect x="60.00" y="30.00" width="540.00" height="190.00" rx="0.0" fill="#FFFFFF" stroke="#D5DBE4" stroke-width="1.0"/>
+<polyline points="60.00,220.00 600.00,220.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="223.50" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">0</text>
+<polyline points="60.00,171.29 600.00,171.29" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="174.79" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">1,000</text>
+<polyline points="60.00,122.58 600.00,122.58" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="126.08" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">2,000</text>
+<polyline points="60.00,73.87 600.00,73.87" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="77.37" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">3,000</text>
+<polyline points="114.00,30.00 114.00,220.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="114.00" y="234.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">I-1</text>
+<polyline points="222.00,30.00 222.00,220.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="222.00" y="234.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">I-2</text>
+<polyline points="330.00,30.00 330.00,220.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="330.00" y="234.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">I-3</text>
+<polyline points="438.00,30.00 438.00,220.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="438.00" y="234.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">I-4</text>
+<polyline points="546.00,30.00 546.00,220.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="546.00" y="234.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">I-5</text>
+<text x="330.00" y="250.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="10" font-weight="normal" fill="#5E6C82" text-anchor="middle">injector</text>
+<text x="16.00" y="125.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="10" font-weight="normal" fill="#5E6C82" text-anchor="middle" transform="rotate(-90 16.00 125.00)">rate [bbl/d]</text>
+<text x="60.00" y="22.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#0B121C" text-anchor="start">Injector efficiency (oil per bbl injected) — current vs optimized rate</text>
+<rect x="74.12" y="107.48" width="38.88" height="112.52" rx="0.0" fill="#93A0B4" stroke="none" stroke-width="1.0"/>
+<rect x="115.00" y="44.07" width="38.88" height="175.93" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<text x="114.00" y="42.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#E0973F" text-anchor="middle">0.006</text>
+<rect x="182.12" y="133.18" width="38.88" height="86.82" rx="0.0" fill="#93A0B4" stroke="none" stroke-width="1.0"/>
+<rect x="223.00" y="87.39" width="38.88" height="132.61" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<text x="222.00" y="42.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#E0973F" text-anchor="middle">0.005</text>
+<rect x="290.12" y="130.31" width="38.88" height="89.69" rx="0.0" fill="#93A0B4" stroke="none" stroke-width="1.0"/>
+<rect x="331.00" y="220.00" width="38.88" height="0.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<text x="330.00" y="42.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#E0973F" text-anchor="middle">0.004</text>
+<rect x="398.12" y="139.84" width="38.88" height="80.16" rx="0.0" fill="#93A0B4" stroke="none" stroke-width="1.0"/>
+<rect x="439.00" y="220.00" width="38.88" height="0.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<text x="438.00" y="42.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#E0973F" text-anchor="middle">0.004</text>
+<rect x="506.12" y="149.37" width="38.88" height="70.63" rx="0.0" fill="#93A0B4" stroke="none" stroke-width="1.0"/>
+<rect x="547.00" y="88.72" width="38.88" height="131.28" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<text x="546.00" y="42.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8" font-weight="normal" fill="#E0973F" text-anchor="middle">0.003</text>
+<rect x="60.00" y="262.00" width="16.00" height="9.00" rx="0.0" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.350"/>
+<text x="81.00" y="270.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">current</text>
+<rect x="138.40" y="262.00" width="16.00" height="9.00" rx="0.0" fill="#4C9BD4" stroke="none" stroke-width="1.0" opacity="0.350"/>
+<text x="159.40" y="270.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">optimized</text>
+<polyline points="229.20,266.00 245.20,266.00" fill="none" stroke="#E0973F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="250.20" y="270.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">oil per bbl injected (label)</text>
+</svg></figure>
+
+  <h3>Which method won</h3>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" width="620" height="330" viewBox="0 0 620 330" role="img" aria-label="Tournament leaderboard">
+<rect x="0" y="0" width="620" height="330" fill="#FFFFFF"/>
+<text x="20.00" y="22.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="11.5" font-weight="bold" fill="#0B121C" text-anchor="start">Which method won — composite score (blind R², MAPE, AICc, stability, plausibility, runtime)</text>
+<text x="182.00" y="56.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">CRMP (producer)</text>
+<rect x="190.00" y="46.00" width="230.00" height="18.00" rx="2" fill="#4C9BD4" stroke="none" stroke-width="1.0"/>
+<text x="426.00" y="57.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="start">0.986  R² 1.000  MAPE 0.0 %  p 24</text>
+<text x="182.00" y="82.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">CRMIP (pair)</text>
+<rect x="190.00" y="72.00" width="218.82" height="18.00" rx="2" fill="#9F8FD0" stroke="none" stroke-width="1.0"/>
+<text x="414.82" y="83.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="start">0.938  R² 1.000  MAPE 0.0 %  p 48</text>
+<text x="182.00" y="108.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">CRMT (field tank)</text>
+<rect x="190.00" y="98.00" width="175.43" height="18.00" rx="2" fill="#93A0B4" stroke="none" stroke-width="1.0"/>
+<text x="371.43" y="109.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="start">0.752  R² 0.918  MAPE 6.5 %  p 4</text>
+<text x="182.00" y="134.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">MPI (geometric)</text>
+<rect x="190.00" y="124.00" width="34.50" height="18.00" rx="2" fill="#D5DBE4" stroke="none" stroke-width="1.0"/>
+<text x="230.50" y="135.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#93A0B4" text-anchor="start">excluded — usable as a geometric prior / sanity check on f_ij; not a history-match method itself</text>
+<text x="182.00" y="160.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">MLR / BMLR</text>
+<rect x="190.00" y="150.00" width="34.50" height="18.00" rx="2" fill="#D5DBE4" stroke="none" stroke-width="1.0"/>
+<text x="230.50" y="161.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#93A0B4" text-anchor="start">excluded — cheap screening for barriers; no dynamics, superseded by CRM for forecasting</text>
+<text x="182.00" y="186.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">CRM-Aquifer (CRMPA/AQ)</text>
+<rect x="190.00" y="176.00" width="34.50" height="18.00" rx="2" fill="#D5DBE4" stroke="none" stroke-width="1.0"/>
+<text x="230.50" y="187.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#93A0B4" text-anchor="start">excluded — Σf_ij≈0.88 — no influx signature; extra aquifer parameters would be unidentifiable</text>
+<text x="182.00" y="212.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">Two-phase coupled</text>
+<rect x="190.00" y="202.00" width="34.50" height="18.00" rx="2" fill="#D5DBE4" stroke="none" stroke-width="1.0"/>
+<text x="230.50" y="213.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#93A0B4" text-anchor="start">excluded — mean water cut 0.97 ≥ 0.5 — mobility stable, constant-τ CRM sufficient</text>
+<text x="182.00" y="238.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">Crossflow / productivity-coeff.</text>
+<rect x="190.00" y="228.00" width="34.50" height="18.00" rx="2" fill="#D5DBE4" stroke="none" stroke-width="1.0"/>
+<text x="230.50" y="239.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#93A0B4" text-anchor="start">excluded — 0 events/well — operating modes stable, classical f_ij holds</text>
+<text x="182.00" y="264.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">PINN / residual ML</text>
+<rect x="190.00" y="254.00" width="34.50" height="18.00" rx="2" fill="#D5DBE4" stroke="none" stroke-width="1.0"/>
+<text x="230.50" y="265.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#93A0B4" text-anchor="start">excluded — long history available; run only if classical residuals show structure (autocorrelation)</text>
+<text x="182.00" y="290.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#0B121C" text-anchor="end">Pure RNN / LSTM</text>
+<rect x="190.00" y="280.00" width="34.50" height="18.00" rx="2" fill="#D5DBE4" stroke="none" stroke-width="1.0"/>
+<text x="230.50" y="291.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#93A0B4" text-anchor="start">excluded — fails interpretability gate — exposes no f_ij / τ for the optimizer (benchmark only)</text>
+</svg></figure>
+  <table class="data compact">
+    <thead><tr><th>gate</th><th>result</th><th>gate</th><th>result</th></tr></thead>
+    <tbody>
+    
+    
+    <tr>
+      <td>history_min</td><td class="ok">pass</td>
+      <td>od</td><td class="ok">pass</td>
+    </tr>
+    
+    <tr>
+      <td>points_per_param</td><td class="ok">pass</td>
+      <td>crmip_data</td><td class="ok">pass</td>
+    </tr>
+    
+    <tr>
+      <td>inj_cv</td><td class="ok">pass</td>
+      <td>tau_dt</td><td class="ok">pass</td>
+    </tr>
+    
+    <tr>
+      <td>influx</td><td class="bad">fail / n.a.</td>
+      <td>event_heavy</td><td class="bad">fail / n.a.</td>
+    </tr>
+    
+    <tr>
+      <td>mature</td><td class="ok">pass</td>
+      <td>long_history</td><td class="ok">pass</td>
+    </tr>
+    
+    <tr>
+      <td>has_xy</td><td class="ok">pass</td>
+      <td>has_bhp</td><td class="bad">fail / n.a.</td>
+    </tr>
+    
+    <tr>
+      <td>has_relperm</td><td class="bad">fail / n.a.</td>
+      <td></td><td></td>
+    </tr>
+    
+    </tbody>
+  </table>
+  
+  
+  <p class="small"><strong>Excluded methods:</strong> aquifer — Σf_ij≈0.88 — no influx signature; extra aquifer parameters would be unidentifiable; twophase — mean water cut 0.97 ≥ 0.5 — mobility stable, constant-τ CRM sufficient; crossflow — 0 events/well — operating modes stable, classical f_ij holds; rnn — fails interpretability gate — exposes no f_ij / τ for the optimizer (benchmark only)</p>
+  
+
+  <h3>History match per well</h3>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" width="620" height="340" viewBox="0 0 620 340" role="img" aria-label="History match per well">
+<rect x="0" y="0" width="620" height="340" fill="#FFFFFF"/>
+<rect x="62.00" y="30.00" width="240.00" height="88.00" rx="0.0" fill="#FFFFFF" stroke="#D5DBE4" stroke-width="1.0"/>
+<polyline points="62.00,118.00 302.00,118.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="56.00" y="121.50" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">0</text>
+<polyline points="62.00,94.69 302.00,94.69" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="56.00" y="98.19" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">500</text>
+<polyline points="62.00,71.39 302.00,71.39" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="56.00" y="74.89" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">1,000</text>
+<polyline points="62.00,48.08 302.00,48.08" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="56.00" y="51.58" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">1,500</text>
+<polyline points="62.00,30.00 62.00,118.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="62.00" y="132.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2010-01</text>
+<polyline points="142.67,30.00 142.67,118.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="142.67" y="132.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2013-05</text>
+<polyline points="223.34,30.00 223.34,118.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="223.34" y="132.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2016-09</text>
+<text x="62.00" y="22.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#0B121C" text-anchor="start">P-1  R² 1.000  MAPE 0.0 %</text>
+<rect x="255.61" y="30.00" width="46.39" height="88.00" rx="0.0" fill="#9F8FD0" stroke="none" stroke-width="1.0" opacity="0.120"/>
+<circle cx="62.00" cy="64.60" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="64.02" cy="62.00" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="66.03" cy="60.13" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="68.05" cy="58.39" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="70.07" cy="56.80" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="72.08" cy="55.68" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="74.10" cy="53.74" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="76.12" cy="52.37" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="78.13" cy="51.20" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="80.15" cy="50.60" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="82.17" cy="50.19" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="84.18" cy="52.24" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="86.20" cy="53.73" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="88.22" cy="54.94" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="90.24" cy="55.90" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="92.25" cy="51.81" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="94.27" cy="48.72" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="96.29" cy="45.88" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="98.30" cy="43.86" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="100.32" cy="42.42" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="102.34" cy="41.21" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="104.35" cy="40.35" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="106.37" cy="39.54" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="108.39" cy="38.80" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="110.40" cy="38.43" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="112.42" cy="41.83" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="114.44" cy="44.37" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="116.45" cy="46.62" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="118.47" cy="48.40" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="120.49" cy="49.80" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="122.50" cy="50.96" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="124.52" cy="54.16" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="126.54" cy="56.74" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="128.55" cy="58.46" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="130.57" cy="60.09" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="132.59" cy="61.38" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="134.61" cy="67.05" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="136.62" cy="71.42" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="138.64" cy="74.68" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="140.66" cy="73.63" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="142.67" cy="72.74" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="144.69" cy="72.17" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="146.71" cy="71.70" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="148.72" cy="64.73" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="150.74" cy="59.26" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="152.76" cy="54.81" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="154.77" cy="50.87" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="156.79" cy="47.57" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="158.81" cy="50.66" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="160.82" cy="51.01" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="162.84" cy="51.12" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="164.86" cy="51.40" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="166.87" cy="51.56" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="168.89" cy="54.71" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="170.91" cy="57.29" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="172.92" cy="59.49" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="174.94" cy="61.24" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="176.96" cy="62.70" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="178.97" cy="64.01" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="180.99" cy="64.89" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="183.01" cy="65.16" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="185.03" cy="65.33" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="187.04" cy="65.48" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="189.06" cy="65.53" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="191.08" cy="62.92" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="193.09" cy="63.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="195.11" cy="63.42" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="197.13" cy="63.71" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="199.14" cy="63.91" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="201.16" cy="64.21" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="203.18" cy="63.92" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="205.19" cy="63.93" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="207.21" cy="63.89" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="209.23" cy="63.80" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="211.24" cy="62.00" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="213.26" cy="60.32" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="215.28" cy="58.98" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="217.29" cy="57.87" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="219.31" cy="53.32" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="221.33" cy="49.39" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="223.34" cy="46.34" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="225.36" cy="44.06" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="227.38" cy="42.08" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="229.39" cy="41.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="231.41" cy="40.72" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="233.43" cy="40.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="235.45" cy="44.65" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="237.46" cy="48.73" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="239.48" cy="51.98" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="241.50" cy="54.54" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="243.51" cy="49.07" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="245.53" cy="44.01" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="247.55" cy="40.20" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="249.56" cy="38.72" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="251.58" cy="37.50" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="253.60" cy="36.52" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="255.61" cy="37.00" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="257.63" cy="37.18" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="259.65" cy="37.37" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="261.66" cy="37.46" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="263.68" cy="37.65" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="265.70" cy="38.29" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="267.71" cy="39.02" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="269.73" cy="39.82" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="271.75" cy="47.14" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="273.76" cy="52.83" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="275.78" cy="57.59" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="277.80" cy="61.42" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="279.82" cy="62.39" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="281.83" cy="63.09" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="283.85" cy="60.30" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="285.87" cy="57.84" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="287.88" cy="55.13" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="289.90" cy="52.95" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="291.92" cy="51.21" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="293.93" cy="50.03" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="295.95" cy="48.89" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="297.97" cy="48.01" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="299.98" cy="47.27" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="302.00" cy="42.39" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<polyline points="62.00,64.60 64.02,62.00 66.03,60.13 68.05,58.39 70.07,56.80 72.08,55.68 74.10,53.74 76.12,52.37 78.13,51.20 80.15,50.60 82.17,50.19 84.18,52.24 86.20,53.73 88.22,54.94 90.24,55.90 92.25,51.81 94.27,48.72 96.29,45.88 98.30,43.86 100.32,42.42 102.34,41.21 104.35,40.35 106.37,39.54 108.39,38.80 110.40,38.43 112.42,41.83 114.44,44.37 116.45,46.62 118.47,48.40 120.49,49.80 122.50,50.96 124.52,54.16 126.54,56.74 128.55,58.46 130.57,60.09 132.59,61.38 134.61,67.05 136.62,71.42 138.64,74.68 140.66,73.63 142.67,72.74 144.69,72.17 146.71,71.70 148.72,64.73 150.74,59.26 152.76,54.81 154.77,50.87 156.79,47.57 158.81,50.66 160.82,51.01 162.84,51.12 164.86,51.40 166.87,51.56 168.89,54.71 170.91,57.29 172.92,59.49 174.94,61.24 176.96,62.70 178.97,64.01 180.99,64.89 183.01,65.16 185.03,65.33 187.04,65.48 189.06,65.53 191.08,62.92 193.09,63.28 195.11,63.42 197.13,63.71 199.14,63.91 201.16,64.21 203.18,63.92 205.19,63.93 207.21,63.89 209.23,63.80 211.24,62.00 213.26,60.32 215.28,58.98 217.29,57.87 219.31,53.32 221.33,49.39 223.34,46.34 225.36,44.06 227.38,42.08 229.39,41.28 231.41,40.72 233.43,40.28 235.45,44.65 237.46,48.73 239.48,51.98 241.50,54.54 243.51,49.07 245.53,44.01 247.55,40.20 249.56,38.72 251.58,37.50 253.60,36.52 255.61,37.00 257.63,37.18 259.65,37.37 261.66,37.46 263.68,37.65 265.70,38.29 267.71,39.02 269.73,39.82 271.75,47.14 273.76,52.83 275.78,57.59 277.80,61.42 279.82,62.39 281.83,63.09 283.85,60.30 285.87,57.84 287.88,55.13 289.90,52.95 291.92,51.21 293.93,50.03 295.95,48.89 297.97,48.01 299.98,47.27 302.00,42.39" fill="none" stroke="#5E6C82" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="62.00,64.60 64.02,62.00 66.03,60.13 68.05,58.39 70.07,56.80 72.08,55.68 74.10,53.74 76.12,52.37 78.13,51.20 80.15,50.60 82.17,50.19 84.18,52.24 86.20,53.73 88.22,54.94 90.24,55.90 92.25,51.81 94.27,48.72 96.29,45.88 98.30,43.86 100.32,42.42 102.34,41.21 104.35,40.35 106.37,39.54 108.39,38.80 110.40,38.43 112.42,41.83 114.44,44.37 116.45,46.62 118.47,48.40 120.49,49.80 122.50,50.96 124.52,54.16 126.54,56.74 128.55,58.46 130.57,60.09 132.59,61.38 134.61,67.05 136.62,71.42 138.64,74.68 140.66,73.63 142.67,72.74 144.69,72.17 146.71,71.70 148.72,64.73 150.74,59.26 152.76,54.81 154.77,50.87 156.79,47.57 158.81,50.66 160.82,51.01 162.84,51.12 164.86,51.40 166.87,51.56 168.89,54.71 170.91,57.29 172.92,59.49 174.94,61.24 176.96,62.70 178.97,64.01 180.99,64.89 183.01,65.16 185.03,65.33 187.04,65.48 189.06,65.53 191.08,62.92 193.09,63.28 195.11,63.42 197.13,63.71 199.14,63.91 201.16,64.21 203.18,63.92 205.19,63.93 207.21,63.89 209.23,63.80 211.24,62.00 213.26,60.32 215.28,58.98 217.29,57.87 219.31,53.32 221.33,49.39 223.34,46.34 225.36,44.06 227.38,42.08 229.39,41.28 231.41,40.72 233.43,40.28 235.45,44.65 237.46,48.73 239.48,51.98 241.50,54.54 243.51,49.07 245.53,44.01 247.55,40.20 249.56,38.72 251.58,37.50 253.60,36.52 255.61,37.00 257.63,37.18 259.65,37.37 261.66,37.46 263.68,37.65 265.70,38.29 267.71,39.02 269.73,39.82 271.75,47.14 273.76,52.83 275.78,57.59 277.80,61.42 279.82,62.39 281.83,63.09 283.85,60.30 285.87,57.84 287.88,55.13 289.90,52.95 291.92,51.21 293.93,50.03 295.95,48.89 297.97,48.01 299.98,47.27 302.00,42.39" fill="none" stroke="#E0973F" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="62.00" y="122.00" width="240.00" height="20.00" rx="0.0" fill="#F3F5F8" stroke="none" stroke-width="1.0"/>
+<polyline points="62.00,132.00 302.00,132.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="62.00,132.00 64.02,134.13 66.03,135.45 68.05,136.38 70.07,137.02 72.08,137.27 74.10,137.80 76.12,137.10 78.13,136.42 80.15,135.54 82.17,134.67 84.18,132.83 86.20,132.21 88.22,131.89 90.24,131.74 92.25,134.10 94.27,134.88 96.29,135.27 98.30,135.15 100.32,134.61 102.34,134.04 104.35,133.38 106.37,132.75 108.39,132.22 110.40,131.58 112.42,129.45 114.44,128.22 116.45,127.44 118.47,127.09 120.49,127.07 122.50,127.19 124.52,125.53 126.54,124.56 128.55,124.23 130.57,124.10 132.59,124.18 134.61,122.27 136.62,122.00 138.64,122.24 140.66,125.28 142.67,127.60 144.69,129.35 146.71,130.69 148.72,134.45 150.74,136.56 152.76,137.98 154.77,138.72 156.79,138.93 158.81,135.94 160.82,135.18 162.84,134.75 164.86,134.32 166.87,134.01 168.89,132.33 170.91,131.22 172.92,130.58 174.94,130.35 176.96,130.33 178.97,130.44 180.99,130.78 183.01,130.56 185.03,130.46 187.04,130.38 189.06,130.37 191.08,131.63 193.09,130.82 195.11,130.29 197.13,129.77 199.14,129.38 201.16,129.04 203.18,129.55 205.19,129.79 207.21,130.03 209.23,130.24 211.24,131.64 213.26,132.70 215.28,133.34 217.29,133.70 219.31,135.59 221.33,136.63 223.34,136.93 225.36,136.74 227.38,136.34 229.39,135.32 231.41,134.29 233.43,133.40 235.45,130.46 237.46,128.30 239.48,127.36 241.50,127.08 243.51,130.68 245.53,133.26 247.55,134.60 249.56,134.58 251.58,134.38 253.60,134.09 255.61,133.12 257.63,132.48 259.65,131.99 261.66,131.27 263.68,130.66 265.70,129.89 267.71,129.22 269.73,128.67 271.75,125.19 273.76,123.31 275.78,122.48 277.80,122.32 279.82,124.09 281.83,125.71 283.85,128.56 285.87,130.74 287.88,132.62 289.90,133.90 291.92,134.66 293.93,134.92 295.95,135.06 297.97,135.04 299.98,134.95 302.00,136.82" fill="none" stroke="#D2685A" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="302.00" y="138.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="7.5" font-weight="normal" fill="#93A0B4" text-anchor="end">residual</text>
+<rect x="362.00" y="30.00" width="240.00" height="88.00" rx="0.0" fill="#FFFFFF" stroke="#D5DBE4" stroke-width="1.0"/>
+<polyline points="362.00,118.00 602.00,118.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="356.00" y="121.50" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">0</text>
+<polyline points="362.00,91.55 602.00,91.55" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="356.00" y="95.05" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">500</text>
+<polyline points="362.00,65.10 602.00,65.10" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="356.00" y="68.60" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">1,000</text>
+<polyline points="362.00,38.65 602.00,38.65" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="356.00" y="42.15" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">1,500</text>
+<polyline points="362.00,30.00 362.00,118.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="362.00" y="132.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2010-01</text>
+<polyline points="442.67,30.00 442.67,118.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="442.67" y="132.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2013-05</text>
+<polyline points="523.34,30.00 523.34,118.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="523.34" y="132.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2016-09</text>
+<text x="362.00" y="22.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#0B121C" text-anchor="start">P-2  R² 1.000  MAPE 0.0 %</text>
+<rect x="555.61" y="30.00" width="46.39" height="88.00" rx="0.0" fill="#9F8FD0" stroke="none" stroke-width="1.0" opacity="0.120"/>
+<circle cx="362.00" cy="64.10" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="364.02" cy="60.81" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="366.03" cy="58.61" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="368.05" cy="56.74" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="370.07" cy="55.16" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="372.08" cy="54.06" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="374.10" cy="52.56" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="376.12" cy="52.86" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="378.13" cy="53.09" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="380.15" cy="53.72" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="382.17" cy="54.34" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="384.18" cy="56.50" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="386.20" cy="57.59" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="388.22" cy="58.49" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="390.24" cy="59.16" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="392.25" cy="55.85" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="394.27" cy="53.89" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="396.29" cy="51.17" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="398.30" cy="49.37" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="400.32" cy="48.44" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="402.34" cy="47.67" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="404.35" cy="46.60" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="406.37" cy="45.71" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="408.39" cy="44.96" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="410.40" cy="44.50" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="412.42" cy="46.82" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="414.44" cy="47.72" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="416.45" cy="48.40" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="418.47" cy="48.88" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="420.49" cy="49.14" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="422.50" cy="47.89" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="424.52" cy="50.44" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="426.54" cy="52.40" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="428.55" cy="53.69" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="430.57" cy="54.80" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="432.59" cy="55.55" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="434.61" cy="59.58" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="436.62" cy="62.06" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="438.64" cy="63.76" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="440.66" cy="59.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="442.67" cy="57.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="444.69" cy="55.82" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="446.71" cy="54.78" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="448.72" cy="51.08" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="450.74" cy="47.62" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="452.76" cy="44.78" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="454.77" cy="42.43" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="456.79" cy="40.62" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="458.81" cy="43.58" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="460.82" cy="42.56" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="462.84" cy="41.53" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="464.86" cy="40.84" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="466.87" cy="40.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="468.89" cy="43.09" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="470.91" cy="45.24" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="472.92" cy="47.00" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="474.94" cy="48.21" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="476.96" cy="49.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="478.97" cy="50.21" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="480.99" cy="50.65" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="483.01" cy="51.34" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="485.03" cy="53.57" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="487.04" cy="55.11" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="489.06" cy="56.42" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="491.08" cy="55.32" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="493.09" cy="58.33" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="495.11" cy="60.40" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="497.13" cy="60.25" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="499.14" cy="60.12" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="501.16" cy="60.04" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="503.18" cy="59.15" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="505.19" cy="58.80" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="507.21" cy="61.04" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="509.23" cy="62.67" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="511.24" cy="60.06" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="513.26" cy="57.91" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="515.28" cy="56.37" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="517.29" cy="55.12" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="519.31" cy="51.46" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="521.33" cy="48.55" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="523.34" cy="46.47" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="525.36" cy="45.06" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="527.38" cy="41.34" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="529.39" cy="39.83" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="531.41" cy="38.81" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="533.43" cy="37.98" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="535.45" cy="40.88" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="537.46" cy="43.54" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="539.48" cy="46.34" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="541.50" cy="48.35" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="543.51" cy="44.17" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="545.53" cy="40.56" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="547.55" cy="38.15" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="549.56" cy="38.63" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="551.58" cy="38.91" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="553.60" cy="39.17" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="555.61" cy="42.17" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="557.63" cy="44.29" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="559.65" cy="45.84" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="561.66" cy="47.32" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="563.68" cy="48.42" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="565.70" cy="50.11" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="567.71" cy="51.56" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="569.73" cy="49.83" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="571.75" cy="53.47" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="573.76" cy="56.04" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="575.78" cy="57.97" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="577.80" cy="59.57" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="579.82" cy="57.35" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="581.83" cy="55.43" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="583.85" cy="51.71" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="585.87" cy="49.55" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="587.88" cy="46.98" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="589.90" cy="45.00" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="591.92" cy="43.43" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="593.93" cy="42.58" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="595.95" cy="41.79" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="597.97" cy="41.13" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="599.98" cy="40.34" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="602.00" cy="36.52" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<polyline points="362.00,64.10 364.02,60.81 366.03,58.61 368.05,56.74 370.07,55.16 372.08,54.06 374.10,52.56 376.12,52.86 378.13,53.09 380.15,53.72 382.17,54.34 384.18,56.50 386.20,57.59 388.22,58.49 390.24,59.16 392.25,55.85 394.27,53.89 396.29,51.17 398.30,49.37 400.32,48.44 402.34,47.67 404.35,46.60 406.37,45.71 408.39,44.96 410.40,44.50 412.42,46.82 414.44,47.72 416.45,48.40 418.47,48.88 420.49,49.14 422.50,47.89 424.52,50.44 426.54,52.40 428.55,53.69 430.57,54.80 432.59,55.55 434.61,59.58 436.62,62.06 438.64,63.76 440.66,59.28 442.67,57.28 444.69,55.82 446.71,54.78 448.72,51.08 450.74,47.62 452.76,44.78 454.77,42.43 456.79,40.62 458.81,43.58 460.82,42.56 462.84,41.53 464.86,40.84 466.87,40.28 468.89,43.09 470.91,45.24 472.92,47.00 474.94,48.21 476.96,49.28 478.97,50.21 480.99,50.65 483.01,51.34 485.03,53.57 487.04,55.11 489.06,56.42 491.08,55.32 493.09,58.33 495.11,60.40 497.13,60.25 499.14,60.12 501.16,60.04 503.18,59.15 505.19,58.80 507.21,61.04 509.23,62.67 511.24,60.06 513.26,57.91 515.28,56.37 517.29,55.12 519.31,51.46 521.33,48.55 523.34,46.47 525.36,45.06 527.38,41.34 529.39,39.83 531.41,38.81 533.43,37.98 535.45,40.88 537.46,43.54 539.48,46.34 541.50,48.35 543.51,44.17 545.53,40.56 547.55,38.15 549.56,38.63 551.58,38.91 553.60,39.17 555.61,42.17 557.63,44.29 559.65,45.84 561.66,47.32 563.68,48.42 565.70,50.11 567.71,51.56 569.73,49.83 571.75,53.47 573.76,56.04 575.78,57.97 577.80,59.57 579.82,57.35 581.83,55.43 583.85,51.71 585.87,49.55 587.88,46.98 589.90,45.00 591.92,43.43 593.93,42.58 595.95,41.79 597.97,41.13 599.98,40.34 602.00,36.52" fill="none" stroke="#5E6C82" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="362.00,64.10 364.02,60.81 366.03,58.61 368.05,56.74 370.07,55.16 372.08,54.06 374.10,52.56 376.12,52.86 378.13,53.09 380.15,53.72 382.17,54.34 384.18,56.50 386.20,57.59 388.22,58.49 390.24,59.16 392.25,55.85 394.27,53.89 396.29,51.17 398.30,49.37 400.32,48.44 402.34,47.67 404.35,46.60 406.37,45.71 408.39,44.96 410.40,44.50 412.42,46.82 414.44,47.72 416.45,48.40 418.47,48.88 420.49,49.14 422.50,47.89 424.52,50.44 426.54,52.40 428.55,53.69 430.57,54.80 432.59,55.55 434.61,59.58 436.62,62.06 438.64,63.76 440.66,59.28 442.67,57.28 444.69,55.82 446.71,54.78 448.72,51.08 450.74,47.62 452.76,44.78 454.77,42.43 456.79,40.62 458.81,43.58 460.82,42.56 462.84,41.53 464.86,40.84 466.87,40.28 468.89,43.09 470.91,45.24 472.92,47.00 474.94,48.21 476.96,49.28 478.97,50.21 480.99,50.65 483.01,51.34 485.03,53.57 487.04,55.11 489.06,56.42 491.08,55.32 493.09,58.33 495.11,60.40 497.13,60.25 499.14,60.12 501.16,60.04 503.18,59.15 505.19,58.80 507.21,61.04 509.23,62.67 511.24,60.06 513.26,57.91 515.28,56.37 517.29,55.12 519.31,51.46 521.33,48.55 523.34,46.47 525.36,45.06 527.38,41.34 529.39,39.83 531.41,38.81 533.43,37.98 535.45,40.88 537.46,43.54 539.48,46.34 541.50,48.35 543.51,44.17 545.53,40.56 547.55,38.15 549.56,38.63 551.58,38.91 553.60,39.17 555.61,42.17 557.63,44.29 559.65,45.84 561.66,47.32 563.68,48.42 565.70,50.11 567.71,51.56 569.73,49.83 571.75,53.47 573.76,56.04 575.78,57.97 577.80,59.57 579.82,57.35 581.83,55.43 583.85,51.71 585.87,49.55 587.88,46.98 589.90,45.00 591.92,43.43 593.93,42.58 595.95,41.79 597.97,41.13 599.98,40.34 602.00,36.52" fill="none" stroke="#E0973F" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="362.00" y="122.00" width="240.00" height="20.00" rx="0.0" fill="#F3F5F8" stroke="none" stroke-width="1.0"/>
+<polyline points="362.00,132.00 602.00,132.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="362.00,132.00 364.02,127.63 366.03,125.37 368.05,124.13 370.07,123.54 372.08,123.54 374.10,123.48 376.12,126.53 378.13,128.75 380.15,130.83 382.17,132.42 384.18,134.44 386.20,133.96 388.22,133.41 390.24,132.88 392.25,129.63 394.27,129.43 396.29,128.67 398.30,128.91 400.32,130.15 402.34,131.24 404.35,131.73 406.37,132.38 408.39,132.97 410.40,133.67 412.42,135.65 414.44,135.78 416.45,135.59 418.47,135.24 420.49,134.76 422.50,132.85 424.52,136.45 426.54,138.55 428.55,139.54 430.57,140.02 432.59,140.04 434.61,142.00 436.62,141.09 438.64,139.93 440.66,132.06 442.67,128.69 444.69,126.68 446.71,125.59 448.72,125.15 450.74,125.06 452.76,125.05 454.77,125.69 456.79,126.74 458.81,130.77 460.82,129.53 462.84,128.54 464.86,128.10 466.87,127.95 468.89,130.43 470.91,131.80 472.92,132.37 474.94,132.25 476.96,132.05 478.97,131.69 480.99,130.95 483.01,132.14 485.03,134.56 487.04,135.74 489.06,136.33 491.08,135.09 493.09,138.62 495.11,140.36 497.13,139.37 499.14,138.69 501.16,138.17 503.18,136.24 505.19,135.35 507.21,137.23 509.23,138.04 511.24,133.58 513.26,130.63 515.28,129.09 517.29,128.21 519.31,126.17 521.33,125.56 523.34,125.94 525.36,126.84 527.38,125.31 529.39,126.45 531.41,127.93 533.43,129.19 535.45,132.45 537.46,134.60 539.48,135.85 541.50,135.88 543.51,131.86 545.53,129.55 547.55,129.03 549.56,131.23 551.58,132.72 553.60,133.78 555.61,136.96 557.63,138.52 559.65,139.19 561.66,140.10 563.68,140.37 565.70,141.17 567.71,141.54 569.73,138.52 571.75,139.77 573.76,139.73 575.78,138.91 577.80,138.00 579.82,132.99 581.83,129.53 583.85,126.11 585.87,125.20 587.88,124.07 589.90,123.75 591.92,123.90 593.93,124.81 595.95,125.63 597.97,126.30 599.98,126.66 602.00,125.09" fill="none" stroke="#D2685A" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="602.00" y="138.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="7.5" font-weight="normal" fill="#93A0B4" text-anchor="end">residual</text>
+<rect x="62.00" y="180.00" width="240.00" height="88.00" rx="0.0" fill="#FFFFFF" stroke="#D5DBE4" stroke-width="1.0"/>
+<polyline points="62.00,268.00 302.00,268.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="56.00" y="271.50" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">0</text>
+<polyline points="62.00,238.65 302.00,238.65" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="56.00" y="242.15" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">1,000</text>
+<polyline points="62.00,209.30 302.00,209.30" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="56.00" y="212.80" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">2,000</text>
+<polyline points="62.00,180.00 62.00,268.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="62.00" y="282.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2010-01</text>
+<polyline points="142.67,180.00 142.67,268.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="142.67" y="282.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2013-05</text>
+<polyline points="223.34,180.00 223.34,268.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="223.34" y="282.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2016-09</text>
+<text x="62.00" y="172.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#0B121C" text-anchor="start">P-3  R² 1.000  MAPE 0.0 %</text>
+<rect x="255.61" y="180.00" width="46.39" height="88.00" rx="0.0" fill="#9F8FD0" stroke="none" stroke-width="1.0" opacity="0.120"/>
+<circle cx="62.00" cy="205.31" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="64.02" cy="201.43" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="66.03" cy="198.65" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="68.05" cy="196.61" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="70.07" cy="195.30" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="72.08" cy="194.16" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="74.10" cy="193.57" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="76.12" cy="199.21" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="78.13" cy="203.09" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="80.15" cy="206.04" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="82.17" cy="209.17" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="84.18" cy="211.18" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="86.20" cy="209.09" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="88.22" cy="207.52" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="90.24" cy="206.59" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="92.25" cy="205.61" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="94.27" cy="206.61" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="96.29" cy="206.14" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="98.30" cy="205.82" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="100.32" cy="205.78" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="102.34" cy="205.68" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="104.35" cy="205.73" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="106.37" cy="205.82" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="108.39" cy="205.87" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="110.40" cy="205.73" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="112.42" cy="204.59" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="114.44" cy="202.70" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="116.45" cy="201.21" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="118.47" cy="200.03" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="120.49" cy="199.12" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="122.50" cy="196.63" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="124.52" cy="199.57" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="126.54" cy="201.87" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="128.55" cy="203.63" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="130.57" cy="204.78" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="132.59" cy="205.54" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="134.61" cy="203.94" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="136.62" cy="199.62" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="138.64" cy="196.83" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="140.66" cy="192.82" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="142.67" cy="191.75" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="144.69" cy="190.80" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="146.71" cy="190.10" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="148.72" cy="190.83" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="150.74" cy="192.54" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="152.76" cy="191.63" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="154.77" cy="190.96" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="156.79" cy="190.69" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="158.81" cy="190.46" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="160.82" cy="190.93" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="162.84" cy="190.87" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="164.86" cy="190.82" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="166.87" cy="190.88" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="168.89" cy="192.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="170.91" cy="192.49" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="172.92" cy="192.77" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="174.94" cy="192.89" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="176.96" cy="193.15" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="178.97" cy="193.29" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="180.99" cy="192.18" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="183.01" cy="196.69" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="185.03" cy="202.07" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="187.04" cy="205.63" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="189.06" cy="208.57" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="191.08" cy="210.64" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="193.09" cy="213.32" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="195.11" cy="215.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="197.13" cy="215.19" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="199.14" cy="215.14" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="201.16" cy="215.01" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="203.18" cy="211.56" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="205.19" cy="209.38" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="207.21" cy="210.85" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="209.23" cy="212.05" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="211.24" cy="210.89" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="213.26" cy="209.90" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="215.28" cy="209.38" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="217.29" cy="208.86" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="219.31" cy="208.65" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="221.33" cy="209.42" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="223.34" cy="210.04" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="225.36" cy="210.50" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="227.38" cy="207.53" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="229.39" cy="205.87" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="231.41" cy="204.84" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="233.43" cy="201.40" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="235.45" cy="199.06" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="237.46" cy="197.25" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="239.48" cy="195.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="241.50" cy="193.61" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="243.51" cy="192.43" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="245.53" cy="191.52" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="247.55" cy="191.02" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="249.56" cy="189.27" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="251.58" cy="187.97" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="253.60" cy="190.06" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="255.61" cy="193.89" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="257.63" cy="196.78" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="259.65" cy="198.69" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="261.66" cy="202.42" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="263.68" cy="204.99" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="265.70" cy="207.13" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="267.71" cy="208.74" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="269.73" cy="205.28" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="271.75" cy="202.88" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="273.76" cy="201.22" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="275.78" cy="199.76" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="277.80" cy="198.97" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="279.82" cy="196.90" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="281.83" cy="193.12" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="283.85" cy="190.85" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="285.87" cy="190.04" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="287.88" cy="189.14" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="289.90" cy="187.98" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="291.92" cy="187.19" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="293.93" cy="186.69" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="295.95" cy="186.52" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="297.97" cy="187.62" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="299.98" cy="187.86" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="302.00" cy="187.86" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<polyline points="62.00,205.31 64.02,201.43 66.03,198.65 68.05,196.61 70.07,195.30 72.08,194.16 74.10,193.57 76.12,199.21 78.13,203.09 80.15,206.04 82.17,209.17 84.18,211.18 86.20,209.09 88.22,207.52 90.24,206.59 92.25,205.61 94.27,206.61 96.29,206.14 98.30,205.82 100.32,205.78 102.34,205.68 104.35,205.73 106.37,205.82 108.39,205.87 110.40,205.73 112.42,204.59 114.44,202.70 116.45,201.21 118.47,200.03 120.49,199.12 122.50,196.63 124.52,199.57 126.54,201.87 128.55,203.63 130.57,204.78 132.59,205.54 134.61,203.94 136.62,199.62 138.64,196.83 140.66,192.82 142.67,191.75 144.69,190.80 146.71,190.10 148.72,190.83 150.74,192.54 152.76,191.63 154.77,190.96 156.79,190.69 158.81,190.46 160.82,190.93 162.84,190.87 164.86,190.82 166.87,190.88 168.89,192.28 170.91,192.49 172.92,192.77 174.94,192.89 176.96,193.15 178.97,193.29 180.99,192.18 183.01,196.69 185.03,202.07 187.04,205.63 189.06,208.57 191.08,210.64 193.09,213.32 195.11,215.28 197.13,215.19 199.14,215.14 201.16,215.01 203.18,211.56 205.19,209.38 207.21,210.85 209.23,212.05 211.24,210.89 213.26,209.90 215.28,209.38 217.29,208.86 219.31,208.65 221.33,209.42 223.34,210.04 225.36,210.50 227.38,207.53 229.39,205.87 231.41,204.84 233.43,201.40 235.45,199.06 237.46,197.25 239.48,195.28 241.50,193.61 243.51,192.43 245.53,191.52 247.55,191.02 249.56,189.27 251.58,187.97 253.60,190.06 255.61,193.89 257.63,196.78 259.65,198.69 261.66,202.42 263.68,204.99 265.70,207.13 267.71,208.74 269.73,205.28 271.75,202.88 273.76,201.22 275.78,199.76 277.80,198.97 279.82,196.90 281.83,193.12 283.85,190.85 285.87,190.04 287.88,189.14 289.90,187.98 291.92,187.19 293.93,186.69 295.95,186.52 297.97,187.62 299.98,187.86 302.00,187.86" fill="none" stroke="#5E6C82" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="62.00,205.31 64.02,201.43 66.03,198.65 68.05,196.61 70.07,195.30 72.08,194.16 74.10,193.57 76.12,199.21 78.13,203.09 80.15,206.04 82.17,209.17 84.18,211.18 86.20,209.09 88.22,207.52 90.24,206.59 92.25,205.61 94.27,206.61 96.29,206.14 98.30,205.82 100.32,205.78 102.34,205.68 104.35,205.73 106.37,205.82 108.39,205.87 110.40,205.73 112.42,204.59 114.44,202.70 116.45,201.21 118.47,200.03 120.49,199.12 122.50,196.63 124.52,199.57 126.54,201.87 128.55,203.63 130.57,204.78 132.59,205.54 134.61,203.94 136.62,199.62 138.64,196.83 140.66,192.82 142.67,191.75 144.69,190.80 146.71,190.10 148.72,190.83 150.74,192.54 152.76,191.63 154.77,190.96 156.79,190.69 158.81,190.46 160.82,190.93 162.84,190.87 164.86,190.82 166.87,190.88 168.89,192.28 170.91,192.49 172.92,192.77 174.94,192.89 176.96,193.15 178.97,193.29 180.99,192.18 183.01,196.69 185.03,202.07 187.04,205.63 189.06,208.57 191.08,210.64 193.09,213.32 195.11,215.28 197.13,215.19 199.14,215.14 201.16,215.01 203.18,211.56 205.19,209.38 207.21,210.85 209.23,212.05 211.24,210.89 213.26,209.90 215.28,209.38 217.29,208.86 219.31,208.65 221.33,209.42 223.34,210.04 225.36,210.50 227.38,207.53 229.39,205.87 231.41,204.84 233.43,201.40 235.45,199.06 237.46,197.25 239.48,195.28 241.50,193.61 243.51,192.43 245.53,191.52 247.55,191.02 249.56,189.27 251.58,187.97 253.60,190.06 255.61,193.89 257.63,196.78 259.65,198.69 261.66,202.42 263.68,204.99 265.70,207.13 267.71,208.74 269.73,205.28 271.75,202.88 273.76,201.22 275.78,199.76 277.80,198.97 279.82,196.90 281.83,193.12 283.85,190.85 285.87,190.04 287.88,189.14 289.90,187.98 291.92,187.19 293.93,186.69 295.95,186.52 297.97,187.62 299.98,187.86 302.00,187.86" fill="none" stroke="#E0973F" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="62.00" y="272.00" width="240.00" height="20.00" rx="0.0" fill="#F3F5F8" stroke="none" stroke-width="1.0"/>
+<polyline points="62.00,282.00 302.00,282.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="62.00,282.00 64.02,285.97 66.03,288.56 68.05,290.22 70.07,291.11 72.08,291.78 74.10,292.00 76.12,288.18 78.13,286.09 80.15,284.86 82.17,284.42 84.18,284.45 86.20,287.31 88.22,289.31 90.24,290.45 92.25,291.35 94.27,288.69 96.29,287.00 98.30,285.81 100.32,284.90 102.34,284.30 104.35,284.07 106.37,283.89 108.39,283.81 110.40,283.85 112.42,284.62 114.44,285.04 116.45,285.23 118.47,285.25 120.49,285.20 122.50,285.28 124.52,282.42 126.54,280.53 128.55,279.36 130.57,278.72 132.59,278.30 134.61,277.54 136.62,279.16 138.64,279.86 140.66,279.57 142.67,278.93 144.69,278.40 146.71,277.99 148.72,277.91 150.74,278.63 152.76,280.89 154.77,282.48 156.79,283.53 158.81,284.29 160.82,284.91 162.84,285.47 164.86,286.01 166.87,286.26 168.89,286.27 170.91,285.46 172.92,284.89 174.94,284.47 176.96,284.19 178.97,284.03 180.99,283.60 183.01,279.27 185.03,276.38 187.04,274.80 189.06,273.87 191.08,273.50 193.09,273.69 195.11,274.05 197.13,274.98 199.14,275.54 201.16,275.98 203.18,278.70 205.19,280.31 207.21,281.07 209.23,281.63 211.24,281.53 213.26,281.49 215.28,281.30 217.29,281.15 219.31,280.90 221.33,280.82 223.34,280.78 225.36,280.77 227.38,281.20 229.39,281.37 231.41,281.26 233.43,280.47 235.45,279.69 237.46,278.89 239.48,279.64 241.50,280.07 243.51,280.18 245.53,280.18 247.55,280.14 249.56,281.98 251.58,283.17 253.60,284.90 255.61,286.16 257.63,287.35 259.65,288.32 261.66,287.65 263.68,287.49 265.70,287.76 267.71,288.03 269.73,288.59 271.75,288.62 273.76,288.41 275.78,288.24 277.80,287.89 279.82,287.53 281.83,286.62 283.85,285.72 285.87,284.70 287.88,283.86 289.90,283.51 291.92,283.10 293.93,282.71 295.95,282.27 297.97,282.34 299.98,282.66 302.00,282.94" fill="none" stroke="#D2685A" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="302.00" y="288.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="7.5" font-weight="normal" fill="#93A0B4" text-anchor="end">residual</text>
+<rect x="362.00" y="180.00" width="240.00" height="88.00" rx="0.0" fill="#FFFFFF" stroke="#D5DBE4" stroke-width="1.0"/>
+<polyline points="362.00,268.00 602.00,268.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="356.00" y="271.50" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">0</text>
+<polyline points="362.00,246.44 602.00,246.44" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="356.00" y="249.94" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">500</text>
+<polyline points="362.00,224.88 602.00,224.88" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="356.00" y="228.38" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">1,000</text>
+<polyline points="362.00,203.31 602.00,203.31" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="356.00" y="206.81" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">1,500</text>
+<polyline points="362.00,181.75 602.00,181.75" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="356.00" y="185.25" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">2,000</text>
+<polyline points="362.00,180.00 362.00,268.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="362.00" y="282.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2010-01</text>
+<polyline points="442.67,180.00 442.67,268.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="442.67" y="282.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2013-05</text>
+<polyline points="523.34,180.00 523.34,268.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="523.34" y="282.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">2016-09</text>
+<text x="362.00" y="172.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#0B121C" text-anchor="start">P-4  R² 1.000  MAPE 0.0 %</text>
+<rect x="555.61" y="180.00" width="46.39" height="88.00" rx="0.0" fill="#9F8FD0" stroke="none" stroke-width="1.0" opacity="0.120"/>
+<circle cx="362.00" cy="230.34" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="364.02" cy="228.90" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="366.03" cy="227.87" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="368.05" cy="226.87" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="370.07" cy="226.08" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="372.08" cy="225.37" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="374.10" cy="224.74" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="376.12" cy="225.27" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="378.13" cy="225.70" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="380.15" cy="226.03" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="382.17" cy="227.73" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="384.18" cy="229.09" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="386.20" cy="230.12" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="388.22" cy="230.99" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="390.24" cy="231.69" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="392.25" cy="232.31" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="394.27" cy="229.91" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="396.29" cy="226.93" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="398.30" cy="224.53" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="400.32" cy="222.42" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="402.34" cy="220.67" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="404.35" cy="219.85" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="406.37" cy="219.15" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="408.39" cy="218.68" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="410.40" cy="218.20" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="412.42" cy="217.76" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="414.44" cy="216.23" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="416.45" cy="214.86" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="418.47" cy="213.61" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="420.49" cy="212.54" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="422.50" cy="210.14" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="424.52" cy="208.11" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="426.54" cy="206.50" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="428.55" cy="205.31" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="430.57" cy="204.19" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="432.59" cy="203.15" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="434.61" cy="198.82" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="436.62" cy="195.01" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="438.64" cy="192.07" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="440.66" cy="189.31" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="442.67" cy="188.63" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="444.69" cy="187.87" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="446.71" cy="187.25" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="448.72" cy="186.52" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="450.74" cy="188.63" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="452.76" cy="190.30" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="454.77" cy="191.78" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="456.79" cy="193.18" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="458.81" cy="194.37" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="460.82" cy="197.94" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="462.84" cy="200.53" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="464.86" cy="203.08" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="466.87" cy="205.08" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="468.89" cy="207.89" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="470.91" cy="207.83" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="472.92" cy="207.95" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="474.94" cy="207.92" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="476.96" cy="208.05" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="478.97" cy="208.09" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="480.99" cy="206.27" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="483.01" cy="204.93" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="485.03" cy="205.67" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="487.04" cy="206.16" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="489.06" cy="206.69" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="491.08" cy="207.26" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="493.09" cy="207.59" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="495.11" cy="207.99" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="497.13" cy="207.70" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="499.14" cy="207.31" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="501.16" cy="207.00" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="503.18" cy="206.48" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="505.19" cy="206.22" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="507.21" cy="208.66" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="509.23" cy="210.74" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="511.24" cy="211.65" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="513.26" cy="212.53" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="515.28" cy="213.31" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="517.29" cy="213.92" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="519.31" cy="214.47" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="521.33" cy="216.26" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="523.34" cy="217.76" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="525.36" cy="218.96" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="527.38" cy="217.31" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="529.39" cy="215.99" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="531.41" cy="214.89" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="533.43" cy="209.83" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="535.45" cy="205.87" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="537.46" cy="202.24" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="539.48" cy="200.38" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="541.50" cy="198.64" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="543.51" cy="197.13" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="545.53" cy="195.84" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="547.55" cy="194.92" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="549.56" cy="194.05" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="551.58" cy="193.34" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="553.60" cy="197.82" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="555.61" cy="203.68" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="557.63" cy="208.68" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="559.65" cy="212.46" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="561.66" cy="216.10" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="563.68" cy="219.07" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="565.70" cy="221.74" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="567.71" cy="223.86" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="569.73" cy="221.22" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="571.75" cy="219.05" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="573.76" cy="217.22" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="575.78" cy="215.58" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="577.80" cy="214.32" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="579.82" cy="213.17" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="581.83" cy="208.79" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="583.85" cy="205.62" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="585.87" cy="203.49" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="587.88" cy="201.65" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="589.90" cy="200.03" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="591.92" cy="198.68" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="593.93" cy="197.48" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="595.95" cy="196.52" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="597.97" cy="197.91" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="599.98" cy="198.75" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<circle cx="602.00" cy="199.25" r="1.30" fill="#93A0B4" stroke="none" stroke-width="1.0" opacity="0.700"/>
+<polyline points="362.00,230.34 364.02,228.90 366.03,227.87 368.05,226.87 370.07,226.08 372.08,225.37 374.10,224.74 376.12,225.27 378.13,225.70 380.15,226.03 382.17,227.73 384.18,229.09 386.20,230.12 388.22,230.99 390.24,231.69 392.25,232.31 394.27,229.91 396.29,226.93 398.30,224.53 400.32,222.42 402.34,220.67 404.35,219.85 406.37,219.15 408.39,218.68 410.40,218.20 412.42,217.76 414.44,216.23 416.45,214.86 418.47,213.61 420.49,212.54 422.50,210.14 424.52,208.11 426.54,206.50 428.55,205.31 430.57,204.19 432.59,203.15 434.61,198.82 436.62,195.01 438.64,192.07 440.66,189.31 442.67,188.63 444.69,187.87 446.71,187.25 448.72,186.52 450.74,188.63 452.76,190.30 454.77,191.78 456.79,193.18 458.81,194.37 460.82,197.94 462.84,200.53 464.86,203.08 466.87,205.08 468.89,207.89 470.91,207.83 472.92,207.95 474.94,207.92 476.96,208.05 478.97,208.09 480.99,206.27 483.01,204.93 485.03,205.67 487.04,206.16 489.06,206.69 491.08,207.26 493.09,207.59 495.11,207.99 497.13,207.70 499.14,207.31 501.16,207.00 503.18,206.48 505.19,206.22 507.21,208.66 509.23,210.74 511.24,211.65 513.26,212.53 515.28,213.31 517.29,213.92 519.31,214.47 521.33,216.26 523.34,217.76 525.36,218.96 527.38,217.31 529.39,215.99 531.41,214.89 533.43,209.83 535.45,205.87 537.46,202.24 539.48,200.38 541.50,198.64 543.51,197.13 545.53,195.84 547.55,194.92 549.56,194.05 551.58,193.34 553.60,197.82 555.61,203.68 557.63,208.68 559.65,212.46 561.66,216.10 563.68,219.07 565.70,221.74 567.71,223.86 569.73,221.22 571.75,219.05 573.76,217.22 575.78,215.58 577.80,214.32 579.82,213.17 581.83,208.79 583.85,205.62 585.87,203.49 587.88,201.65 589.90,200.03 591.92,198.68 593.93,197.48 595.95,196.52 597.97,197.91 599.98,198.75 602.00,199.25" fill="none" stroke="#5E6C82" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="362.00,230.34 364.02,228.90 366.03,227.87 368.05,226.87 370.07,226.08 372.08,225.37 374.10,224.74 376.12,225.27 378.13,225.70 380.15,226.03 382.17,227.73 384.18,229.09 386.20,230.12 388.22,230.99 390.24,231.69 392.25,232.31 394.27,229.91 396.29,226.93 398.30,224.53 400.32,222.42 402.34,220.67 404.35,219.85 406.37,219.15 408.39,218.68 410.40,218.20 412.42,217.76 414.44,216.23 416.45,214.86 418.47,213.61 420.49,212.54 422.50,210.14 424.52,208.11 426.54,206.50 428.55,205.31 430.57,204.19 432.59,203.15 434.61,198.82 436.62,195.01 438.64,192.07 440.66,189.31 442.67,188.63 444.69,187.87 446.71,187.25 448.72,186.52 450.74,188.63 452.76,190.30 454.77,191.78 456.79,193.18 458.81,194.37 460.82,197.94 462.84,200.53 464.86,203.08 466.87,205.08 468.89,207.89 470.91,207.83 472.92,207.95 474.94,207.92 476.96,208.05 478.97,208.09 480.99,206.27 483.01,204.93 485.03,205.67 487.04,206.16 489.06,206.69 491.08,207.26 493.09,207.59 495.11,207.99 497.13,207.70 499.14,207.31 501.16,207.00 503.18,206.48 505.19,206.22 507.21,208.66 509.23,210.74 511.24,211.65 513.26,212.53 515.28,213.31 517.29,213.92 519.31,214.47 521.33,216.26 523.34,217.76 525.36,218.96 527.38,217.31 529.39,215.99 531.41,214.89 533.43,209.83 535.45,205.87 537.46,202.24 539.48,200.38 541.50,198.64 543.51,197.13 545.53,195.84 547.55,194.92 549.56,194.05 551.58,193.34 553.60,197.82 555.61,203.68 557.63,208.68 559.65,212.46 561.66,216.10 563.68,219.07 565.70,221.74 567.71,223.86 569.73,221.22 571.75,219.05 573.76,217.22 575.78,215.58 577.80,214.32 579.82,213.17 581.83,208.79 583.85,205.62 585.87,203.49 587.88,201.65 589.90,200.03 591.92,198.68 593.93,197.48 595.95,196.52 597.97,197.91 599.98,198.75 602.00,199.25" fill="none" stroke="#E0973F" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="362.00" y="272.00" width="240.00" height="20.00" rx="0.0" fill="#F3F5F8" stroke="none" stroke-width="1.0"/>
+<polyline points="362.00,282.00 602.00,282.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="362.00,282.00 364.02,282.17 366.03,282.19 368.05,282.13 370.07,282.00 372.08,281.83 374.10,281.67 376.12,281.06 378.13,280.60 380.15,280.25 382.17,279.40 384.18,278.83 386.20,278.53 388.22,278.34 390.24,278.25 392.25,278.22 394.27,279.44 396.29,280.61 398.30,281.34 400.32,281.80 402.34,282.02 404.35,281.78 406.37,281.50 408.39,281.19 410.40,280.91 412.42,280.65 414.44,280.86 416.45,280.92 418.47,280.93 420.49,280.83 422.50,281.20 424.52,281.30 426.54,281.18 428.55,280.93 430.57,280.66 432.59,280.40 434.61,281.51 436.62,282.21 438.64,282.50 440.66,282.54 442.67,281.83 444.69,281.22 446.71,280.66 448.72,280.21 450.74,278.59 452.76,277.44 454.77,276.57 456.79,275.89 458.81,275.41 460.82,274.03 462.84,273.25 464.86,272.69 466.87,272.44 468.89,272.00 470.91,272.81 472.92,273.44 474.94,274.03 476.96,274.45 478.97,274.86 480.99,275.96 483.01,276.65 485.03,276.48 487.04,276.43 489.06,276.40 491.08,276.35 493.09,276.43 495.11,276.45 497.13,276.64 499.14,276.83 501.16,276.95 503.18,277.15 505.19,277.21 507.21,276.32 509.23,275.75 511.24,275.74 513.26,275.78 515.28,275.85 517.29,276.00 519.31,276.15 521.33,275.77 523.34,275.59 525.36,275.56 527.38,276.56 529.39,277.25 531.41,277.73 533.43,279.77 535.45,281.02 537.46,281.86 539.48,281.92 541.50,281.87 543.51,281.75 545.53,281.52 547.55,281.16 549.56,280.86 551.58,280.51 553.60,278.08 555.61,275.63 557.63,273.97 559.65,273.04 561.66,272.42 563.68,272.17 565.70,272.14 567.71,272.34 569.73,274.31 571.75,275.75 573.76,276.79 575.78,277.58 577.80,278.08 579.82,278.44 581.83,280.07 583.85,280.95 585.87,281.25 587.88,281.38 589.90,281.37 591.92,281.24 593.93,281.05 595.95,280.77 597.97,279.58 599.98,278.78 602.00,278.26" fill="none" stroke="#D2685A" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="602.00" y="288.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="7.5" font-weight="normal" fill="#93A0B4" text-anchor="end">residual</text>
+<text x="20.00" y="332.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="8.5" font-weight="normal" fill="#5E6C82" text-anchor="start">liquid rate [bbl/d] · raw (points), cleaned (grey), model (orange); blind window shaded</text>
+</svg></figure>
+
+  <h3>Sampling and pressure</h3>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" width="620" height="260" viewBox="0 0 620 260" role="img" aria-label="Δt versus τ">
+<rect x="0" y="0" width="620" height="260" fill="#FFFFFF"/>
+<rect x="60.00" y="30.00" width="540.00" height="170.00" rx="0.0" fill="#FFFFFF" stroke="#D5DBE4" stroke-width="1.0"/>
+<polyline points="60.00,200.00 600.00,200.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="203.50" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">0</text>
+<polyline points="60.00,159.52 600.00,159.52" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="163.02" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">0.25</text>
+<polyline points="60.00,119.05 600.00,119.05" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="122.55" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">0.50</text>
+<polyline points="60.00,78.57 600.00,78.57" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="82.07" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">0.75</text>
+<polyline points="60.00,38.10 600.00,38.10" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="54.00" y="41.60" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="end">1</text>
+<polyline points="60.00,30.00 60.00,200.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="60.00" y="214.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">0</text>
+<polyline points="232.91,30.00 232.91,200.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="232.91" y="214.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">200</text>
+<polyline points="405.81,30.00 405.81,200.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="405.81" y="214.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">400</text>
+<polyline points="578.72,30.00 578.72,200.00" fill="none" stroke="#D5DBE4" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="578.72" y="214.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="middle">600</text>
+<text x="330.00" y="230.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="10" font-weight="normal" fill="#5E6C82" text-anchor="middle">time since injection step [d]</text>
+<text x="16.00" y="115.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="10" font-weight="normal" fill="#5E6C82" text-anchor="middle" transform="rotate(-90 16.00 115.00)">response fraction</text>
+<text x="60.00" y="22.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#0B121C" text-anchor="start">Step response 1 − e^(−t/τ) and the sampling interval</text>
+<polyline points="60.00,200.00 62.70,196.00 65.40,192.10 68.10,188.30 70.80,184.59 73.50,180.98 76.20,177.45 78.90,174.01 81.60,170.65 84.30,167.38 87.00,164.19 89.70,161.07 92.40,158.04 95.10,155.08 97.80,152.19 100.50,149.37 103.20,146.62 105.90,143.94 108.60,141.33 111.30,138.78 114.00,136.30 116.70,133.87 119.40,131.51 122.10,129.20 124.80,126.95 127.50,124.76 130.20,122.62 132.90,120.53 135.60,118.49 138.30,116.51 141.00,114.57 143.70,112.69 146.40,110.84 149.10,109.05 151.80,107.30 154.50,105.59 157.20,103.92 159.90,102.30 162.60,100.71 165.30,99.16 168.00,97.66 170.70,96.19 173.40,94.75 176.10,93.35 178.80,91.99 181.50,90.66 184.20,89.36 186.90,88.09 189.60,86.86 192.30,85.66 195.00,84.48 197.70,83.34 200.40,82.22 203.10,81.13 205.80,80.07 208.50,79.03 211.20,78.02 213.90,77.03 216.60,76.07 219.30,75.14 222.00,74.22 224.70,73.33 227.40,72.46 230.10,71.61 232.80,70.78 235.50,69.98 238.20,69.19 240.90,68.42 243.60,67.67 246.30,66.94 249.00,66.23 251.70,65.54 254.40,64.86 257.10,64.20 259.80,63.55 262.50,62.92 265.20,62.31 267.90,61.71 270.60,61.13 273.30,60.56 276.00,60.01 278.70,59.47 281.40,58.94 284.10,58.42 286.80,57.92 289.50,57.43 292.20,56.95 294.90,56.49 297.60,56.03 300.30,55.59 303.00,55.16 305.70,54.74 308.40,54.33 311.10,53.93 313.80,53.54 316.50,53.15 319.20,52.78 321.90,52.42 324.60,52.07 327.30,51.72 330.00,51.39 332.70,51.06 335.40,50.74 338.10,50.42 340.80,50.12 343.50,49.82 346.20,49.53 348.90,49.25 351.60,48.98 354.30,48.71 357.00,48.45 359.70,48.19 362.40,47.94 365.10,47.70 367.80,47.46 370.50,47.23 373.20,47.00 375.90,46.78 378.60,46.57 381.30,46.36 384.00,46.16 386.70,45.96 389.40,45.76 392.10,45.57 394.80,45.39 397.50,45.21 400.20,45.03 402.90,44.86 405.60,44.69 408.30,44.53 411.00,44.37 413.70,44.22 416.40,44.07 419.10,43.92 421.80,43.78 424.50,43.64 427.20,43.50 429.90,43.37 432.60,43.24 435.30,43.11 438.00,42.98 440.70,42.86 443.40,42.75 446.10,42.63 448.80,42.52 451.50,42.41 454.20,42.30 456.90,42.20 459.60,42.10 462.30,42.00 465.00,41.90 467.70,41.81 470.40,41.72 473.10,41.63 475.80,41.54 478.50,41.46 481.20,41.37 483.90,41.29 486.60,41.21 489.30,41.14 492.00,41.06 494.70,40.99 497.40,40.92 500.10,40.85 502.80,40.78 505.50,40.71 508.20,40.65 510.90,40.58 513.60,40.52 516.30,40.46 519.00,40.40 521.70,40.35 524.40,40.29 527.10,40.24 529.80,40.18 532.50,40.13 535.20,40.08 537.90,40.03 540.60,39.99 543.30,39.94 546.00,39.89 548.70,39.85 551.40,39.81 554.10,39.76 556.80,39.72 559.50,39.68 562.20,39.64 564.90,39.61 567.60,39.57 570.30,39.53 573.00,39.50 575.70,39.46 578.40,39.43 581.10,39.39 583.80,39.36 586.50,39.33 589.20,39.30 591.90,39.27 594.60,39.24 597.30,39.21 600.00,39.19" fill="none" stroke="#4C9BD4" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="86.31" cy="165.00" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="112.61" cy="137.56" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="138.92" cy="116.06" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="165.23" cy="99.21" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="191.53" cy="86.00" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="217.84" cy="75.64" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="244.15" cy="67.52" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="270.45" cy="61.16" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="296.76" cy="56.18" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="323.06" cy="52.27" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="349.37" cy="49.20" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="375.68" cy="46.80" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="401.98" cy="44.92" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="428.29" cy="43.44" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="454.60" cy="42.29" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="480.90" cy="41.38" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="507.21" cy="40.67" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="533.52" cy="40.11" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="559.82" cy="39.68" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<circle cx="586.13" cy="39.34" r="4.00" fill="#7DB88A" stroke="#FFFFFF" stroke-width="1"/>
+<polyline points="168.00,30.00 168.00,200.00" fill="none" stroke="#5E6C82" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3,3"/>
+<text x="172.00" y="44.00" font-family="IBM Plex Mono, Consolas, monospace" font-size="9" font-weight="normal" fill="#5E6C82" text-anchor="start">τ ≈ 125 d</text>
+<text x="594.00" y="192.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="bold" fill="#7DB88A" text-anchor="end">Δt = 30.4 d · τ/Δt = 4.1 · adequate (τ/Δt ≥ 3)</text>
+<polyline points="60.00,246.00 76.00,246.00" fill="none" stroke="#4C9BD4" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="81.00" y="250.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">response</text>
+<circle cx="152.60" cy="246.00" r="4.00" fill="#7DB88A" stroke="none" stroke-width="1.0"/>
+<text x="165.60" y="250.00" font-family="IBM Plex Sans, Arial, Helvetica, sans-serif" font-size="9.5" font-weight="normal" fill="#5E6C82" text-anchor="start">sampling points (colour = adequacy)</text>
+</svg></figure>
+  <p class="small">Δt = 30 d · τ estimate = 125 d · τ/Δt = 4.1 · O<sub>d</sub> = 20.0 · monthly allocated data · field pressure source: none</p>
+</section>
+
+
+
+
+<section>
+  <h2>Data quality</h2>
+  <p>Traffic light: <span class="light green">green</span> · steps 120 · outliers removed 0 · simultaneous P+I steps 0 · unmatched IDs 0 · warnings 0 · errors 0</p>
+  <table class="data compact">
+    <thead><tr><th>well</th><th>type</th><th class="num">coverage %</th><th>pressure</th><th>conversions</th></tr></thead>
+    <tbody><tr><td class="mono">I-1</td><td>INJ</td><td class="num">100</td><td></td><td class="small"></td></tr><tr><td class="mono">I-2</td><td>INJ</td><td class="num">100</td><td></td><td class="small"></td></tr><tr><td class="mono">I-3</td><td>INJ</td><td class="num">100</td><td></td><td class="small"></td></tr><tr><td class="mono">I-4</td><td>INJ</td><td class="num">100</td><td></td><td class="small"></td></tr><tr><td class="mono">I-5</td><td>INJ</td><td class="num">100</td><td></td><td class="small"></td></tr><tr><td class="mono">P-1</td><td>PROD</td><td class="num">100</td><td>none</td><td class="small"></td></tr><tr><td class="mono">P-2</td><td>PROD</td><td class="num">100</td><td>none</td><td class="small"></td></tr><tr><td class="mono">P-3</td><td>PROD</td><td class="num">100</td><td>none</td><td class="small"></td></tr><tr><td class="mono">P-4</td><td>PROD</td><td class="num">100</td><td>none</td><td class="small"></td></tr></tbody>
+  </table>
+  <h3>Conditions (plain language)</h3>
+  <table class="data">
+    <thead><tr><th>severity</th><th>what it means</th><th>suggested action</th><th>scope</th></tr></thead>
+    <tbody>
+    <tr><td class="info">info</td><td>Reservoir-volume conversion uses constant formation-volume factors (Bo = 1.0, Bw = 1.0).</td><td>Load a PVT table if formation volume factors change with pressure.</td><td class="mono small">field</td></tr><tr><td class="info">info</td><td>No flowing pressure data; lift or choke changes must be in the events table.</td><td>Load ESP/gauge pressure or an events log if lift settings changed during the history.</td><td class="mono small">field</td></tr><tr><td class="info">info</td><td>The MPI (geometric) model would suit this data but is not available in this release.</td><td>None needed; the next best available model was used.</td><td class="mono small">field</td></tr><tr><td class="info">info</td><td>The MLR / BMLR model would suit this data but is not available in this release.</td><td>None needed; the next best available model was used.</td><td class="mono small">field</td></tr><tr><td class="info">info</td><td>The PINN / residual ML model would suit this data but is not available in this release.</td><td>None needed; the next best available model was used.</td><td class="mono small">field</td></tr><tr><td class="info">info</td><td>The model misses some slow trends for P-1; forecasts may drift.</td><td>None needed for screening; a residual correction is considered when history exceeds 120 months.</td><td class="mono small">well:P-1</td></tr><tr><td class="info">info</td><td>The model misses some slow trends for P-2; forecasts may drift.</td><td>None needed for screening; a residual correction is considered when history exceeds 120 months.</td><td class="mono small">well:P-2</td></tr><tr><td class="info">info</td><td>The model misses some slow trends for P-3; forecasts may drift.</td><td>None needed for screening; a residual correction is considered when history exceeds 120 months.</td><td class="mono small">well:P-3</td></tr><tr><td class="info">info</td><td>The model misses some slow trends for P-4; forecasts may drift.</td><td>None needed for screening; a residual correction is considered when history exceeds 120 months.</td><td class="mono small">well:P-4</td></tr>
+    </tbody>
+  </table>
+</section>
+
+
+<section>
+  <h2>Workflow</h2>
+  <table class="kv">
+    <tr><th>recommendation</th><td class="mono">422b38fb649a</td></tr>
+    <tr><th>state</th><td>APPROVED</td></tr>
+    <tr><th>originator</th><td class="mono">admin</td></tr>
+    <tr><th>approved by originator</th><td><strong class="bad">YES — same person ran and approved</strong></td></tr>
+    <tr><th>override reason</th><td>—</td></tr>
+    <tr><th>advanced overrides</th><td class="mono small">none</td></tr>
+    <tr><th>snapshot digest</th><td class="mono small">6a0b517bad5e5f2fa974da02b1b8e8ce338281d5c7e683826a350295d6d61cc6</td></tr>
+    <tr><th>implemented at</th><td class="mono">—</td></tr>
+  </table>
+  <table class="data compact">
+    <thead><tr><th>when</th><th>action</th><th>actor</th><th>acting role</th><th>from → to</th><th>note</th></tr></thead>
+    <tbody><tr><td class="mono">2026-09-04 08:22</td><td>review</td><td class="mono">admin</td><td>reviewer</td><td class="mono">DRAFT → REVIEWED</td><td>sample review</td></tr><tr><td class="mono">2026-09-04 08:22</td><td>approve</td><td class="mono">admin</td><td>approver</td><td class="mono">REVIEWED → APPROVED</td><td>sample approval</td></tr></tbody>
+  </table>
+  <table class="data compact">
+    <thead><tr><th>injector</th><th class="num">recommended [bbl/d]</th><th class="num">implemented [bbl/d]</th></tr></thead>
+    <tbody><tr><td class="mono">I-1</td><td class="num">3,612</td><td class="num">—</td></tr><tr><td class="mono">I-2</td><td class="num">2,722</td><td class="num">—</td></tr><tr><td class="mono">I-3</td><td class="num">0</td><td class="num">—</td></tr><tr><td class="mono">I-4</td><td class="num">0</td><td class="num">—</td></tr><tr><td class="mono">I-5</td><td class="num">2,695</td><td class="num">—</td></tr></tbody>
+  </table>
+  
+</section>
+
+
+<section>
+  <h2>Reproducibility</h2>
+  <table class="kv">
+    <tr><th>run id</th><td class="mono">f1f43bbedd07</td></tr>
+    <tr><th>data snapshot hash</th><td class="mono small">f7fda78b31f7813fabf5d9e653ed8508b3f642bb382c1ebbbf405b4a1ddc592e</td></tr>
+    <tr><th>config hash</th><td class="mono small">7f90028e1dc16a82f17887a8f06f66883030895f1fc53860299672b9c6576ee0</td></tr>
+    <tr><th>code version</th><td class="mono">cbb7eec</td></tr>
+    <tr><th>seed</th><td class="mono">232413243</td></tr>
+    <tr><th>engine runtime</th><td class="mono">22.3 s</td></tr>
+    <tr><th>windows</th><td class="small">2010-01-01 → 2019-12-01 (full history)</td></tr>
+    <tr><th>application</th><td>Waterflood Optimizer 0.5.0 — CRM-based waterflood evaluation and optimization (architecture v2.1)</td></tr>
+  </table>
+</section>
+</body>
+</html>

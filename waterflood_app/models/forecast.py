@@ -8,7 +8,7 @@ multi-start ensemble gives the P10/P50/P90 fan (§13).
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import date
 from typing import Any
 
@@ -79,6 +79,7 @@ class ForecastModel:
     grid: Grid  # history (sector grid)
     surface_ratio: FArray  # (Np,) surface liquid / reservoir liquid
     label: str = "p50"
+    _state: dict[str, Any] | None = field(default=None, init=False, repr=False, compare=False)
 
     @property
     def producers(self) -> list[str]:
@@ -96,10 +97,78 @@ class ForecastModel:
         support = self.grid.inj @ self.params.f
         return np.asarray(np.cumsum(support * self.grid.dt_days[:, None], axis=0)[-1], dtype=np.float64)
 
+    # ---- fast continuation (CRMT / CRMP / CRMIP) -----------------------------------------------
+    def _uses_j(self) -> bool:
+        return self.params.J is not None and self.grid.bhp is not None
+
+    def _history_state(self) -> dict[str, Any]:
+        """Recursion state at the last historical step — computed once per model, vectorised over producers.
+
+        Reproduces ``predict_field`` exactly (forecast mode from q(0), free-primary parameters).
+        """
+        if self._state is not None:
+            return self._state
+        g, p = self.grid, self.params
+        m = g.n_steps
+        dpdt = np.zeros((m, g.n_prod))
+        if self._uses_j():
+            assert g.bhp is not None
+            dpdt[1:] = np.diff(g.bhp, axis=0) / g.dt_days[1:, None]
+        if self.variant == "crmip":
+            tau = np.asarray(p.tau, dtype=np.float64)  # (Ni, Np)
+            J = np.asarray(p.J, dtype=np.float64) if self._uses_j() else np.zeros_like(tau)
+            e = np.exp(-g.dt_days[:, None, None] / tau[None, :, :])  # (M, Ni, Np)
+            x = np.zeros_like(tau)
+            for n in range(1, m):
+                src = p.f * g.inj[n][:, None] - J * tau * dpdt[n][None, :]
+                x = x * e[n] + (1.0 - e[n]) * src
+        else:
+            tau = np.asarray(p.tau, dtype=np.float64).reshape(-1)  # (Np,)
+            J = np.asarray(p.J, dtype=np.float64).reshape(-1) if self._uses_j() else np.zeros(g.n_prod)
+            e = np.exp(-g.dt_days[:, None] / tau[None, :])  # (M, Np)
+            S = g.inj @ p.f + (-J * tau)[None, :] * dpdt
+            x = np.zeros(g.n_prod)
+            for n in range(1, m):
+                x = x * e[n] + (1.0 - e[n]) * S[n]
+        self._state = {"x": x, "tau": tau, "J": J, "q0": g.liq[0].astype(np.float64)}
+        return self._state
+
+    def _continue(self, inj_plan: FArray, dt_days: FArray, bhp_future: FArray | None) -> FArray:
+        """Liquid over the plan steps from the cached history state (same recursion as predict_field)."""
+        g, p = self.grid, self.params
+        st = self._history_state()
+        h = inj_plan.shape[0]
+        t_future = g.time_days[-1] + np.cumsum(dt_days)
+        dpdt = np.zeros((h, g.n_prod))
+        if self._uses_j() and bhp_future is not None:
+            assert g.bhp is not None
+            dpdt = np.diff(np.vstack([g.bhp[-1][None, :], bhp_future]), axis=0) / dt_days[:, None]
+        tau, J = st["tau"], st["J"]
+        out = np.zeros((h, g.n_prod))
+        if self.variant == "crmip":
+            x = st["x"].copy()
+            e = np.exp(-dt_days[:, None, None] / tau[None, :, :])
+            for n in range(h):
+                src = p.f * inj_plan[n][:, None] - J * tau * dpdt[n][None, :]
+                x = x * e[n] + (1.0 - e[n]) * src
+                out[n] = x.sum(axis=0)
+        else:
+            x = st["x"].copy()
+            e = np.exp(-dt_days[:, None] / tau[None, :])
+            S = inj_plan @ p.f + (-J * tau)[None, :] * dpdt
+            for n in range(h):
+                x = x * e[n] + (1.0 - e[n]) * S[n]
+                out[n] = x
+        prim = p.gain_p[None, :] * st["q0"][None, :] * np.exp(-t_future[:, None] / p.tau_p[None, :])
+        return np.asarray(prim + out, dtype=np.float64)
+
     def simulate(self, inj_plan: FArray, dt_days: FArray, bhp_future: FArray | None = None) -> Forecast:
         """Continue the fitted model over a plan (H, Ni) with step lengths dt_days (H,)."""
         g = self.grid
         h = inj_plan.shape[0]
+        if self.variant in ("crmt", "crmp", "crmip"):
+            liq = np.maximum(self._continue(inj_plan, dt_days, bhp_future), 0.0)
+            return self._finish(inj_plan, dt_days, liq)
         t_future = g.time_days[-1] + np.cumsum(dt_days)
         bhp = None
         if g.bhp is not None:
@@ -120,6 +189,11 @@ class ForecastModel:
             raw={},
         )
         liq = np.maximum(predict_field(ext, self.params, self.variant)[-h:], 0.0)
+        return self._finish(inj_plan, dt_days, liq)
+
+    def _finish(self, inj_plan: FArray, dt_days: FArray, liq: FArray) -> Forecast:
+        g = self.grid
+        h = inj_plan.shape[0]
         support = inj_plan @ self.params.f
         cwi0 = self.historical_cwi_end()
         cwi = np.zeros((h, g.n_prod))

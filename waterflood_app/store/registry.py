@@ -5,17 +5,26 @@ yields identical results (fixed seeds), so the triple is the cache key (§5 engi
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from waterflood_app.store.project import ProjectStore
 
 
 def code_version() -> str:
+    """Short git hash of the checked-out code; ``WFO_CODE_VERSION`` (set at image build) when there is no .git."""
+    env = os.environ.get("WFO_CODE_VERSION")
+    if env:
+        return env
     try:
         return subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL
+            ["git", "rev-parse", "--short", "HEAD"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+            cwd=Path(__file__).resolve().parents[2],
         ).strip()
     except Exception:
         return "unknown"

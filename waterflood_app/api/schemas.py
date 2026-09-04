@@ -202,3 +202,39 @@ class WebhookOut(BaseModel):
     events: list[str]
     active: bool
     created_at: str
+
+
+class WritebackRequest(BaseModel):
+    connection_id: str = Field(description="a connection of the same project flagged with option wfo_writeback=1")
+    table: str | None = Field(
+        default=None, description="target table / CSV name; default from integration.writeback_table"
+    )
+    effective_date: str | None = Field(default=None, description="ISO date the targets take effect; default today")
+    note: str = ""
+
+
+class WritebackOut(BaseModel):
+    id: str
+    recommendation_id: str
+    project_id: str
+    connection_id: str
+    target: str
+    kind: str
+    n_rows: int
+    table: str
+    effective_date: str
+    actor: str
+    acting_role: str
+    created_at: str
+    rows: list[dict[str, Any]]
+    note: str = ""
+
+
+class ReadyOut(BaseModel):
+    status: str
+    ok: bool
+    version: str
+    code_version: str
+    uptime_s: float
+    writeback_enabled: bool
+    checks: dict[str, Any]

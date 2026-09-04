@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, explain } from "../api/client";
-import type { RecommendationRecord } from "../api/types";
+import type { Connection, RecommendationRecord, Writeback } from "../api/types";
 import { canAct, useApp } from "../App";
 import { Badge, Empty, KV, Msg, Num, Skeleton } from "../components/Common";
 import { DataTable, type Col } from "../components/DataTable";
@@ -23,12 +23,19 @@ export default function WorkflowScreen() {
   const [actual, setActual] = useState<Record<string, string>>({});
   const [evalForm, setEvalForm] = useState({ months_after: 3, realised_oil: "" });
   const [busy, setBusy] = useState(false);
+  const [dl, setDl] = useState<string | null>(null);
+  const [conns, setConns] = useState<Connection[]>([]);
+  const [wbs, setWbs] = useState<Writeback[]>([]);
+  const [wb, setWb] = useState({ connection_id: "", table: "", effective_date: "", note: "" });
+  const [wbDone, setWbDone] = useState<Writeback | null>(null);
 
   const reload = useCallback(async () => {
     if (!project) return;
     try { setList(await api.recommendations.list(project.id)); } catch (e) { setErr(explain(e)); }
     if (recId) {
       try { const r = await api.recommendations.get(recId); setRec(r); setActual(Object.fromEntries(Object.entries(r.recommended_rates).map(([w, v]) => [w, String(Math.round(v))]))); } catch (e) { setErr(explain(e)); }
+      try { setWbs(await api.recommendations.writebacks(recId)); } catch { setWbs([]); }
+      try { const cs = await api.connections.list(project.id); setConns(cs.filter((c) => c.options?.wfo_writeback === "1")); } catch { setConns([]); }
     } else setRec(null);
   }, [project, recId]);
   useEffect(() => { reload(); }, [reload]);
@@ -46,6 +53,22 @@ export default function WorkflowScreen() {
     } catch (e) { setErr(explain(e)); } finally { setBusy(false); }
   };
 
+  const grab = async (kind: "pdf" | "docx" | "xlsx") => {
+    if (!rec) return;
+    setDl(kind); setErr(null);
+    try { if (kind === "xlsx") await api.recommendations.export(rec.id, kind); else await api.recommendations.report(rec.id, kind); } catch (e) { setErr(explain(e)); } finally { setDl(null); }
+  };
+  const writeback = async () => {
+    if (!rec || !wb.connection_id) return;
+    setBusy(true); setErr(null); setWbDone(null);
+    try {
+      const body: { connection_id: string; table?: string; effective_date?: string; note?: string } = { connection_id: wb.connection_id, note: wb.note };
+      if (wb.table) body.table = wb.table;
+      if (wb.effective_date) body.effective_date = wb.effective_date;
+      const w = await api.recommendations.writeback(rec.id, body);
+      setWbDone(w); setWbs(await api.recommendations.writebacks(rec.id));
+    } catch (e) { setErr(explain(e)); } finally { setBusy(false); }
+  };
   const evaluate = async () => {
     if (!rec) return;
     setBusy(true); setErr(null);
@@ -79,7 +102,7 @@ export default function WorkflowScreen() {
       {rec && (
         <div className="grid grid-sidebar">
           <section className="card stack" aria-label="Recommendation">
-            <div className="row" style={{ justifyContent: "space-between" }}><h2 className="mono">{rec.id}</h2><Badge level={rec.confidence} /></div>
+            <div className="row" style={{ justifyContent: "space-between" }}><h2 className="mono">{rec.id}</h2><span className="row" style={{ gap: 10 }}><span className="row" style={{ gap: 6 }} aria-label="Download"><span className="sub">Report</span><span className="seg">{(["pdf", "docx", "xlsx"] as const).map((k) => <button key={k} onClick={() => grab(k)} disabled={dl !== null} data-testid={`wf-dl-${k}`}>{dl === k ? "…" : k.toUpperCase()}</button>)}</span></span><Badge level={rec.confidence} /></span></div>
             <StateDiagram state={rec.state} />
             <KV rows={[["Originator", rec.originator], ["Asset / sector", `${rec.asset} / ${rec.sector}`], ["Data hash", <span title={rec.data_hash}>{rec.data_hash.slice(0, 12)}…</span>], ["Config hash", <span title={rec.config_hash}>{rec.config_hash.slice(0, 12)}…</span>], ["Model version", rec.model_version], ["Snapshot (frozen at approval)", rec.snapshot ? <span title={rec.snapshot.digest}>{rec.snapshot.digest.slice(0, 12)}…</span> : "—"], ["Override reason", rec.override_reason ?? "—"], ["Approved by originator", rec.approved_by_originator ? "yes (visible in reports)" : "no"]]} />
             {Object.keys(rec.advanced_overrides ?? {}).length > 0 && <Msg severity="warning" message="Advanced-mode overrides were used for this recommendation." action={JSON.stringify(rec.advanced_overrides)} />}
@@ -119,6 +142,22 @@ export default function WorkflowScreen() {
                 <button className="primary" onClick={evaluate} disabled={busy || !evalForm.realised_oil} data-testid="btn-evaluate">Record evaluation</button>
               </div>
             )}
+            {(rec.state === "APPROVED" || rec.state === "IMPLEMENTED" || rec.state === "EVALUATED") && canAct(role, "approver") && (
+              <div className="stack" data-testid="writeback-panel">
+                <h3>Write targets to the surveillance system <span className="sub">approver only (§18)</span></h3>
+                {conns.length === 0 ? <Msg severity="info" message="No writeback connection for this project." action="An admin adds a connection with the option wfo_writeback = 1 (write credentials) under Admin → Connections." /> : (
+                  <>
+                    <label className="field"><span className="f">Target connection</span><select value={wb.connection_id} onChange={(e) => setWb({ ...wb, connection_id: e.target.value })} data-testid="wb-connection"><option value="">— choose —</option>{conns.map((c) => <option key={c.id} value={c.id}>{c.kind} · {c.database}</option>)}</select></label>
+                    <div className="row"><label className="field"><span className="f">Table / file name</span><input className="mono" value={wb.table} onChange={(e) => setWb({ ...wb, table: e.target.value })} placeholder="wfo_injection_targets" /></label>
+                      <label className="field"><span className="f">Effective date</span><input className="mono" type="date" value={wb.effective_date} onChange={(e) => setWb({ ...wb, effective_date: e.target.value })} /></label></div>
+                    <label className="field"><span className="f">Note</span><input value={wb.note} onChange={(e) => setWb({ ...wb, note: e.target.value })} /></label>
+                    <button className="primary" onClick={writeback} disabled={busy || !wb.connection_id} data-testid="btn-writeback">Write {Object.keys(rec.recommended_rates).length} injector targets</button>
+                    {wbDone && <Msg severity="info" message={`${wbDone.n_rows} targets written to ${wbDone.target}.`} action="The surveillance system can trace each row back to this recommendation, run and data snapshot." />}
+                  </>
+                )}
+              </div>
+            )}
+            {wbs.length > 0 && <><h3>Writebacks</h3><table className="data" data-testid="writeback-list"><thead><tr><th>when</th><th>target</th><th className="num">rows</th><th>effective</th><th>by</th></tr></thead><tbody>{wbs.map((w) => <tr key={w.id}><td className="mono">{w.created_at.slice(0, 16).replace("T", " ")}</td><td className="mono">{w.target}</td><td className="num">{w.n_rows}</td><td className="mono">{w.effective_date}</td><td className="mono">{w.actor} ({w.acting_role})</td></tr>)}</tbody></table></>}
             {rec.state === "REJECTED" && <Msg severity="info" message="This recommendation was rejected." action="Run again with new data or settings to create a new draft." />}
             {!canAct(role, "reviewer", "approver", "operations", "engineer") && <Msg severity="info" message="Read-only view." action="Switch to a role you hold to act." />}
           </section>

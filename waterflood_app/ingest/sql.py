@@ -88,7 +88,8 @@ class ConnectionSpec:
         pw = (secrets.get(self.secret_ref) if secrets and self.secret_ref else None) or ""
         auth = f"{self.user}:{pw}@" if self.user else ""
         port = f":{self.port}" if self.port else ""
-        opts = ("?" + "&".join(f"{k}={v}" for k, v in self.options.items())) if self.options else ""
+        url_opts = {k: v for k, v in self.options.items() if not k.startswith("wfo_")}  # wfo_* are app flags
+        opts = ("?" + "&".join(f"{k}={v}" for k, v in url_opts.items())) if url_opts else ""
         return f"{_DIALECT_PREFIX[self.kind]}://{auth}{self.host}{port}/{self.database}{opts}"
 
     def public(self) -> dict[str, Any]:

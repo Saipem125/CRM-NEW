@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from waterflood_app.ingest.units import BBL_PER_M3
 from waterflood_app.models.forecast import Forecast
 from waterflood_app.optimize.economics import Economics
 
@@ -73,7 +74,7 @@ def make_objective(name: str, economics: Economics | None = None, target_oil: fl
     if name in ("oil", "max_cumulative_oil", "cumulative_oil"):
         return CumulativeOil()
     if name in ("npv", "max_npv"):
-        return NetPresentValue(economics=economics or Economics(70.0, 1.5, 0.8, 0.1))
+        return NetPresentValue(economics=economics or Economics(70.0, 1.5, 0.8, 0.1), bbl_per_unit=BBL_PER_M3)
     if name in ("min_water", "min_water_for_target_oil"):
         return MinWaterForTargetOil(target_oil=float(target_oil or 0.0))
     raise ValueError(f"unknown objective {name!r}")

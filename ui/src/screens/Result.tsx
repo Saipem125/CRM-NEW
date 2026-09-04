@@ -23,6 +23,12 @@ export default function ResultScreen() {
   const [detailTab, setDetailTab] = useState<"quality" | "tournament" | "fits" | "sampling" | "alerts">("quality");
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<string | null>(null);
+  const [dl, setDl] = useState<string | null>(null);
+  const grab = async (kind: "pdf" | "docx" | "xlsx" | "csv" | "json") => {
+    if (!runId) return;
+    setDl(kind); setErr(null);
+    try { if (kind === "pdf" || kind === "docx") await api.runs.report(runId, kind); else await api.runs.export(runId, kind); } catch (e) { setErr(explain(e)); } finally { setDl(null); }
+  };
 
   useEffect(() => {
     if (!runId) {
@@ -62,6 +68,7 @@ export default function ResultScreen() {
           <span className="sub mono">run {runId} · data {bundle.data_hash.slice(0, 8)} · config {bundle.config_hash.slice(0, 8)}</span>
         </div>
         <div className="row">
+          <span className="row" style={{ gap: 6 }} aria-label="Download"><span className="sub">Download</span><span className="seg">{(["pdf", "docx", "xlsx", "csv", "json"] as const).map((k) => <button key={k} onClick={() => grab(k)} disabled={dl !== null} data-testid={`dl-${k}`} title={k === "pdf" || k === "docx" ? "Report with figures" : k === "json" ? "Fitted model parameters" : "Tables"}>{dl === k ? "…" : k.toUpperCase()}</button>)}</span></span>
           <button onClick={() => setDetails(true)} data-testid="open-details">▸ Details</button>
           {canAct(role, "engineer", "reviewer") && !created && <button className="primary" onClick={createRec} disabled={creating || !rec} data-testid="create-recommendation">{creating ? "Creating…" : "Create recommendation (Draft)"}</button>}
           {created && <button className="primary" onClick={() => nav(`/workflow/${created}`)}>Open in Workflow →</button>}

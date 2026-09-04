@@ -19,3 +19,8 @@ ui/test-results/
 ../tools/
 wfo_store/
 wfo_store_dev/
+ui/test-results/
+backups/
+data/
+.env
+ui/public/_preview.html

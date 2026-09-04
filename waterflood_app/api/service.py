@@ -10,7 +10,9 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import shutil
 import threading
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
@@ -33,8 +35,11 @@ from waterflood_app.ingest.units import PVT
 from waterflood_app.ingest.welltype import derive_well_types
 from waterflood_app.optimize.economics import Economics
 from waterflood_app.optimize.objectives import make_objective
-from waterflood_app.optimize.run import SectorRecommendation, forecast_models, optimize_sector
+from waterflood_app.optimize.run import SectorRecommendation, forecast_models, optimize_sectors
 from waterflood_app.optimize.scenarios import ScenarioManager
+from waterflood_app.outputs import export as X
+from waterflood_app.outputs import report as R
+from waterflood_app.outputs import writeback as W
 from waterflood_app.store.audit import AuditLog
 from waterflood_app.store.project import ProjectStore
 from waterflood_app.store.registry import RunRegistry, code_version
@@ -74,6 +79,7 @@ class Service:
         self.users = UserStore(self.store)
         self.tokens = TokenService(self.store, float(self.base_cfg.get("api.jwt_expires_hours", 8)))
         self.secrets = SecretsStore(self.root)
+        self.started_at = time.time()
         self.registry = RunRegistry(self.store)
         self.audit = AuditLog(self.store)
         self.validation = ValidationRecord(self.store)
@@ -474,22 +480,20 @@ class Service:
         run = run_engine(loaded, cfg, pvt, seed=req.get("seed"), variants=req.get("variants"))
         h.progress(0.7, "optimising")
         econ = Economics.from_config(cfg, req.get("economics") or None)
-        recs: dict[str, SectorRecommendation] = {}
-        for s in run.latest():
-            try:
-                recs[s.sector.id] = optimize_sector(
-                    s,
-                    cfg,
-                    str(req.get("objective", "oil")),
-                    req.get("posture"),
-                    req.get("horizon_months"),
-                    economics=econ,
-                    target_oil=req.get("target_oil"),
-                    seed=run.seed,
-                )
-            except Exception as exc:
-                recs[s.sector.id] = None  # type: ignore[assignment]
-                run.meta.setdefault("optimizer_errors", {})[s.sector.id] = f"{type(exc).__name__}: {exc}"
+        recs_ok, errors = optimize_sectors(
+            run.latest(),
+            cfg,
+            str(req.get("objective", "oil")),
+            req.get("posture"),
+            req.get("horizon_months"),
+            economics=econ,
+            target_oil=req.get("target_oil"),
+            seed=run.seed,
+        )
+        recs: dict[str, SectorRecommendation] = dict(recs_ok)
+        for sid, err in errors.items():
+            recs[sid] = None  # type: ignore[assignment]
+            run.meta.setdefault("optimizer_errors", {})[sid] = err
         run_id = uuid.uuid4().hex[:12]
         summary = run.summary()
         summary["snapshot_hash"] = snap
@@ -561,6 +565,228 @@ class Service:
             )
         self._project(p, art.project_id)
         return art
+
+    # ---- reports, exports, writeback (§14 output artefacts, §18 integration) ----------------
+    def _report_inputs(self, p: Principal, run_id: str) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+        r = self.registry.get(run_id)
+        if r is None:
+            raise NotFoundError("run not found")
+        self._project(p, str(r["project_id"]))
+        b = self.registry.bundle(run_id)
+        if b is None:
+            raise NotFoundError("no result bundle for this run")
+        return r, b, self.project_out(str(r["project_id"]))
+
+    def report(self, p: Principal, run_id: str | None, fmt: str, rec_id: str | None = None) -> tuple[bytes, str, str]:
+        """PDF / DOCX / HTML report for a run or a recommendation; watermarked with the run id (§18)."""
+        rec = self.get_recommendation(p, rec_id) if rec_id else None
+        if rec is not None:
+            run_id = str(rec["run_id"])
+        if not run_id:
+            raise NotFoundError("run not found")
+        r, b, proj = self._report_inputs(p, run_id)
+        ctx = R.build_context(r, b, proj, rec, generated_by=p.user.username)
+        stem = f"wfo_{'recommendation_' + str(rec_id) if rec_id else 'run_' + run_id}"
+        if fmt == "html":
+            data, media = R.render_html(ctx).encode("utf-8"), "text/html; charset=utf-8"
+        elif fmt == "pdf":
+            try:
+                data = R.html_to_pdf(R.render_html(ctx), self.effective_config(str(proj["id"])))
+            except R.ReportError as exc:
+                raise ConflictError(str(exc)) from exc
+            media = "application/pdf"
+        elif fmt == "docx":
+            data = R.render_docx(ctx)
+            media = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        else:
+            raise ValueError(f"unknown report format {fmt!r}")
+        self.log(
+            p,
+            "report",
+            "recommendation" if rec_id else "run",
+            str(rec_id or run_id),
+            str(r["data_hash"]),
+            str(r["config_hash"]),
+            format=fmt,
+            bytes=len(data),
+        )
+        return data, media, f"{stem}.{fmt}"
+
+    def export(self, p: Principal, run_id: str | None, fmt: str, rec_id: str | None = None) -> tuple[bytes, str, str]:
+        """XLSX / CSV (zip) tables or the model JSON of a run (optionally with a recommendation's tables)."""
+        rec = self.get_recommendation(p, rec_id) if rec_id else None
+        if rec is not None:
+            run_id = str(rec["run_id"])
+        if not run_id:
+            raise NotFoundError("run not found")
+        r, b, _proj = self._report_inputs(p, run_id)
+        watermark = (
+            f"run {run_id} · data {str(b.get('data_hash', ''))[:12]} · config {str(b.get('config_hash', ''))[:12]} · "
+            f"code {r.get('code_version', '')}"
+        )
+        stem = f"wfo_{'recommendation_' + str(rec_id) if rec_id else 'run_' + run_id}"
+        if fmt == "xlsx":
+            data = X.to_xlsx(X.tables_from_bundle(r, b, rec), watermark)
+            media, name = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", f"{stem}.xlsx"
+        elif fmt == "csv":
+            data = X.to_csv_zip(X.tables_from_bundle(r, b, rec), watermark)
+            media, name = "application/zip", f"{stem}_csv.zip"
+        elif fmt == "json":
+            data = json.dumps(X.model_json(r, b), indent=1, default=str).encode("utf-8")
+            media, name = "application/json", f"{stem}_model.json"
+        else:
+            raise ValueError(f"unknown export format {fmt!r}")
+        self.log(
+            p,
+            "export",
+            "recommendation" if rec_id else "run",
+            str(rec_id or run_id),
+            str(r["data_hash"]),
+            str(r["config_hash"]),
+            format=fmt,
+            bytes=len(data),
+        )
+        return data, media, name
+
+    def writeback_enabled(self) -> bool:
+        return bool(
+            self.store.get_setting("writeback_enabled", self.base_cfg.get("integration.writeback_enabled", True))
+        )
+
+    def writeback(
+        self,
+        p: Principal,
+        rid: str,
+        connection_id: str,
+        table: str | None = None,
+        effective_date: str | None = None,
+        note: str = "",
+    ) -> dict[str, Any]:
+        """Approver-gated writeback of an approved recommendation's injection targets (§18)."""
+        require(p, "approver")
+        if not self.writeback_enabled():
+            raise ConflictError("Writeback to the surveillance system is disabled for this deployment.")
+        rec = self.get_recommendation(p, rid)  # display units, asset scope checked
+        if rec["state"] not in ("APPROVED", "IMPLEMENTED", "EVALUATED"):
+            raise ConflictError("Only an approved recommendation can be written to the surveillance system.")
+        cid_project, spec, _ = self._spec(connection_id)
+        if cid_project != rec["project_id"]:
+            raise ConflictError("The connection belongs to another project.")
+        tbl = table or str(self.base_cfg.get("integration.writeback_table", "wfo_injection_targets"))
+        eff = effective_date or date.today().isoformat()
+        rows = W.build_rows(rec, str(rec["units"]["rate"]), eff, p.user.username, note)
+        try:
+            result = W.write_targets(rows, spec, self.secrets, tbl)
+        except W.WritebackError as exc:
+            raise ConflictError(str(exc)) from exc
+        except Exception as exc:  # database / file errors, reported plainly
+            raise ConflictError(f"The surveillance system refused the write: {type(exc).__name__}: {exc}") from exc
+        wid = uuid.uuid4().hex[:12]
+        record = {
+            "id": wid,
+            "recommendation_id": rid,
+            "project_id": rec["project_id"],
+            "connection_id": connection_id,
+            "target": result["target"],
+            "kind": result["kind"],
+            "n_rows": result["n_rows"],
+            "table": tbl,
+            "effective_date": eff,
+            "actor": p.user.username,
+            "acting_role": p.acting_role,
+            "created_at": _now(),
+            "rows": [r.__dict__ for r in rows],
+            "note": note,
+        }
+        with self.store.conn() as c:
+            c.execute(
+                "INSERT INTO writebacks VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (
+                    wid,
+                    rid,
+                    rec["project_id"],
+                    connection_id,
+                    result["target"],
+                    result["n_rows"],
+                    p.user.username,
+                    p.acting_role,
+                    record["created_at"],
+                    json.dumps(record, default=str),
+                ),
+            )
+        self.log(
+            p,
+            "writeback",
+            "recommendation",
+            rid,
+            str(rec["data_hash"]),
+            str(rec["config_hash"]),
+            connection_id=connection_id,
+            target=result["target"],
+            n_rows=result["n_rows"],
+        )
+        self.dispatch_webhook(
+            "writeback.done",
+            {"recommendation_id": rid, "writeback_id": wid, "target": result["target"], "n_rows": result["n_rows"]},
+        )
+        return record
+
+    def list_writebacks(self, p: Principal, rid: str) -> list[dict[str, Any]]:
+        rec = self.get_recommendation(p, rid)
+        with self.store.conn() as c:
+            rows = c.execute(
+                "SELECT payload_json FROM writebacks WHERE recommendation_id=? ORDER BY created_at", (rec["id"],)
+            ).fetchall()
+        return [dict(json.loads(r[0])) for r in rows]
+
+    # ---- health (§18 deployment) -------------------------------------------------------------
+    def readiness(self) -> dict[str, Any]:
+        """Readiness probe: store reachable and writable, snapshot folder present, jobs alive, disk, renderer."""
+        checks: dict[str, Any] = {}
+        ok = True
+        try:
+            with self.store.conn() as c:
+                n_projects = int(c.execute("SELECT COUNT(*) FROM projects").fetchone()[0])
+                n_jobs = int(c.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0])
+            checks["store"] = {
+                "ok": True,
+                "path": str(self.store.db_path),
+                "projects": n_projects,
+                "jobs_active": n_jobs,
+            }
+        except Exception as exc:
+            ok = False
+            checks["store"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        try:
+            probe = self.root / ".ready_probe"
+            probe.write_text(_now(), encoding="utf-8")
+            probe.unlink()
+            snaps = self.root / "snapshots"
+            checks["filesystem"] = {"ok": snaps.is_dir(), "root": str(self.root), "snapshots_dir": snaps.is_dir()}
+            ok = ok and snaps.is_dir()
+        except Exception as exc:
+            ok = False
+            checks["filesystem"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        try:
+            du = shutil.disk_usage(self.root)
+            free_mb = du.free / 1e6
+            checks["disk"] = {"ok": free_mb > 200, "free_mb": round(free_mb), "total_mb": round(du.total / 1e6)}
+            ok = ok and free_mb > 200
+        except Exception as exc:  # pragma: no cover
+            checks["disk"] = {"ok": False, "error": str(exc)}
+        pool_ok = self.jobs.sync or (self.jobs.pool is not None and not getattr(self.jobs.pool, "_shutdown", False))
+        checks["jobs"] = {"ok": bool(pool_ok), "mode": "sync" if self.jobs.sync else "thread-pool"}
+        ok = ok and bool(pool_ok)
+        checks["pdf_renderer"] = {"ok": True, "renderer": R.pdf_renderer(self.base_cfg)}
+        return {
+            "status": "ready" if ok else "degraded",
+            "ok": ok,
+            "version": R.APP_VERSION,
+            "code_version": code_version(),
+            "uptime_s": round(time.time() - self.started_at, 1),
+            "writeback_enabled": self.writeback_enabled(),
+            "checks": checks,
+        }
 
     # ---- scenarios --------------------------------------------------------------------------
     def scenario(self, p: Principal, req: dict[str, Any]) -> dict[str, Any]:

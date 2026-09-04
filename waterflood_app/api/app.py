@@ -9,15 +9,17 @@ import os
 import secrets as _secrets
 from collections.abc import Callable
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import Depends, FastAPI, Header, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 
 from waterflood_app.api import schemas as S
 from waterflood_app.api.auth import AuthError, Principal, require, resolve_principal
 from waterflood_app.api.service import ConflictError, NotFoundError, Service
 from waterflood_app.config import Config, load_config
+from waterflood_app.store.registry import code_version
 from waterflood_app.workflow.states import WorkflowError
 
 
@@ -37,7 +39,7 @@ def create_app(root: Path | str | None = None, cfg: Config | None = None, sync_j
 
     app = FastAPI(
         title="Waterflood Optimizer API",
-        version="0.3.0",
+        version="0.5.0",
         description=(
             "CRM-based waterflood evaluation and optimization — architecture v2.1. All technical detail "
             "lives behind /runs/{id} results; the main path is load → map → wells → run → recommendation."
@@ -319,17 +321,83 @@ def create_app(root: Path | str | None = None, cfg: Config | None = None, sync_j
     def deactivate_webhook(wid: str, p: P) -> dict[str, Any]:
         return svc.deactivate_webhook(p, wid)
 
+    # ---- reports & exports (§14, §18) --------------------------------------------------------
+    def _file(data: bytes, media: str, name: str) -> Response:
+        return Response(
+            content=data, media_type=media, headers={"Content-Disposition": f'attachment; filename="{name}"'}
+        )
+
+    @app.get("/runs/{run_id}/report.{fmt}", tags=["reports"], response_class=Response)
+    def run_report(run_id: str, fmt: Literal["pdf", "docx", "html"], p: P) -> Response:
+        return _file(*svc.report(p, run_id, fmt))
+
+    @app.get("/runs/{run_id}/export.{fmt}", tags=["reports"], response_class=Response)
+    def run_export(run_id: str, fmt: Literal["xlsx", "csv", "json"], p: P) -> Response:
+        return _file(*svc.export(p, run_id, fmt))
+
+    @app.get("/recommendations/{rid}/report.{fmt}", tags=["reports"], response_class=Response)
+    def rec_report(rid: str, fmt: Literal["pdf", "docx", "html"], p: P) -> Response:
+        return _file(*svc.report(p, None, fmt, rec_id=rid))
+
+    @app.get("/recommendations/{rid}/export.{fmt}", tags=["reports"], response_class=Response)
+    def rec_export(rid: str, fmt: Literal["xlsx", "csv", "json"], p: P) -> Response:
+        return _file(*svc.export(p, None, fmt, rec_id=rid))
+
+    @app.post("/recommendations/{rid}/writeback", response_model=S.WritebackOut, status_code=201, tags=["integration"])
+    def writeback(rid: str, body: S.WritebackRequest, p: P) -> dict[str, Any]:
+        return svc.writeback(p, rid, body.connection_id, body.table, body.effective_date, body.note)
+
+    @app.get("/recommendations/{rid}/writebacks", response_model=list[S.WritebackOut], tags=["integration"])
+    def writebacks(rid: str, p: P) -> list[dict[str, Any]]:
+        return svc.list_writebacks(p, rid)
+
+    @app.get("/health/ready", response_model=S.ReadyOut, tags=["admin"])
+    def ready(response: Response) -> dict[str, Any]:
+        r = svc.readiness()
+        if not r["ok"]:
+            response.status_code = 503
+        return r
+
     @app.get("/health", tags=["admin"])
     def health() -> dict[str, str]:
-        return {"status": "ok", "version": app.version}
+        return {"status": "ok", "version": app.version, "code_version": code_version()}
 
     return app
+
+
+def create_root_app(ui_dist: Path | str | None = None, **kwargs: Any) -> FastAPI:
+    """API mounted under /api plus the built UI (SPA) at / — the single-container ``offline`` profile.
+
+    ``ui_dist`` defaults to ``WFO_UI_DIST``; without it the plain API app is returned (nginx serves the UI).
+    """
+    api = create_app(**kwargs)
+    dist = Path(ui_dist or os.environ.get("WFO_UI_DIST", ""))
+    if not ui_dist and not os.environ.get("WFO_UI_DIST"):
+        return api
+    if not (dist / "index.html").exists():
+        raise FileNotFoundError(f"UI build not found at {dist} (run `npm run build` in ui/)")
+    root = FastAPI(title="Waterflood Optimizer", version=api.version, docs_url=None, redoc_url=None, openapi_url=None)
+    root.state.service = api.state.service
+    root.state.generated_admin_password = api.state.generated_admin_password
+    root.mount("/api", api)
+    root.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
+    if (dist / "fonts").is_dir():
+        root.mount("/fonts", StaticFiles(directory=dist / "fonts"), name="fonts")
+
+    @root.get("/{path:path}", include_in_schema=False)
+    def spa(path: str) -> FileResponse:
+        candidate = dist / path
+        if path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(dist / "index.html")
+
+    return root
 
 
 def main() -> None:  # pragma: no cover — `python -m waterflood_app.api.app`
     import uvicorn
 
-    app = create_app()
+    app = create_root_app()
     if app.state.generated_admin_password:
         print(f"[wfo] bootstrap admin password (shown once): {app.state.generated_admin_password}")
     uvicorn.run(app, host=os.environ.get("WFO_HOST", "127.0.0.1"), port=int(os.environ.get("WFO_PORT", "8000")))

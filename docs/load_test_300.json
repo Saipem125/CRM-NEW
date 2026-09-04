@@ -1,0 +1,20 @@
+{
+ "wells": 300,
+ "sectors": 10,
+ "steps": 120,
+ "cores": 8,
+ "variants": "full tournament",
+ "build_s": 0.1,
+ "engine_s": 279.9,
+ "optimizer_s": 47.3,
+ "bundle_s": 0.3,
+ "total_s": 327.6,
+ "sectors_fitted": 10,
+ "winners": [
+  "crmp"
+ ],
+ "confidence": "HIGH",
+ "mean_abs_f_error": 0.0,
+ "bundle_bytes": 4480529,
+ "pass_10_min": true
+}

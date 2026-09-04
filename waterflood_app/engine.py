@@ -8,12 +8,14 @@ optimizer (M2) and the tests need: grid, well types, windows, sectors, gates, to
 from __future__ import annotations
 
 import hashlib
+import os
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
 import polars as pl
+from joblib import Parallel, delayed
 
 from waterflood_app.config import Config, load_config, seed_from_hash
 from waterflood_app.ingest.connectors import LoadedData
@@ -174,57 +176,38 @@ def run_engine(
     blocks = blocks_from_category(loaded.category)
     n_wells_total = grid.n_inj + grid.n_prod
     lift_counts = lift_events_per_producer(events, grid.producers, grid.well_of_entity)
-    runs: list[SectorRun] = []
+    tasks: list[tuple[int, Any, Grid]] = []
     for wi, win in enumerate(windows):
         wgrid = grid.window(win.start, win.end).active_entities(min_steps=3)
         if wgrid.n_inj == 0 or wgrid.n_prod == 0:
             continue
         for sector in sectorize(wgrid, cfg, blocks):
-            sgrid = wgrid.subset(sector.injectors, sector.producers)
-            slog = ConditionLog()
-            split = train_blind_split(sgrid.n_steps, cfg)
-            data = FitData(sgrid, split)
-            # quick CRMT for the τ estimate (§8 gate) — cheap, 2 starts
-            tau_est: float | None = None
-            try:
-                crmt = CRMT(cfg)
-                crmt.fit(data, seed=seed, n_starts=2)
-                tau_est = crmt.tau_field
-            except Exception:
-                tau_est = None
-            sums_p, sums_i = _quick_sum_f(data, cfg, seed)
-            ev_per_well = events_per_well(events, n_wells_total) if events is not None else 0.0
-            prof = profile(
-                sgrid,
-                cfg,
-                has_relperm=relperm is not None,
-                events_per_well=max(ev_per_well, float(lift_counts.mean()) if len(lift_counts) else 0.0),
-                tau_estimate_days=tau_est,
-                sum_f_apparent=_sum_f_apparent(sgrid, split.n_train),
-                pressure_source=pprep.field_source,
-                sum_f_per_producer=sums_p,
-                sum_f_per_injector=sums_i,
-            )
-            gates = run_gates(prof, cfg, slog, scope=f"sector:{sector.id}")
-            if not gates["history_min"]:
-                log.extend(slog)
-                continue
-            sp = static_pressure_on_grid(sgrid, pprep.static_surveys)
-            tres = run_tournament(
-                data,
-                prof,
-                gates,
-                cfg,
-                slog,
-                seed=seed,
-                engine=engine,
-                variants=variants,
-                static_pressure=sp,
-                relperm=relperm,
-            )
-            oil_cut, oil_pred = _fit_oil_cut(sgrid, tres, split.n_train)
-            log.extend(slog)
-            runs.append(SectorRun(wi, sector, sgrid, prof, gates, tres, oil_cut, oil_pred, slog))
+            tasks.append((wi, sector, wgrid.subset(sector.injectors, sector.producers)))
+    ev_per_well = events_per_well(events, n_wells_total) if events is not None else 0.0
+    ev_rate = max(ev_per_well, float(lift_counts.mean()) if len(lift_counts) else 0.0)
+    n_jobs = int(cfg.get("solver.n_jobs", -1) or -1)
+    n_avail = (os.cpu_count() or 1) if n_jobs < 0 else n_jobs
+    n_workers = min(len(tasks), n_avail)
+    # sector-level processes pay off once there are enough sectors to fill the cores; with one or two
+    # sectors the per-producer parallelism inside fit_field uses the cores better
+    if bool(cfg.get("solver.sector_parallel", False)) and n_workers > 1 and len(tasks) >= max(3, n_avail // 2):
+        # one process per sector (the fixture's "full tournament per sector should run in parallel");
+        # inside a worker the per-producer parallelism is switched off so cores are not oversubscribed
+        inner = cfg.with_overrides({"solver": {"n_jobs": 1}})
+        results = Parallel(n_jobs=n_workers, prefer="processes")(
+            delayed(_fit_sector)(wi, sector, sgrid, inner, seed, engine, variants, pprep, relperm, ev_rate)
+            for wi, sector, sgrid in tasks
+        )
+    else:
+        results = [
+            _fit_sector(wi, sector, sgrid, cfg, seed, engine, variants, pprep, relperm, ev_rate)
+            for wi, sector, sgrid in tasks
+        ]
+    runs: list[SectorRun] = []
+    for srun, slog in results:
+        log.extend(slog)
+        if srun is not None:
+            runs.append(srun)
     return RunResult(
         grid,
         types,
@@ -239,6 +222,62 @@ def run_engine(
         events,
         {"engine": engine},
     )
+
+
+def _fit_sector(
+    wi: int,
+    sector: Any,
+    sgrid: Grid,
+    cfg: Config,
+    seed: int,
+    engine: str,
+    variants: list[str] | None,
+    pprep: PressurePrep,
+    relperm: RelPerm | None,
+    events_per_well_rate: float,
+) -> tuple[SectorRun | None, ConditionLog]:
+    """Gates → tournament → oil cut for one (window, sector); runs in a worker process for large fields."""
+    slog = ConditionLog()
+    split = train_blind_split(sgrid.n_steps, cfg)
+    data = FitData(sgrid, split)
+    # quick CRMT for the τ estimate (§8 gate) — cheap, 2 starts
+    tau_est: float | None = None
+    try:
+        crmt = CRMT(cfg)
+        crmt.fit(data, seed=seed, n_starts=2)
+        tau_est = crmt.tau_field
+    except Exception:
+        tau_est = None
+    sums_p, sums_i = _quick_sum_f(data, cfg, seed)
+    prof = profile(
+        sgrid,
+        cfg,
+        has_relperm=relperm is not None,
+        events_per_well=events_per_well_rate,
+        tau_estimate_days=tau_est,
+        sum_f_apparent=_sum_f_apparent(sgrid, split.n_train),
+        pressure_source=pprep.field_source,
+        sum_f_per_producer=sums_p,
+        sum_f_per_injector=sums_i,
+    )
+    gates = run_gates(prof, cfg, slog, scope=f"sector:{sector.id}")
+    if not gates["history_min"]:
+        return None, slog
+    sp = static_pressure_on_grid(sgrid, pprep.static_surveys)
+    tres = run_tournament(
+        data,
+        prof,
+        gates,
+        cfg,
+        slog,
+        seed=seed,
+        engine=engine,
+        variants=variants,
+        static_pressure=sp,
+        relperm=relperm,
+    )
+    oil_cut, oil_pred = _fit_oil_cut(sgrid, tres, split.n_train)
+    return SectorRun(wi, sector, sgrid, prof, gates, tres, oil_cut, oil_pred, slog), slog
 
 
 def _quick_sum_f(data: FitData, cfg: Config, seed: int) -> tuple[dict[str, float], dict[str, float]]:

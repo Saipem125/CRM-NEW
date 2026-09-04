@@ -1,0 +1,274 @@
+{
+ "application": "Waterflood Optimizer 0.5.0",
+ "run_id": "f1f43bbedd07",
+ "project_id": "1b7aa87b7108",
+ "created_at": "2026-09-04T08:22:50.961061+00:00",
+ "data_hash": "f7fda78b31f7813fabf5d9e653ed8508b3f642bb382c1ebbbf405b4a1ddc592e",
+ "config_hash": "7f90028e1dc16a82f17887a8f06f66883030895f1fc53860299672b9c6576ee0",
+ "code_version": "cbb7eec",
+ "seed": 232413243,
+ "units": {
+  "rate": "bbl/d",
+  "gas_rate": "Mscf/d",
+  "pressure": "psi",
+  "length": "ft",
+  "volume": "bbl"
+ },
+ "confidence": "HIGH",
+ "registry_models": [
+  {
+   "sector": "w0:S1",
+   "variant": "crmp",
+   "params": {
+    "f_ij": {
+     "I-1": {
+      "P-1": 0.5993563326828106,
+      "P-2": 0.3006437149926815,
+      "P-3": 0.0,
+      "P-4": 0.0
+     },
+     "I-2": {
+      "P-1": 0.3597681692586808,
+      "P-2": 0.35976816154596314,
+      "P-3": 0.18046368432157753,
+      "P-4": 0.0
+     },
+     "I-3": {
+      "P-1": 0.037560266653656194,
+      "P-2": 0.07487937176293795,
+      "P-3": 0.7499999783319647,
+      "P-4": 0.0375603162769508
+     },
+     "I-4": {
+      "P-1": 0.0,
+      "P-2": 0.18046367723538115,
+      "P-3": 0.35976816567429387,
+      "P-4": 0.35976816382155596
+     },
+     "I-5": {
+      "P-1": 0.0,
+      "P-2": 0.0,
+      "P-3": 0.3006437320540429,
+      "P-4": 0.5993562816145781
+     }
+    },
+    "gain_p": {
+     "P-1": 1.0,
+     "P-2": 1.0,
+     "P-3": 1.0,
+     "P-4": 1.0
+    },
+    "tau_p_days": {
+     "P-1": 150.0000530851607,
+     "P-2": 109.99999440650497,
+     "P-3": 95.0000021499663,
+     "P-4": 180.0000055039114
+    },
+    "extra": {},
+    "tau_days": {
+     "P-1": 150.0000530851607,
+     "P-2": 109.99999440650497,
+     "P-3": 95.0000021499663,
+     "P-4": 180.0000055039114
+    }
+   },
+   "metrics": {
+    "blind_r2": 0.9999999999999976,
+    "blind_mape": 4.590530212122406e-07,
+    "aicc": -9619.455089474945,
+    "confidence": "HIGH"
+   }
+  }
+ ],
+ "sectors": [
+  {
+   "window": "w0:S1",
+   "window_index": 0,
+   "sector": "S1",
+   "dates": [
+    "2010-01-01",
+    "2019-12-01"
+   ],
+   "blind_start_index": 96,
+   "injectors": [
+    "I-1",
+    "I-2",
+    "I-3",
+    "I-4",
+    "I-5"
+   ],
+   "producers": [
+    "P-1",
+    "P-2",
+    "P-3",
+    "P-4"
+   ],
+   "variant": "crmp",
+   "label": "CRMP (producer)",
+   "f_ij": [
+    [
+     0.5993563326828106,
+     0.3006437149926815,
+     0.0,
+     0.0
+    ],
+    [
+     0.3597681692586808,
+     0.35976816154596314,
+     0.18046368432157753,
+     0.0
+    ],
+    [
+     0.037560266653656194,
+     0.07487937176293795,
+     0.7499999783319647,
+     0.0375603162769508
+    ],
+    [
+     0.0,
+     0.18046367723538115,
+     0.35976816567429387,
+     0.35976816382155596
+    ],
+    [
+     0.0,
+     0.0,
+     0.3006437320540429,
+     0.5993562816145781
+    ]
+   ],
+   "tau_days": [
+    150.0000530851607,
+    109.99999440650497,
+    95.0000021499663,
+    180.0000055039114
+   ],
+   "tau_ij_days": null,
+   "J": null,
+   "J_unit": "bbl/d per psi",
+   "extra": {},
+   "n_params": 24,
+   "metrics": {
+    "blind_r2": 0.9999999999999976,
+    "blind_mape": 4.590530212122406e-07,
+    "aicc": -9619.455089474945,
+    "spread": 0.0,
+    "plausible": true
+   },
+   "confidence": "HIGH",
+   "gates": {
+    "history_min": true,
+    "od": true,
+    "points_per_param": true,
+    "crmip_data": true,
+    "inj_cv": true,
+    "tau_dt": true,
+    "influx": false,
+    "event_heavy": false,
+    "mature": true,
+    "long_history": true,
+    "has_xy": true,
+    "has_bhp": false,
+    "has_relperm": false
+   },
+   "leaderboard": [
+    {
+     "rank": 1,
+     "variant": "crmp",
+     "label": "CRMP (producer)",
+     "score": 0.9855,
+     "blind_r2": 0.9999999999999976,
+     "blind_mape": 4.590530212122406e-07,
+     "aicc": -9619.455089474945,
+     "spread": 0.0,
+     "runtime_s": 1.7917901000473648,
+     "n_params": 24,
+     "c_blind_r2": 1.0,
+     "c_mape": 1.0,
+     "c_aicc": 1.0,
+     "c_stability": 1.0,
+     "c_plausibility": 1.0,
+     "c_runtime": 0.7107
+    },
+    {
+     "rank": 2,
+     "variant": "crmip",
+     "label": "CRMIP (pair)",
+     "score": 0.9376,
+     "blind_r2": 0.9999999999999774,
+     "blind_mape": 3.9722351436806434e-06,
+     "aicc": -8864.312286647859,
+     "spread": 0.0,
+     "runtime_s": 19.43786199996248,
+     "n_params": 48,
+     "c_blind_r2": 1.0,
+     "c_mape": 1.0,
+     "c_aicc": 0.9379,
+     "c_stability": 1.0,
+     "c_plausibility": 1.0,
+     "c_runtime": 0.0
+    },
+    {
+     "rank": 3,
+     "variant": "crmt",
+     "label": "CRMT (field tank)",
+     "score": 0.7517,
+     "blind_r2": 0.9180613540747745,
+     "blind_mape": 6.5425040521997815,
+     "aicc": 2536.1985259477196,
+     "spread": 0.0,
+     "runtime_s": 0.2414487999631092,
+     "n_params": 4,
+     "c_blind_r2": 0.9181,
+     "c_mape": 0.8691,
+     "c_aicc": 0.0,
+     "c_stability": 1.0,
+     "c_plausibility": 1.0,
+     "c_runtime": 1.0
+    },
+    {
+     "rank": null,
+     "variant": "mpi",
+     "label": "MPI (geometric)",
+     "excluded": "usable as a geometric prior / sanity check on f_ij; not a history-match method itself"
+    },
+    {
+     "rank": null,
+     "variant": "mlr",
+     "label": "MLR / BMLR",
+     "excluded": "cheap screening for barriers; no dynamics, superseded by CRM for forecasting"
+    },
+    {
+     "rank": null,
+     "variant": "aquifer",
+     "label": "CRM-Aquifer (CRMPA/AQ)",
+     "excluded": "\u03a3f_ij\u22480.88 \u2014 no influx signature; extra aquifer parameters would be unidentifiable"
+    },
+    {
+     "rank": null,
+     "variant": "twophase",
+     "label": "Two-phase coupled",
+     "excluded": "mean water cut 0.97 \u2265 0.5 \u2014 mobility stable, constant-\u03c4 CRM sufficient"
+    },
+    {
+     "rank": null,
+     "variant": "crossflow",
+     "label": "Crossflow / productivity-coeff.",
+     "excluded": "0 events/well \u2014 operating modes stable, classical f_ij holds"
+    },
+    {
+     "rank": null,
+     "variant": "pinn",
+     "label": "PINN / residual ML",
+     "excluded": "long history available; run only if classical residuals show structure (autocorrelation)"
+    },
+    {
+     "rank": null,
+     "variant": "rnn",
+     "label": "Pure RNN / LSTM",
+     "excluded": "fails interpretability gate \u2014 exposes no f_ij / \u03c4 for the optimizer (benchmark only)"
+    }
+   ]
+  }
+ ]
+}

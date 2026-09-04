@@ -1,7 +1,7 @@
 /* Screen 6 — Admin: users and roles, assets, connections, thresholds, validation dashboard (§16 Tier 3), audit log. */
 import { useEffect, useState } from "react";
 import { api, explain } from "../api/client";
-import type { AuditEntry, Connection, Project, Role, Thresholds, User, Webhook } from "../api/types";
+import type { Ready, AuditEntry, Connection, Project, Role, Thresholds, User, Webhook } from "../api/types";
 import { useApp } from "../App";
 import { Msg, Num, Skeleton } from "../components/Common";
 import { DataTable, type Col } from "../components/DataTable";
@@ -11,12 +11,12 @@ type Err = { message: string; action: string } | null;
 
 export default function AdminScreen() {
   const { projects } = useApp();
-  const [tab, setTab] = useState<"users" | "connections" | "thresholds" | "validation" | "audit" | "webhooks">("users");
+  const [tab, setTab] = useState<"users" | "connections" | "thresholds" | "validation" | "audit" | "webhooks" | "system">("users");
   const [err, setErr] = useState<Err>(null);
   return (
     <div className="stack">
       <h1>Admin</h1>
-      <div className="tabs" role="tablist">{(["users", "connections", "thresholds", "validation", "audit", "webhooks"] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} className={`tab ${tab === t ? "on" : ""}`} onClick={() => setTab(t)}>{t === "validation" ? "Validation dashboard" : t[0].toUpperCase() + t.slice(1)}</button>)}</div>
+      <div className="tabs" role="tablist">{(["users", "connections", "thresholds", "validation", "audit", "webhooks", "system"] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} className={`tab ${tab === t ? "on" : ""}`} onClick={() => setTab(t)}>{t === "validation" ? "Validation dashboard" : t[0].toUpperCase() + t.slice(1)}</button>)}</div>
       {err && <Msg severity="error" message={err.message} action={err.action} />}
       {tab === "users" && <Users onErr={setErr} />}
       {tab === "connections" && <Connections projects={projects} onErr={setErr} />}
@@ -24,6 +24,7 @@ export default function AdminScreen() {
       {tab === "validation" && <Validation onErr={setErr} />}
       {tab === "audit" && <Audit onErr={setErr} />}
       {tab === "webhooks" && <Webhooks onErr={setErr} />}
+      {tab === "system" && <System onErr={setErr} />}
     </div>
   );
 }
@@ -132,6 +133,25 @@ function Webhooks({ onErr }: { onErr: (e: Err) => void }) {
     <section className="card stack">
       <div className="row"><label className="field"><span className="f">Webhook URL (state changes, finished runs, alerts)</span><input value={url} onChange={(e) => setUrl(e.target.value)} style={{ width: 380 }} /></label><button className="primary" onClick={async () => { try { await api.webhooks.add({ url }); setUrl(""); await load(); } catch (e) { onErr(explain(e)); } }} disabled={!url}>Add</button></div>
       {rows === null ? <Skeleton lines={2} /> : <table className="data"><thead><tr><th>url</th><th>events</th><th>status</th><th /></tr></thead><tbody>{rows.map((w) => <tr key={w.id}><td className="mono">{w.url}</td><td>{w.events.join(", ")}</td><td>{w.active ? <span className="tag ok">active</span> : <span className="tag">off</span>}</td><td>{w.active && <button className="sm danger" onClick={async () => { try { await api.webhooks.deactivate(w.id); await load(); } catch (e) { onErr(explain(e)); } }}>Deactivate</button>}</td></tr>)}{rows.length === 0 && <tr><td colSpan={4} className="dim">No webhooks.</td></tr>}</tbody></table>}
+    </section>
+  );
+}
+
+function System({ onErr }: { onErr: (e: Err) => void }) {
+  const [ready, setReady] = useState<Ready | null>(null);
+  const load = () => api.ready().then(setReady).catch((e) => onErr(explain(e)));
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <section className="card stack" aria-label="System health">
+      <div className="row" style={{ justifyContent: "space-between" }}><h2>System health <span className="sub">GET /health/ready — the same probe Docker Compose uses</span></h2><button className="sm" onClick={load}>Refresh</button></div>
+      {ready === null ? <Skeleton lines={5} height={18} /> : (
+        <>
+          <div className="row" style={{ gap: 10 }}><span className={`tag ${ready.ok ? "ok" : "bad"}`}>{ready.status}</span><span className="mono sub">app {ready.version} · code {ready.code_version} · up {Math.round(ready.uptime_s / 60)} min · writeback {ready.writeback_enabled ? "enabled" : "disabled"}</span></div>
+          <table className="data" data-testid="health-checks"><thead><tr><th>check</th><th>status</th><th>detail</th></tr></thead>
+            <tbody>{Object.entries(ready.checks).map(([k, v]) => <tr key={k}><td>{k}</td><td><span className={`tag ${v.ok ? "ok" : "bad"}`}>{v.ok ? "ok" : "failing"}</span></td><td className="mono small">{Object.entries(v).filter(([kk]) => kk !== "ok").map(([kk, vv]) => `${kk}: ${String(vv)}`).join(" · ")}</td></tr>)}</tbody></table>
+          <span className="sub">Backups: run <code>python scripts/backup.py backup --store &lt;store&gt; --out &lt;folder&gt; --retain 14</code> on the host (the prod profile does this nightly).</span>
+        </>
+      )}
     </section>
   );
 }

@@ -1,1 +1,1 @@
-"""Waterflood app package — see docs/spec/Waterflood_Optimizer_Architecture.html §19."""
+"""L5 outputs (architecture §19): figures, report (PDF/DOCX), exports (XLSX/CSV/JSON), writeback."""

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0] — 2026-09-04 — Milestone 5: reports, deployment, hardening
+
+- `outputs/`: figures (SVG + PNG scene graph), HTML/PDF/DOCX report (`GET /runs/{id}/report.{pdf,docx,html}`, `GET /recommendations/{id}/report.*`), XLSX / CSV-zip / model-JSON exports, approver-gated writeback of injection targets (`POST /recommendations/{id}/writeback`, `GET …/writebacks`).
+- `optimize/sensitivity.py`: economic tornado stored with every recommendation; NPV unit factor fixed; action-list expected oil gain always a volume.
+- API: `/health/ready` readiness probe, `create_root_app` (single-process API + UI), version 0.5.0; `writebacks` table; `integration` config section.
+- UI: Download menu on Result (PDF, DOCX, XLSX, CSV, JSON), report buttons and writeback panel on Workflow, NPV economics inputs on Run, Admin → System health tab, vendored fonts (offline).
+- Deployment: `Dockerfile` (api / offline targets, WeasyPrint runtime), `ui/Dockerfile` + nginx, `docker-compose.yml` profiles `dev` / `prod` / `offline` with health checks and a backup sidecar, `.env.example`.
+- Scripts: `backup.py` (backup / verify / restore), `load_test.py` (300 wells, 8 cores), `sample_report.py` (docs/samples from `streak_5x4`).
+- Docs: `README.md`, `docs/USER_GUIDE.md`, `docs/ADMIN_GUIDE.md`, sample report set under `docs/samples/`.
+
 ## [0.4.0] — 2026-09-03 — Milestone 4: UI
 
 - `ui/`: Vite + React 18 + TypeScript app with the seven screens (Loader, Run, Result, Details drawer, Workflow, Admin, Advanced), §4.1 design tokens, one Plotly template (forecast fan, history match with residuals, Δt/τ, leaderboard, injector efficiency, tornado), D3 well map with connectivity arrows and connectivity matrix, pipeline and state-machine schematics, virtualised sortable tables, plain-language errors from the messaging map, Playwright end-to-end tests with committed screenshots.

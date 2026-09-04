@@ -332,6 +332,16 @@ def display_recommendation(rec: dict[str, Any], d: Display) -> dict[str, Any]:
     if "base_rates" in opt:
         opt["base_rates"] = {w: float(v) * d.rate for w, v in opt["base_rates"].items()}
     out["optimization"] = opt
+    tor = dict(out.get("tornado") or {})
+    if tor.get("unit") == "volume":
+        tor["base"] = float(tor.get("base", 0.0)) * d.volume
+        tor["items"] = [
+            {**i, "low": float(i["low"]) * d.volume, "high": float(i["high"]) * d.volume} for i in tor.get("items", [])
+        ]
+        tor["unit"] = d.units["volume"]
+    elif tor:
+        tor["unit"] = "USD"
+    out["tornado"] = tor
     out["actions"] = [
         {
             **a,
