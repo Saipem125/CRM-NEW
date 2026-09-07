@@ -27,7 +27,7 @@ python -m ruff / mypy        clean (88 source files)
 ui: npx tsc -b               clean
 ui: npx playwright test      6 passed (57 s) — primary path now also downloads XLSX/JSON/DOCX from Result and the PDF from Workflow, creates a writeback connection and writes 5 targets
 scripts/load_test.py         see below
-docker                       NOT executed on the build machine (Docker not installed): Dockerfiles and compose validated by syntax/review and by the new CI job only
+docker                       images built and compose profiles validated on GitHub Actions (docker-build job); stack not started end to end
 ```
 
 ### Load test (300 wells, 10 sealed sectors × [12 inj + 18 prod], 120 months, full tournament, 8 cores)
@@ -70,13 +70,13 @@ Round trip backup → verify → restore with two snapshots; secrets excluded/in
 | rolling re-fit + CUSUM alerts inside standard runs | done — `rolling.mode`, blended forecast ensemble, `tests/test_surveillance.py` (4 tests incl. a real synthetic shift) |
 | PostgreSQL store | done — `store/db.py` shim, verified on PostgreSQL 16 (3 tests: store/registry/audit, full API flow, readiness — passed locally on PostgreSQL 16.4 portable binaries); CI postgres service; `pg_dump` backups |
 | worker service | done — DB-table queue, `python -m waterflood_app.api.worker`, atomic claim, artefacts persisted (`tests/test_worker.py`) |
-| Docker execution | not possible here (no Docker) — CI builds images and validates the compose files |
+| Docker execution | not possible on the build PC (no Docker); verified on GitHub Actions instead — run https://github.com/Saipem125/CRM-NEW/actions (commit `2e8b0d1`): `docker-build` builds the api, offline and ui images and validates the `dev` / `prod` / `offline` profiles; Python 3.11 + 3.12 jobs (with a PostgreSQL service) and the UI build all green |
 
 Load test after the follow-up (rolling re-fit active in every 30-well sector): engine 343 s (rolling windows in all 10 sectors) + optimizer 50 s = 394 s on 8 cores, bound 600 s — pass (`docs/load_test_300_rolling.json`).
 
 ## Not done / open
 
-- Docker profiles were not executed here (no Docker); run `docker compose --profile prod up --build` on a Docker host and report.
+- The compose stacks have been built and validated on CI but not started end to end (no `docker compose up` on a Docker host yet).
 - The report's tornado is economic only for the NPV objective (the oil objective carries the forecast range alone).
 - No automated contrast audit of the UI; PNG report figures use host fonts (DejaVu / Arial / Consolas), not the brand fonts.
 
