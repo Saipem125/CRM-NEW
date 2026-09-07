@@ -76,6 +76,8 @@ class Fig:
         opacity: float = 1.0,
         rx: float = 0.0,
     ) -> None:
+        if not all(math.isfinite(v) for v in (x, y, w, h)):
+            return
         self.ops.append(
             {
                 "t": "rect",
@@ -114,6 +116,7 @@ class Fig:
         dash: str | None = None,
         opacity: float = 1.0,
     ) -> None:
+        pts = _finite(pts)  # NaN coordinates (broken wells) are dropped, never drawn
         if len(pts) >= 2:
             self.ops.append({"t": "line", "p": pts, "stroke": stroke, "sw": sw, "dash": dash, "o": opacity})
 
@@ -125,6 +128,7 @@ class Fig:
         sw: float = 1.0,
         opacity: float = 1.0,
     ) -> None:
+        pts = _finite(pts)
         if len(pts) >= 3:
             self.ops.append({"t": "poly", "p": pts, "fill": fill, "stroke": stroke, "sw": sw, "o": opacity})
 
@@ -138,6 +142,8 @@ class Fig:
         sw: float = 1.0,
         opacity: float = 1.0,
     ) -> None:
+        if not (math.isfinite(cx) and math.isfinite(cy) and math.isfinite(r)):
+            return
         self.ops.append(
             {"t": "circle", "cx": cx, "cy": cy, "r": r, "fill": fill, "stroke": stroke, "sw": sw, "o": opacity}
         )
@@ -155,6 +161,8 @@ class Fig:
         rotate: float = 0.0,
         opacity: float = 1.0,
     ) -> None:
+        if not (math.isfinite(x) and math.isfinite(y)):
+            return
         self.ops.append(
             {
                 "t": "text",
@@ -281,6 +289,10 @@ class Fig:
         buf = io.BytesIO()
         img.convert("RGB").save(buf, format="PNG", optimize=True)
         return buf.getvalue()
+
+
+def _finite(pts: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    return [(x, y) for x, y in pts if math.isfinite(x) and math.isfinite(y)]
 
 
 def _esc(s: str) -> str:
