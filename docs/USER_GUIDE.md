@@ -28,7 +28,8 @@ every action is logged with your name and the role you acted in. Pick a project 
 **Rates from monthly volumes.** Give the loader calendar-day rates (monthly volume ÷ days in the
 month) and the reported operating days in a `days_on` column. Do not divide by operating days: a
 month booked against one or two days becomes an enormous rate, and the model reads it as reservoir
-behaviour. `days_on` is used only to tell shut-in months from producing ones.
+behaviour. `days_on` is used only to tell shut-in months from producing ones. Drop the current, incomplete
+month before loading: the optimizer's "hold current" base is the last month's rates.
 
 Data are snapshotted on every load and referenced by content hash, so a result can always be traced
 back to exactly the numbers it was built from.

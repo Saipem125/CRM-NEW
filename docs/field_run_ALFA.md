@@ -65,3 +65,29 @@ on the 41–46 WI cluster).
    rolling re-fit over 30 windows on a 54-well sector. `rolling.max_wells_in_run` (80) is a per-
    sector well count; for long histories the surveillance job is the right place. Lowered to 40.
 5. The tornado guard for a plan without values.
+
+## Re-run on renamed wells (" WI" suffix removed, partial last month dropped)
+
+| run | wells | winner | blind R² | badge |
+|---|---|---|---|---|
+| app defaults (history cut at conversions), latest window 2023-06 → 2026-06 | 11 I / 15 P | CRMT | 0.66 | LOW |
+| 2020 onward, active wells, no conversion breaks | 13 I / 26 P | CRMT (aquifer R² 0.70, CRMP −0.12) | 0.34 | LOW |
+| 4 injectors × 6 producers, 2020 onward | 4 I / 6 P | CRMP (CRMIP R² 0.54 on 5.8 points/param) | 0.60 | LOW |
+
+The suffix is only a label: fits reproduce the earlier runs to the third decimal. Dropping July 2026
+(a partial month: field injection 521 bbl/d against ≈ 2 600) restores realistic hold-current rates
+(274 / 406 / 676 / 439 bbl/d for the group's injectors instead of 49 / 99 / 113 / 135).
+
+Two more app findings from this pass:
+
+- **A field-tank winner produced a "reallocation gain"** (486 % in the 2020-onward run) although a
+  single tank cannot tell injectors apart — the number came from oil-cut nonlinearity on a forecast
+  that already under-predicted the last months. When CRMT wins, the optimizer now returns the
+  hold-current plan with gain 0, no actions and an explicit note (`optimize/run.py`, tested).
+- **Partial last month.** The loader cannot know a month is incomplete; the user guide now says to
+  drop it. A check (last step's field totals far below the trailing mean) is a candidate condition.
+
+The 4 × 6 group is the first configuration with a readable allocation: ALFA-02 → ALFA-33/09,
+ALFA-41 → ALFA-09/27, ALFA-43 → ALFA-08/27/09, ALFA-46 only 36 % accounted for; τ 65–240 d for
+four producers, at the bound for the other two. Still LOW (field R² 0.60, every producer negative
+on its own held-out months) — a screening picture, not a plan.

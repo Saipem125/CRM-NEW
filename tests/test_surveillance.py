@@ -119,3 +119,18 @@ def test_cusum_alert_from_a_real_shift() -> None:
         x.to_dict() for x in s.shifts
     ]
     assert any(c.code.value == "CUSUM_SHIFT" for c in s.conditions)
+
+
+def test_field_tank_winner_recommends_no_reallocation() -> None:
+    """A CRMT winner cannot distinguish injectors: the plan is hold-current, gain 0, no actions (ALFA finding)."""
+    from waterflood_app.optimize.run import optimize_sector
+
+    run = run_engine(
+        _loaded("streak_5x4"), CFG.with_overrides({"rolling": {"mode": "never"}}), PVT(), seed=0, variants=["crmt"]
+    )
+    s = run.latest()[0]
+    assert s.tournament.winner is not None and s.tournament.winner.variant == "crmt"
+    rec = optimize_sector(s, CFG, "oil", "balanced", seed=0)
+    assert rec.result.gain_vs_base_pct == 0.0 and rec.actions == []
+    assert np.allclose(rec.result.plan.x, rec.result.base.x)
+    assert any("no reallocation" in n for n in rec.notes)

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from typing import Any
+
+import numpy as np
 
 from waterflood_app.config import Config
 from waterflood_app.engine import SectorRun
@@ -117,6 +119,24 @@ def optimize_sector(
     res = optimize_plan(
         models, obj, cons, post, cfg, weights=weights, horizon_months=horizon_months, seed=seed, current=current
     )
+    if run.tournament.winner is not None and run.tournament.winner.variant == "crmt":
+        # A field tank cannot tell injectors apart: any split of the same water gives the same forecast
+        # apart from oil-cut nonlinearity, so a "reallocation gain" would be an artefact (first field data).
+        res = replace(
+            res,
+            plan=res.base,
+            value_plan=res.value_base,
+            member_values_plan=res.member_values_base,
+            forecasts_plan=res.forecasts_base,
+            gain_vs_base_pct=0.0,
+            gain_vs_equal_split_pct=0.0,
+            marginal_value=np.zeros_like(res.marginal_value),
+            notes=[
+                *res.notes,
+                "field-tank model (CRMT) won: injectors are indistinguishable, no reallocation is recommended — "
+                "hold current rates; get pressure data or fit a smaller group for a per-injector model",
+            ],
+        )
     wells = [run.grid.well_of_entity.get(e, e) for e in run.grid.injectors]
     wc_now = {
         run.grid.well_of_entity.get(p, p): float(v)
