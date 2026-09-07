@@ -73,15 +73,19 @@ def detect_shifts(rolling: RollingResult, cfg: Config, log: ConditionLog | None 
     for i in rolling.injectors:
         for j in rolling.producers:
             _, f = rolling.f_series(i, j)
-            ref = max(float(f[0]), 0.02)
-            if ref < 0.02 and f.max() < 0.02:
+            # pairs that are essentially unconnected in most windows cannot "shift" (field data: many
+            # zero-allocation pairs whose fitted f flickers around the floor produced a flood of alerts)
+            if float(np.max(f)) < 0.05 or float(np.mean(f > 0.02)) < 0.5:
                 continue
+            ref = max(float(f[0]), 0.02)
             up, dn = cusum(f / ref, spread_f)
             for sign, arr in (("strengthened", up), ("weakened", dn)):
                 hit = arr > mult
-                if hit[-persist:].all():
+                magnitude = float(f[-1] / ref - 1.0)
+                consistent = magnitude >= 0.25 if sign == "strengthened" else magnitude <= -0.25
+                if hit[-persist:].all() and consistent:
                     since = dates[int(np.argmax(hit))]
-                    shifts.append(Shift("f", i, j, sign, since, float(f[-1] / ref - 1.0), LIKELY_CAUSES))
+                    shifts.append(Shift("f", i, j, sign, since, magnitude, LIKELY_CAUSES))
                     if log is not None:
                         log.emit(
                             ConditionCode.CUSUM_SHIFT,
@@ -98,8 +102,10 @@ def detect_shifts(rolling: RollingResult, cfg: Config, log: ConditionLog | None 
         up, dn = cusum(tau / ref, spread_tau)
         for sign, arr in (("slowed", up), ("quickened", dn)):
             hit = arr > mult
-            if hit[-persist:].all():
+            magnitude = float(tau[-1] / ref - 1.0)
+            consistent = magnitude >= 0.25 if sign == "slowed" else magnitude <= -0.25
+            if hit[-persist:].all() and consistent:
                 since = dates[int(np.argmax(hit))]
-                shifts.append(Shift("tau", None, j, sign, since, float(tau[-1] / ref - 1.0), LIKELY_CAUSES))
+                shifts.append(Shift("tau", None, j, sign, since, magnitude, LIKELY_CAUSES))
                 break
     return shifts

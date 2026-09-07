@@ -79,7 +79,12 @@ def sector_figures(s: dict[str, Any], well_types: dict[str, str], units: dict[st
         efficiency=F.injector_efficiency(s, units),
         fits=F.history_match_grid(s, units),
         dt_tau=F.dt_tau(s),
-        tornado=F.tornado(items, float(tor.get("base", 0.0)), unit, "Sensitivity of the gain over hold-current")
+        tornado=F.tornado(
+            [i for i in items if i.get("low") is not None and i.get("high") is not None],
+            float(tor.get("base") or 0.0),
+            unit,
+            "Sensitivity of the gain over hold-current",
+        )
         if items
         else None,
         outcome=F.outcome_range(rec, units.get("volume", "bbl")) if rec else None,

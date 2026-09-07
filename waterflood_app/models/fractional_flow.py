@@ -40,7 +40,10 @@ class PowerLawOilCut:
     r2_log: float = 0.0
 
     def oil_cut(self, cwi: FArray) -> FArray:
-        return 1.0 / (1.0 + self.alpha * np.power(np.maximum(self.offset + cwi, 1e-9), self.beta))
+        with np.errstate(over="ignore", invalid="ignore"):
+            wor = self.alpha * np.power(np.maximum(self.offset + cwi, 1e-9), self.beta)
+        # a runaway fit (α·CWI^β overflowing) means "all water", never NaN in a forecast
+        return np.asarray(1.0 / (1.0 + np.nan_to_num(wor, nan=np.inf, posinf=np.inf)), dtype=np.float64)
 
 
 def cumulative_basis(liq_pred: FArray, support: FArray, dt: FArray, basis: str, offset: float = 0.0) -> FArray:
@@ -57,8 +60,8 @@ def _loglinear(cwi: FArray, fo: FArray, ok: npt.NDArray[np.bool_], offset: float
     coef, *_ = np.linalg.lstsq(A, y, rcond=None)
     pred = A @ coef
     return (
-        float(np.exp(coef[0])),
-        float(coef[1]),
+        float(np.exp(min(float(coef[0]), 700.0))),  # ln α capped: exp overflow on degenerate wells
+        float(np.clip(coef[1], -50.0, 50.0)),
         float(((y - pred) ** 2).sum()),
         float(((y - y.mean()) ** 2).sum()) or 1.0,
     )

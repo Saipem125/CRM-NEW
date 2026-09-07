@@ -614,11 +614,17 @@ def forecast_fan(s: dict[str, Any], units: dict[str, str], width: int = 620, hei
     fig = Fig(width, height, title="Forecast fan")
     fc = s.get("forecast")
     dates = list(s.get("dates") or [])
-    hist = [sum(float(p["oil"][t]) for p in s["producers"]) for t in range(len(dates))] if dates else []
+    hist = [sum(float(p["oil"][t] or 0.0) for p in s["producers"]) for t in range(len(dates))] if dates else []
     if not fc or not hist:
         fig.text(width / 2, height / 2, "No forecast for this sector.", 12, DIM, "middle")
         return fig
-    fp, fb = fc["field_plan"], fc["field_base"]
+
+    def _ser(xs: Any) -> list[float]:  # JSON nulls (NaN forecasts of a broken well) → NaN, drawn as gaps
+        return [float("nan") if v is None else float(v) for v in xs]
+
+    fp = {k: _ser(v) for k, v in fc["field_plan"].items()}
+    fb = {k: _ser(v) for k, v in fc["field_base"].items()}
+    hist = [float("nan") if v is None else float(v) for v in hist]
     # show the last five years of history so the forecast band stays readable
     keep = min(len(hist), max(60, 3 * len(fc["dates"])))
     hist, dates = hist[-keep:], dates[-keep:]
@@ -635,13 +641,15 @@ def forecast_fan(s: dict[str, Any], units: dict[str, str], width: int = 620, hei
         fig.rect(ax.px(b0), ax.y0, ax.px(n_h - 1) - ax.px(b0), ax.h, fill=VIOLET, opacity=0.12)
         fig.text(ax.px(b0) + 3, ax.y0 + 12, "blind test", 8.5, DIM)
     fig.line(ax.px(n_h - 1), ax.y0, ax.px(n_h - 1), ax.y0 + ax.h, DIM, 1, dash="3,3")
-    band = [(ax.px(n_h - 1 + k), ax.py(float(v))) for k, v in enumerate(fp["p90"])] + [
-        (ax.px(n_h - 1 + k), ax.py(float(v))) for k, v in reversed(list(enumerate(fp["p10"])))
+    band = [(ax.px(n_h - 1 + k), ax.py(v)) for k, v in enumerate(fp["p90"]) if math.isfinite(v)] + [
+        (ax.px(n_h - 1 + k), ax.py(v)) for k, v in reversed(list(enumerate(fp["p10"]))) if math.isfinite(v)
     ]
     fig.polygon(band, fill=ACCENT, opacity=0.18)
-    fig.polyline([(ax.px(t), ax.py(v)) for t, v in enumerate(hist)], DIM, 1.5)
-    fig.polyline([(ax.px(n_h - 1 + k), ax.py(float(v))) for k, v in enumerate(fp["p50"])], ACCENT, 2)
-    fig.polyline([(ax.px(n_h - 1 + k), ax.py(float(v))) for k, v in enumerate(fb["p50"])], OIL, 1.5, dash="5,4")
+    fig.polyline([(ax.px(t), ax.py(v)) for t, v in enumerate(hist) if math.isfinite(v)], DIM, 1.5)
+    fig.polyline([(ax.px(n_h - 1 + k), ax.py(v)) for k, v in enumerate(fp["p50"]) if math.isfinite(v)], ACCENT, 2)
+    fig.polyline(
+        [(ax.px(n_h - 1 + k), ax.py(v)) for k, v in enumerate(fb["p50"]) if math.isfinite(v)], OIL, 1.5, dash="5,4"
+    )
     _legend(
         fig,
         ax.x0,
