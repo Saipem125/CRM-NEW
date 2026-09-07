@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "waterflood-optimizer"
-version = "0.5.0"
+version = "0.5.1"
 description = "CRM-based waterflood injection evaluation and optimization (architecture v2.1)"
 requires-python = ">=3.11"
 dependencies = [
@@ -31,7 +31,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.5", "mypy>=1.10", "types-PyYAML"]
-reports = ["weasyprint>=60"]  # PDF without a browser; needs Pango/Cairo (GTK runtime on Windows)
+reports = ["weasyprint>=60"]
+postgres = ["psycopg[binary]>=3.1"]  # PDF without a browser; needs Pango/Cairo (GTK runtime on Windows)
 
 [tool.setuptools.packages.find]
 include = ["waterflood_app*"]
@@ -50,7 +51,6 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "ANN", "RUF"]
 ignore = ["ANN401", "RUF001", "RUF002", "RUF003", "N803", "N806", "N812"]  # N803/N806: J, F, A, X are the physics symbols of the Atlas
 
 [tool.mypy]
-python_version = "3.11"
 strict = true
 ignore_missing_imports = true
 files = ["waterflood_app", "tests"]

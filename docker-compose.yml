@@ -6,9 +6,9 @@
 #
 # Copy .env.example to .env first (admin password, JWT secret, ports).
 #
-# Store: SQLite + Parquet snapshots on the named volume `wfo_store` (the M2/M3 store decision; a PostgreSQL
-# swap is a store-layer change, see docs/DECISIONS.md M5). Jobs run in the API process' thread pool
-# (WFO_JOB_WORKERS); an external queue (RQ/Celery) is a JobRunner backend swap, not part of these profiles.
+# Store: `offline` and `dev` keep SQLite + Parquet snapshots on a named volume; `prod` runs PostgreSQL for the
+# metadata (WFO_DB_URL) with the Parquet snapshots and run artefacts on the shared `wfo_store` volume, and a
+# separate `worker` service claims queued runs from the database (WFO_JOBS_MODE=external on the API).
 
 x-api-env: &api-env
   WFO_STORE: /data/store
@@ -56,18 +56,37 @@ services:
       api-dev: { condition: service_healthy }
 
   # ---------------------------------------------------------------- prod: nginx + api + backup sidecar
+  postgres:
+    profiles: ["prod"]
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wfo
+      POSTGRES_PASSWORD: ${WFO_PG_PASSWORD:?set WFO_PG_PASSWORD in .env}
+      POSTGRES_DB: wfo
+    volumes:
+      - wfo_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wfo -d wfo"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
   api:
     profiles: ["prod"]
     build: { context: ., target: api }
-    image: wfo-api:${WFO_TAG:-0.5.0}
+    image: wfo-api:${WFO_TAG:-0.5.1}
     restart: unless-stopped
     environment:
       <<: *api-env
       WFO_JOBS_SYNC: "0"
+      WFO_JOBS_MODE: external
+      WFO_DB_URL: postgresql://wfo:${WFO_PG_PASSWORD:-}@postgres:5432/wfo
     volumes:
       - wfo_store:/data/store
       - ${WFO_SOURCES:-./data}:/data/sources:ro
     expose: ["8000"]
+    depends_on:
+      postgres: { condition: service_healthy }
     deploy:
       resources:
         limits: { cpus: "${WFO_CORES:-8}", memory: 8g }
@@ -77,10 +96,29 @@ services:
       timeout: 5s
       start_period: 20s
       retries: 3
+  worker:
+    # claims queued runs from PostgreSQL and executes engine + optimizer; scale with `--scale worker=N`
+    profiles: ["prod"]
+    image: wfo-api:${WFO_TAG:-0.5.1}
+    restart: unless-stopped
+    environment:
+      <<: *api-env
+      WFO_JOBS_SYNC: "1"
+      WFO_DB_URL: postgresql://wfo:${WFO_PG_PASSWORD:-}@postgres:5432/wfo
+    command: ["python", "-m", "waterflood_app.api.worker", "--store", "/data/store"]
+    volumes:
+      - wfo_store:/data/store
+      - ${WFO_SOURCES:-./data}:/data/sources:ro
+    deploy:
+      resources:
+        limits: { cpus: "${WFO_CORES:-8}", memory: 8g }
+    depends_on:
+      postgres: { condition: service_healthy }
+      api: { condition: service_healthy }
   ui:
     profiles: ["prod"]
     build: { context: ./ui }
-    image: wfo-ui:${WFO_TAG:-0.5.0}
+    image: wfo-ui:${WFO_TAG:-0.5.1}
     restart: unless-stopped
     ports: ["${WFO_UI_PORT:-8080}:80"]
     depends_on:
@@ -93,9 +131,11 @@ services:
   backup:
     # nightly consistent backup of the store (SQLite online backup + Parquet snapshots), 14 archives kept
     profiles: ["prod"]
-    image: wfo-api:${WFO_TAG:-0.5.0}
+    image: wfo-api:${WFO_TAG:-0.5.1}
     restart: unless-stopped
-    environment: { WFO_STORE: /data/store }
+    environment:
+      WFO_STORE: /data/store
+      WFO_DB_URL: postgresql://wfo:${WFO_PG_PASSWORD:-}@postgres:5432/wfo
     volumes:
       - wfo_store:/data/store:ro
       - ${WFO_BACKUPS:-./backups}:/backups
@@ -108,12 +148,13 @@ services:
         done
     depends_on:
       api: { condition: service_healthy }
+      postgres: { condition: service_healthy }
 
   # ---------------------------------------------------------------- offline: single node, one container
   wfo:
     profiles: ["offline"]
     build: { context: ., target: offline }
-    image: wfo-offline:${WFO_TAG:-0.5.0}
+    image: wfo-offline:${WFO_TAG:-0.5.1}
     restart: unless-stopped
     environment:
       <<: *api-env
@@ -133,5 +174,6 @@ services:
 
 volumes:
   wfo_store:
+  wfo_pg:
   wfo_store_dev:
   ui_node_modules:

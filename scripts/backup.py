@@ -7,7 +7,8 @@ Parquet snapshots under ``snapshots/<data hash>/`` and, optionally, the secrets 
     python scripts/backup.py restore --archive ./backups/wfo_<stamp>.tar.gz --store ./wfo_store_restored
     python scripts/backup.py verify  --archive ./backups/wfo_<stamp>.tar.gz
 
-* The SQLite file is copied with the online backup API (consistent even while the API is running).
+* The SQLite file is copied with the online backup API (consistent even while the API is running);
+  a PostgreSQL store (``WFO_DB_URL`` / ``--db-url``) is dumped with ``pg_dump --format=custom``.
 * Every file is listed in ``manifest.json`` with its SHA-256; ``verify`` re-hashes the archive.
 * Snapshots are immutable, so an incremental scheme is unnecessary: each archive is self-contained
   and ``--retain N`` keeps only the newest N archives.
@@ -21,8 +22,10 @@ import argparse
 import hashlib
 import io
 import json
+import os
 import shutil
 import sqlite3
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -40,9 +43,15 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def backup(store: Path, out: Path, retain: int | None, include_secrets: bool) -> Path:
+def _pg_url(db_url: str | None) -> str | None:
+    url = db_url or os.environ.get("WFO_DB_URL") or ""
+    return url if url.startswith(("postgresql://", "postgres://")) else None
+
+
+def backup(store: Path, out: Path, retain: int | None, include_secrets: bool, db_url: str | None = None) -> Path:
     store = store.resolve()
-    if not (store / "store.sqlite").exists():
+    pg = _pg_url(db_url)
+    if pg is None and not (store / "store.sqlite").exists():
         raise SystemExit(f"no store.sqlite under {store}")
     out.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%S.%fZ")  # sortable, unique within a second
@@ -50,13 +59,20 @@ def backup(store: Path, out: Path, retain: int | None, include_secrets: bool) ->
     with tempfile.TemporaryDirectory(prefix="wfo_backup_") as td:
         stage = Path(td) / "store"
         stage.mkdir()
-        # consistent SQLite copy via the online backup API
-        src = sqlite3.connect(f"file:{store / 'store.sqlite'}?mode=ro", uri=True)
-        dst = sqlite3.connect(stage / "store.sqlite")
-        with dst:
-            src.backup(dst)
-        src.close()
-        dst.close()
+        if pg is not None:
+            # PostgreSQL metadata: custom-format dump (consistent snapshot) next to the Parquet files
+            subprocess.run(
+                ["pg_dump", "--format=custom", "--no-owner", f"--file={stage / 'store.pgdump'}", pg],
+                check=True,
+            )
+        else:
+            # consistent SQLite copy via the online backup API
+            src = sqlite3.connect(f"file:{store / 'store.sqlite'}?mode=ro", uri=True)
+            dst = sqlite3.connect(stage / "store.sqlite")
+            with dst:
+                src.backup(dst)
+            src.close()
+            dst.close()
         snaps = store / "snapshots"
         if snaps.is_dir():
             shutil.copytree(snaps, stage / "snapshots")
@@ -116,7 +132,7 @@ def verify(archive: Path) -> bool:
     return True
 
 
-def restore(archive: Path, store: Path, force: bool) -> None:
+def restore(archive: Path, store: Path, force: bool, db_url: str | None = None) -> None:
     if store.exists() and any(store.iterdir()) and not force:
         raise SystemExit(f"{store} is not empty; pass --force to overwrite")
     if not verify(archive):
@@ -129,6 +145,14 @@ def restore(archive: Path, store: Path, force: bool) -> None:
             m.name = m.name[len("store/") :]
             if m.name:
                 tar.extract(m, store, filter="data")
+    dump = store / "store.pgdump"
+    pg = _pg_url(db_url)
+    if dump.exists():
+        if pg is None:
+            raise SystemExit("archive holds a PostgreSQL dump: pass --db-url (or WFO_DB_URL) of the target database")
+        subprocess.run(["pg_restore", "--clean", "--if-exists", "--no-owner", f"--dbname={pg}", str(dump)], check=True)
+        print(f"restored PostgreSQL metadata from {dump.name} into {pg.split('@')[-1]}")
+        return
     # sanity: the database opens and lists its projects
     n = sqlite3.connect(store / "store.sqlite").execute("SELECT COUNT(*) FROM projects").fetchone()[0]
     print(f"restored to {store}: {n} project(s)")
@@ -142,19 +166,21 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--out", type=Path, default=Path("./backups"))
     b.add_argument("--retain", type=int, default=None, help="keep only the newest N archives")
     b.add_argument("--include-secrets", action="store_true")
+    b.add_argument("--db-url", default=None, help="PostgreSQL URL (default: WFO_DB_URL); omit for SQLite stores")
     v = sub.add_parser("verify")
     v.add_argument("--archive", type=Path, required=True)
     r = sub.add_parser("restore")
     r.add_argument("--archive", type=Path, required=True)
     r.add_argument("--store", type=Path, required=True)
     r.add_argument("--force", action="store_true")
+    r.add_argument("--db-url", default=None, help="PostgreSQL URL to restore the metadata dump into")
     a = ap.parse_args(argv)
     if a.cmd == "backup":
-        backup(a.store, a.out, a.retain, a.include_secrets)
+        backup(a.store, a.out, a.retain, a.include_secrets, a.db_url)
     elif a.cmd == "verify":
         return 0 if verify(a.archive) else 1
     else:
-        restore(a.archive, a.store, a.force)
+        restore(a.archive, a.store, a.force, a.db_url)
     return 0
 
 

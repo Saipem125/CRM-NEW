@@ -1,6 +1,6 @@
 """Development API server: local store, fixed bootstrap admin password, async jobs.
 
-    python scripts/dev_api.py          # http://127.0.0.1:8000  (OpenAPI at /docs)
+python scripts/dev_api.py          # http://127.0.0.1:8000  (OpenAPI at /docs)
 """
 
 from __future__ import annotations

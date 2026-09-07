@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.1] — 2026-09-04 — review follow-up
+
+- Engine: rolling re-fit + CUSUM change alerts inside standard runs (`rolling.mode`, `rolling.max_wells_in_run`); forecast ensemble blended with the latest window (§10).
+- Store: PostgreSQL backend through `store/db.py` (`WFO_DB_URL`), snapshots/artefacts on the shared folder; `pg_dump`/`pg_restore` in `scripts/backup.py`.
+- Jobs: `WFO_JOBS_MODE=external` + `python -m waterflood_app.api.worker`; run artefacts persisted under `artifacts/` and reloaded on demand (scenarios survive restarts).
+- Deployment: `prod` profile = postgres + api + worker + ui + backup; CI runs the store tests against a postgres service; `pip install ".[postgres]"`.
+- Tests: `test_surveillance.py`, `test_store_postgres.py`, `test_worker.py`.
+- CI (first run on GitHub, `Saipem125/CRM-NEW`): compose validation steps get the mandatory passwords; mypy target no longer pinned to 3.11 (numpy stubs use the 3.12 `type` statement).
+
 ## [0.5.0] — 2026-09-04 — Milestone 5: reports, deployment, hardening
 
 - `outputs/`: figures (SVG + PNG scene graph), HTML/PDF/DOCX report (`GET /runs/{id}/report.{pdf,docx,html}`, `GET /recommendations/{id}/report.*`), XLSX / CSV-zip / model-JSON exports, approver-gated writeback of injection targets (`POST /recommendations/{id}/writeback`, `GET …/writebacks`).

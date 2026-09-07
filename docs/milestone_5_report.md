@@ -63,11 +63,21 @@ Round trip backup → verify → restore with two snapshots; secrets excluded/in
 
 `m5_01_result_downloads.png` · `m5_02_workflow_writeback.png` · `m5_03_run_npv_economics.png`
 
+## Review follow-up (same day)
+
+| item | outcome |
+|---|---|
+| rolling re-fit + CUSUM alerts inside standard runs | done — `rolling.mode`, blended forecast ensemble, `tests/test_surveillance.py` (4 tests incl. a real synthetic shift) |
+| PostgreSQL store | done — `store/db.py` shim, verified on PostgreSQL 16 (3 tests: store/registry/audit, full API flow, readiness — passed locally on PostgreSQL 16.4 portable binaries); CI postgres service; `pg_dump` backups |
+| worker service | done — DB-table queue, `python -m waterflood_app.api.worker`, atomic claim, artefacts persisted (`tests/test_worker.py`) |
+| Docker execution | not possible here (no Docker) — CI builds images and validates the compose files |
+
+Load test after the follow-up (rolling re-fit active in every 30-well sector): engine 343 s (rolling windows in all 10 sectors) + optimizer 50 s = 394 s on 8 cores, bound 600 s — pass (`docs/load_test_300_rolling.json`).
+
 ## Not done / open
 
-- Docker profiles were not executed here (no Docker); run `docker compose --profile offline up --build` on a Docker host and report.
-- PostgreSQL store and an RQ/Celery worker backend remain swap points (`ProjectStore.conn`, `JobRunner`); the store is SQLite on a volume in every profile.
-- Rolling re-fit inside standard runs (surveillance wiring) and the change-alert map's live source are still the M4 open items; the report's tornado is economic only for the NPV objective (the oil objective carries the forecast range alone).
+- Docker profiles were not executed here (no Docker); run `docker compose --profile prod up --build` on a Docker host and report.
+- The report's tornado is economic only for the NPV objective (the oil objective carries the forecast range alone).
 - No automated contrast audit of the UI; PNG report figures use host fonts (DejaVu / Arial / Consolas), not the brand fonts.
 
 ## Deliverables checklist (prompt §6)

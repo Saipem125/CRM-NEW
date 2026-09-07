@@ -19,7 +19,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 \
     WFO_STORE=/data/store WFO_HOST=0.0.0.0 WFO_PORT=8000
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libcairo2 libgdk-pixbuf-2.0-0 libffi8 \
-        fonts-dejavu-core curl git \
+        fonts-dejavu-core curl git postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 RUN useradd --create-home --uid 10001 wfo
 WORKDIR /app
@@ -27,7 +27,7 @@ COPY pyproject.toml README.md ./
 COPY waterflood_app ./waterflood_app
 COPY config ./config
 COPY scripts ./scripts
-RUN pip install . weasyprint python-docx jinja2 xlsxwriter \
+RUN pip install ".[postgres]" weasyprint python-docx jinja2 xlsxwriter \
     && python -c "import weasyprint, docx, waterflood_app" \
     && mkdir -p /data/store && chown -R wfo:wfo /data /app
 USER wfo

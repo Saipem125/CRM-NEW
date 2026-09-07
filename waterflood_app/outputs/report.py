@@ -25,7 +25,7 @@ from waterflood_app.config import Config
 from waterflood_app.outputs import figures as F
 
 TEMPLATES = Path(__file__).with_name("templates")
-APP_VERSION = "0.5.0"
+APP_VERSION = "0.5.1"
 
 
 class ReportError(Exception):

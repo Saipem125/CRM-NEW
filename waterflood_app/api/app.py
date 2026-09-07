@@ -23,10 +23,12 @@ from waterflood_app.store.registry import code_version
 from waterflood_app.workflow.states import WorkflowError
 
 
-def create_app(root: Path | str | None = None, cfg: Config | None = None, sync_jobs: bool | None = None) -> FastAPI:
+def create_app(
+    root: Path | str | None = None, cfg: Config | None = None, sync_jobs: bool | None = None, db_url: str | None = None
+) -> FastAPI:
     cfg = cfg or load_config()
     root = Path(root or os.environ.get("WFO_STORE", "./wfo_store"))
-    svc = Service(root, cfg, sync_jobs=sync_jobs)
+    svc = Service(root, cfg, sync_jobs=sync_jobs, db_url=db_url)
     sso_trusted = bool(int(os.environ.get("WFO_SSO_TRUST", "0")))
     sso_header = str(cfg.get("api.sso_header", "X-SSO-User"))
     admin_user = os.environ.get("WFO_ADMIN_USER", str(cfg.get("api.bootstrap_admin_user", "admin")))
@@ -39,7 +41,7 @@ def create_app(root: Path | str | None = None, cfg: Config | None = None, sync_j
 
     app = FastAPI(
         title="Waterflood Optimizer API",
-        version="0.5.0",
+        version="0.5.1",
         description=(
             "CRM-based waterflood evaluation and optimization — architecture v2.1. All technical detail "
             "lives behind /runs/{id} results; the main path is load → map → wells → run → recommendation."

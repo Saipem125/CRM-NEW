@@ -7,7 +7,7 @@ Three Docker Compose profiles (`docker-compose.yml`, settings in `.env` — star
 | profile | what runs | use |
 |---|---|---|
 | `offline` | one container: API + built UI + SQLite store + in-process worker, port 8000 | single node, no internet, field office |
-| `prod` | `ui` (nginx, port 8080, proxies `/api`) · `api` · `backup` sidecar (nightly archive, 14 kept) | on-prem / private cloud |
+| `prod` | `postgres` · `api` (queues runs) · `worker` (runs them, scalable) · `ui` (nginx, port 8080, proxies `/api`) · `backup` sidecar (nightly `pg_dump` + Parquet archive, 14 kept) | on-prem / private cloud |
 | `dev` | API with live reload (source bind-mounted) · Vite dev server (5173) | developers |
 
 ```bash
@@ -86,6 +86,31 @@ python scripts/backup.py restore --archive /backups/wfo_<stamp>.tar.gz --store /
 Secrets are excluded unless `--include-secrets`. The `prod` profile runs the backup nightly in the
 `backup` service; on the `offline` profile schedule it on the host (`docker compose exec wfo python
 scripts/backup.py …`). Raw snapshots are immutable and runs are retained for the asset's life.
+
+## PostgreSQL store and the worker service (prod profile)
+
+`WFO_DB_URL=postgresql://user:password@host:5432/db` moves the metadata (projects, runs,
+recommendations, users, audit, jobs …) to PostgreSQL; Parquet snapshots and run artefacts stay on
+the store folder (`WFO_STORE`), which every API and worker container must share (the `wfo_store`
+volume in the compose file). The schema is created on first start. Install the driver with
+`pip install ".[postgres]"`; the images include it.
+
+`WFO_JOBS_MODE=external` makes the API queue runs only; start one or more workers with
+`python -m waterflood_app.api.worker --store /data/store` (same `WFO_DB_URL`). Scale with
+`docker compose --profile prod up --scale worker=3`. A worker claims the oldest queued job
+atomically, so several workers never run the same job. With a SQLite store keep one worker.
+`/health/ready` reports the queue length in external mode.
+
+Backups of a PostgreSQL store: `python scripts/backup.py backup --store /data/store --out /backups`
+with `WFO_DB_URL` set (or `--db-url`) writes `store.pgdump` (custom format) next to the Parquet
+snapshots; `restore … --db-url postgresql://…` runs `pg_restore --clean` into that database.
+
+## Change alerts in standard runs
+
+Every run re-fits the rolling windows (36 months, step 6 by default) on the winning model and
+raises a plain-language "connection strengthened / weakened since <month>" alert when the CUSUM
+detector confirms a shift; the Details → Change alerts map shows the affected pairs. Sectors above
+`rolling.max_wells_in_run` (80) skip this inside the run (`rolling.mode: always` forces it).
 
 ## Capacity
 

@@ -30,8 +30,10 @@ from waterflood_app.ingest.welltype import (
 from waterflood_app.messaging.conditions import ConditionLog
 from waterflood_app.models.aquifer import static_pressure_on_grid
 from waterflood_app.models.base import FitData
+from waterflood_app.models.change_detect import Shift, detect_shifts
 from waterflood_app.models.crmt import CRMT
 from waterflood_app.models.fractional_flow import PowerLawOilCut, cumulative_basis, fit_power_law
+from waterflood_app.models.rolling import RollingResult, fit_rolling, window_bounds
 from waterflood_app.models.solver import SolverSettings, fit_field
 from waterflood_app.models.tournament import TournamentResult, run_tournament
 from waterflood_app.models.twophase import RelPerm
@@ -60,6 +62,8 @@ class SectorRun:
     oil_cut: dict[str, PowerLawOilCut]
     oil_prediction: np.ndarray | None
     conditions: ConditionLog
+    rolling: RollingResult | None = None  # §10 rolling-window re-fit of the winner (when run)
+    shifts: list[Shift] = field(default_factory=list)  # §10 CUSUM change alerts
 
     @property
     def key(self) -> str:
@@ -277,7 +281,35 @@ def _fit_sector(
         relperm=relperm,
     )
     oil_cut, oil_pred = _fit_oil_cut(sgrid, tres, split.n_train)
-    return SectorRun(wi, sector, sgrid, prof, gates, tres, oil_cut, oil_pred, slog), slog
+    rolling, shifts = _rolling_refit(sgrid, tres, cfg, seed, slog)
+    return SectorRun(wi, sector, sgrid, prof, gates, tres, oil_cut, oil_pred, slog, rolling, shifts), slog
+
+
+def _rolling_refit(
+    grid: Grid, tres: TournamentResult, cfg: Config, seed: int, log: ConditionLog
+) -> tuple[RollingResult | None, list[Shift]]:
+    """§10 inside a standard run: rolling CRMP windows on the winner, CUSUM shifts as conditions.
+
+    ``rolling.mode``: ``always`` | ``auto`` (skip sectors above ``rolling.max_wells_in_run`` wells —
+    large fields run it as a surveillance job) | ``never``. Needs a CRM-family winner and ≥ 2 windows.
+    """
+    r = cfg.section("rolling")
+    mode = str(r.get("mode", "auto"))
+    w = tres.winner
+    if mode == "never" or w is None or w.variant not in ("crmt", "crmp", "crmip"):
+        return None, []
+    if mode == "auto" and grid.n_inj + grid.n_prod > int(r.get("max_wells_in_run", 80)):
+        return None, []
+    if len(window_bounds(grid.n_steps, cfg)) < 2:
+        return None, []
+    try:
+        roll = fit_rolling(
+            grid, cfg, seed=seed, full=w.fit.params, full_blind_r2=w.report.blind_r2_field, variant=w.variant
+        )
+        shifts = detect_shifts(roll, cfg, log)
+    except Exception:  # the rolling fit must never break a run; the full fit stands
+        return None, []
+    return roll, shifts
 
 
 def _quick_sum_f(data: FitData, cfg: Config, seed: int) -> tuple[dict[str, float], dict[str, float]]:

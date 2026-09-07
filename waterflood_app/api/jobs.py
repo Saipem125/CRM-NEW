@@ -38,10 +38,19 @@ class JobHandle:
 
 
 class JobRunner:
-    def __init__(self, store: ProjectStore, workers: int = 2, sync: bool | None = None) -> None:
+    """Modes: ``inline`` (WFO_JOBS_SYNC=1 / sync=True), ``pool`` (thread pool in the API process, default)
+    and ``external`` (WFO_JOBS_MODE=external: the API only queues rows; ``waterflood_app.api.worker``
+    processes claim and run them — the prod profile's worker service)."""
+
+    def __init__(
+        self, store: ProjectStore, workers: int = 2, sync: bool | None = None, mode: str | None = None
+    ) -> None:
         self.store = store
         self.sync = bool(int(os.environ.get("WFO_JOBS_SYNC", "0"))) if sync is None else sync
-        self.pool = None if self.sync else ThreadPoolExecutor(max_workers=workers, thread_name_prefix="wfo-job")
+        self.mode = "inline" if self.sync else str(mode or os.environ.get("WFO_JOBS_MODE", "pool"))
+        self.pool = (
+            ThreadPoolExecutor(max_workers=workers, thread_name_prefix="wfo-job") if self.mode == "pool" else None
+        )
         self._lock = threading.Lock()
         self._results: dict[str, dict[str, Any]] = {}
 
@@ -93,11 +102,40 @@ class JobRunner:
     def submit(self, kind: str, fn: JobFn, payload: dict[str, Any] | None = None) -> str:
         job_id = uuid.uuid4().hex[:12]
         self._insert(job_id, kind, payload or {})
+        if self.mode == "external":
+            return job_id  # a worker process claims it (payload carries everything it needs)
         if self.pool is None:
             self._run(job_id, fn)
         else:
             self.pool.submit(self._run, job_id, fn)
         return job_id
+
+    # ---- external workers ------------------------------------------------------------------
+    def claim_next(self, kinds: tuple[str, ...] = ("run",)) -> dict[str, Any] | None:
+        """Atomically move the oldest queued job of the given kinds to running; None when the queue is empty."""
+        marks = ",".join("?" for _ in kinds)
+        with self._lock, self.store.conn() as c:
+            row = c.execute(
+                f"SELECT id FROM jobs WHERE status='queued' AND kind IN ({marks}) ORDER BY created_at LIMIT 1",
+                tuple(kinds),
+            ).fetchone()
+            if row is None:
+                return None
+            cur = c.execute(
+                "UPDATE jobs SET status='running', message='claimed', updated_at=? WHERE id=? AND status='queued'",
+                (_now(), row[0]),
+            )
+            if getattr(cur, "rowcount", 1) == 0:  # another worker won the race
+                return None
+        return self.get(str(row[0]))
+
+    def run_claimed(self, job_id: str, fn: JobFn) -> None:
+        """Execute a claimed job in this process (used by ``waterflood_app.api.worker``)."""
+        self._run(job_id, fn)
+
+    def queued(self) -> int:
+        with self.store.conn() as c:
+            return int(c.execute("SELECT COUNT(*) FROM jobs WHERE status='queued'").fetchone()[0])
 
     def _run(self, job_id: str, fn: JobFn) -> None:
         self._update(job_id, status="running", message="started")

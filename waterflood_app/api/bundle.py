@@ -218,6 +218,23 @@ def sector_bundle(
         "profile": _f(prof.to_dict()),
         "dt_tau": dt_tau,
         "conditions": s.conditions.to_list(),
+        "rolling": None
+        if s.rolling is None
+        else {
+            "windows": [
+                {
+                    "start": w.start_date.isoformat(),
+                    "end": w.end_date.isoformat(),
+                    "blind_r2": _f(w.blind_r2),
+                    "f_spread": _f(w.f_spread),
+                    "f_ij": _f(w.params.f),
+                    "tau_days": _f(w.params.tau_per_producer()),
+                }
+                for w in s.rolling.windows
+            ],
+            "weights": s.rolling.weights,
+        },
+        "shifts": [x.to_dict() for x in s.shifts],
         "recommendation": display_recommendation(rec.to_dict(), d) if rec is not None else None,
         "forecast": fc,
         "distances": _f(g.distances()) if g.distances() is not None else None,

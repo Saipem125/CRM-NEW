@@ -10,13 +10,15 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sqlite3
+import os
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import polars as pl
+
+from waterflood_app.store.db import Database
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS projects (
@@ -81,18 +83,25 @@ def _now() -> str:
 class ProjectStore:
     root: Path
     db_path: Path
+    db: Database
 
     @classmethod
-    def open(cls, root: Path | str) -> ProjectStore:
+    def open(cls, root: Path | str, db_url: str | None = None) -> ProjectStore:
+        """SQLite under ``root`` (``store.sqlite``) or PostgreSQL when ``db_url`` / ``WFO_DB_URL`` is set.
+
+        Parquet snapshots always live under ``root/snapshots`` — the database holds the metadata.
+        """
         root = Path(root)
         (root / "snapshots").mkdir(parents=True, exist_ok=True)
-        store = cls(root, root / "store.sqlite")
-        with store.conn() as c:
-            c.executescript(SCHEMA)
+        url = db_url or os.environ.get("WFO_DB_URL") or ""
+        db = Database(url if url else root / "store.sqlite", SCHEMA)
+        store = cls(root, root / "store.sqlite", db)
+        db.create_schema()
         return store
 
-    def conn(self) -> sqlite3.Connection:
-        return sqlite3.connect(self.db_path)
+    def conn(self) -> Any:
+        """A DB-API connection usable as ``with store.conn() as c: c.execute(...)`` (commit on exit)."""
+        return self.db.connect()
 
     # ---- projects --------------------------------------------------------------------
     def create_project(self, project_id: str, asset: str, config: dict[str, Any]) -> None:

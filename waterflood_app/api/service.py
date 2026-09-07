@@ -19,6 +19,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+import joblib
 import numpy as np
 import polars as pl
 
@@ -72,9 +73,11 @@ class RunArtifacts:
 
 
 class Service:
-    def __init__(self, root: Path | str, cfg: Config | None = None, sync_jobs: bool | None = None) -> None:
+    def __init__(
+        self, root: Path | str, cfg: Config | None = None, sync_jobs: bool | None = None, db_url: str | None = None
+    ) -> None:
         self.root = Path(root)
-        self.store = ProjectStore.open(self.root)
+        self.store = ProjectStore.open(self.root, db_url=db_url)
         self.base_cfg = cfg or load_config()
         self.users = UserStore(self.store)
         self.tokens = TokenService(self.store, float(self.base_cfg.get("api.jwt_expires_hours", 8)))
@@ -449,7 +452,9 @@ class Service:
         def job(h: JobHandle) -> dict[str, Any]:
             return self._run_job(h, principal, req)
 
-        job_id = self.jobs.submit("run", job, {k: v for k, v in req.items() if k != "economics"})
+        job_id = self.jobs.submit(
+            "run", job, {"request": dict(req), "user": p.user.username, "acting_role": p.acting_role}
+        )
         self.log(
             p,
             "submit_run",
@@ -459,6 +464,18 @@ class Service:
             advanced=bool(req.get("variants") or req.get("threshold_overrides")),
         )
         return job_id
+
+    def run_from_payload(self, h: JobHandle, payload: dict[str, Any]) -> dict[str, Any]:
+        """Entry point for external workers: rebuild the principal from the queued payload and run."""
+        user = self.users.get_by_username(str(payload["user"]))
+        if user is None:
+            raise NotFoundError(f"job user {payload.get('user')!r} not found")
+        return self._run_job(
+            h, Principal(user, str(payload.get("acting_role") or user.roles[0])), dict(payload["request"])
+        )
+
+    def _artifact_path(self, run_id: str) -> Path:
+        return self.root / "artifacts" / f"{run_id}.joblib"
 
     def _run_job(self, h: JobHandle, p: Principal, req: dict[str, Any]) -> dict[str, Any]:
         pid = str(req["project_id"])
@@ -520,10 +537,14 @@ class Service:
                         "confidence": s.tournament.confidence,
                     },
                 )
+        art = RunArtifacts(run, {k: v for k, v in recs.items() if v is not None}, cfg, pid, dict(req))
         with self._lock:
-            self._artifacts[run_id] = RunArtifacts(
-                run, {k: v for k, v in recs.items() if v is not None}, cfg, pid, dict(req)
-            )
+            self._artifacts[run_id] = art
+        try:  # persisted so scenarios survive restarts and external workers (§18 offline / prod)
+            self._artifact_path(run_id).parent.mkdir(parents=True, exist_ok=True)
+            joblib.dump(art, self._artifact_path(run_id), compress=3)
+        except Exception as exc:
+            run.meta["artifact_persist_error"] = f"{type(exc).__name__}: {exc}"
         self.log(p, "run", "run", run_id, run.data_hash, run.config_hash, project_id=pid, confidence=run.confidence)
         self.dispatch_webhook("run.finished", {"run_id": run_id, "project_id": pid, "confidence": run.confidence})
         return {"result_id": run_id, "confidence": run.confidence}
@@ -560,9 +581,21 @@ class Service:
         if art is None:
             if self.registry.get(run_id) is None:
                 raise NotFoundError("run not found")
-            raise ConflictError(
-                "run results are not in memory (service restarted); re-run the project to use scenarios"
-            )
+            path = self._artifact_path(run_id)
+            if path.exists():
+                try:
+                    art = joblib.load(path)
+                    with self._lock:
+                        self._artifacts[run_id] = art
+                except Exception as exc:
+                    raise ConflictError(
+                        f"stored run artefacts could not be loaded ({type(exc).__name__}); re-run the project"
+                    ) from exc
+            else:
+                raise ConflictError(
+                    "run results are not available (older run without stored artefacts); "
+                    "re-run the project to use scenarios"
+                )
         self._project(p, art.project_id)
         return art
 
@@ -750,7 +783,8 @@ class Service:
                 n_jobs = int(c.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0])
             checks["store"] = {
                 "ok": True,
-                "path": str(self.store.db_path),
+                "kind": self.store.db.kind,
+                "path": self.store.db.describe(),
                 "projects": n_projects,
                 "jobs_active": n_jobs,
             }
@@ -774,8 +808,12 @@ class Service:
             ok = ok and free_mb > 200
         except Exception as exc:  # pragma: no cover
             checks["disk"] = {"ok": False, "error": str(exc)}
-        pool_ok = self.jobs.sync or (self.jobs.pool is not None and not getattr(self.jobs.pool, "_shutdown", False))
-        checks["jobs"] = {"ok": bool(pool_ok), "mode": "sync" if self.jobs.sync else "thread-pool"}
+        if self.jobs.mode == "external":
+            pool_ok = True
+            checks["jobs"] = {"ok": True, "mode": "external", "queued": self.jobs.queued()}
+        else:
+            pool_ok = self.jobs.sync or (self.jobs.pool is not None and not getattr(self.jobs.pool, "_shutdown", False))
+            checks["jobs"] = {"ok": bool(pool_ok), "mode": "sync" if self.jobs.sync else "thread-pool"}
         ok = ok and bool(pool_ok)
         checks["pdf_renderer"] = {"ok": True, "renderer": R.pdf_renderer(self.base_cfg)}
         return {

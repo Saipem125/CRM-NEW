@@ -228,7 +228,7 @@ def test_writeback_gate_and_targets(env: dict[str, object]) -> None:
 def test_health_and_readiness(env: dict[str, object]) -> None:
     client: TestClient = env["client"]  # type: ignore[assignment]
     h = client.get("/health").json()
-    assert h["status"] == "ok" and h["version"] == "0.5.0"
+    assert h["status"] == "ok" and h["version"] == "0.5.1"
     r = client.get("/health/ready")
     assert r.status_code == 200, r.text
     body = r.json()

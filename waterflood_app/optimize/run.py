@@ -34,6 +34,22 @@ def forecast_models(run: SectorRun, cfg: Config, max_members: int = 12) -> tuple
         e = run.tournament.winner
         models.append(ForecastModel(e.variant, e.fit.params, run.oil_cut, run.grid, ratio))
         weights.append(1.0)
+    # §10: the forecast uses the latest window blended with the full-history fit by blind score
+    roll = run.rolling
+    if roll is not None and roll.blended is not None and roll.windows and run.tournament.winner is not None:
+        last = roll.windows[-1].params
+        wl = float(roll.weights.get("latest_window", 0.0))
+        wf = float(roll.weights.get("full_history", 1.0))
+        win_variant = run.tournament.winner.variant
+        for m in models:
+            if m.variant != win_variant or m.params.f.shape != last.f.shape:
+                continue
+            p = m.params.copy()
+            p.f = wl * last.f + wf * p.f
+            if p.tau.shape == last.tau.shape:
+                p.tau = wl * last.tau + wf * p.tau
+            p.extra["rolling_blend"] = {"latest_window": wl, "full_history": wf}
+            m.params = p
     return models, weights
 
 

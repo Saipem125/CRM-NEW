@@ -6,12 +6,21 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: wfo, POSTGRES_PASSWORD: wfo, POSTGRES_DB: wfo }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U wfo" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      WFO_TEST_PG_URL: postgresql://wfo:wfo@127.0.0.1:5432/wfo
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install -e ".[dev]"
+      - run: python -m pip install -e ".[dev,postgres]"
       - run: sudo apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libcairo2 && python -m pip install weasyprint
       - run: ruff check .
       - run: mypy
@@ -37,7 +46,8 @@ jobs:
       - run: docker build --target api -t wfo-api:ci .
       - run: docker build --target offline -t wfo-offline:ci .
       - run: docker build -t wfo-ui:ci ui
-      - run: docker compose --profile offline config -q
-      - run: docker compose --profile prod config -q
-      - run: docker compose --profile dev config -q
-        env: { WFO_ADMIN_PASSWORD: ci-pass }
+      - run: |
+          docker compose --profile offline config -q
+          docker compose --profile prod config -q
+          docker compose --profile dev config -q
+        env: { WFO_ADMIN_PASSWORD: ci-pass, WFO_PG_PASSWORD: ci-pg-pass }
