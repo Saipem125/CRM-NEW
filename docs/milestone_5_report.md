@@ -92,3 +92,7 @@ Load test after the follow-up (rolling re-fit active in every 30-well sector): e
 - [~] Docker Compose `dev` / `prod` / `offline` — written and CI-built, not executed on this machine
 - [x] `docs/USER_GUIDE.md` and `docs/ADMIN_GUIDE.md`
 - [x] `docs/DECISIONS.md`
+
+## First field data
+
+See `docs/field_run_ALFA.md` (2026-09-07): four runs on a 48-well field, what broke, what was fixed, and why the result is LOW.

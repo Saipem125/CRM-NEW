@@ -91,7 +91,7 @@ aquifer: # §9 CRMPA (Fetkovich tank) fit
 
 rolling: # §10
   mode: auto # always | auto | never — rolling re-fit + CUSUM alerts inside a standard run
-  max_wells_in_run: 80 # auto: sectors above this run the rolling re-fit as a surveillance job instead
+  max_wells_in_run: 40 # auto: sectors above this run the rolling re-fit as a surveillance job instead (ALFA: 54 wells × 30 windows took an hour)
   window_months: 36
   step_months: 6
   min_window_steps: 24

@@ -25,6 +25,11 @@ every action is logged with your name and the role you acted in. Pick a project 
    timeline. The XY and pressure coverage columns tell you what the model will have to work with.
 4. **Save project config** — the mapping and well list are stored with the project.
 
+**Rates from monthly volumes.** Give the loader calendar-day rates (monthly volume ÷ days in the
+month) and the reported operating days in a `days_on` column. Do not divide by operating days: a
+month booked against one or two days becomes an enormous rate, and the model reads it as reservoir
+behaviour. `days_on` is used only to tell shut-in months from producing ones.
+
 Data are snapshotted on every load and referenced by content hash, so a result can always be traced
 back to exactly the numbers it was built from.
 
