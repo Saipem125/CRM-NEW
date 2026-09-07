@@ -231,7 +231,7 @@ def optimize_plan(
         marg0[k] = (stat(xp) - v0) / h0
     greedy = lo[:ni].copy()
     remaining = total - greedy.sum()
-    for k in np.argsort(-marg0):
+    for k in np.argsort(-marg0).tolist():  # plain ints: `k` is also the range() index above (mypy on 3.12)
         add = min(hi[k] - greedy[k], max(remaining, 0.0))
         greedy[k] += add
         remaining -= add
