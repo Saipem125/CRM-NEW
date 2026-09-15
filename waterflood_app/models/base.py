@@ -19,6 +19,22 @@ from waterflood_app.prep.split import Split
 FArray = npt.NDArray[np.float64]
 
 
+def distance_mask(grid: Grid, cfg: Any) -> npt.NDArray[np.bool_] | None:
+    """Influence radius (``solver.distance_cutoff_factor`` × median nearest injector–producer distance).
+
+    Pairs farther apart are fixed at f_ij = 0 in every fit; every producer keeps its nearest injector.
+    None when the factor is unset or there are no coordinates.
+    """
+    factor = cfg.get("solver.distance_cutoff_factor")
+    d = grid.distances()
+    if not factor or d is None or d.size == 0:
+        return None
+    nearest = np.concatenate([d.min(axis=1), d.min(axis=0)])
+    allowed = d <= float(factor) * float(np.median(nearest))
+    allowed |= d <= d.min(axis=0, keepdims=True)
+    return np.asarray(allowed, dtype=bool)
+
+
 @dataclass
 class FitData:
     """One sector × one window, with its train/blind split and the producing-day weights."""
@@ -26,6 +42,7 @@ class FitData:
     grid: Grid
     split: Split
     weights: FArray | None = None  # (M, Np) — default: producing-day mask
+    allowed: npt.NDArray[np.bool_] | None = None  # (Ni, Np) influence radius: pairs allowed to connect
 
     def __post_init__(self) -> None:
         if self.weights is None:

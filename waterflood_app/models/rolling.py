@@ -18,7 +18,7 @@ import numpy.typing as npt
 
 from waterflood_app.config import Config
 from waterflood_app.messaging.conditions import ConditionLog
-from waterflood_app.models.base import FitData, ModelParams
+from waterflood_app.models.base import FitData, ModelParams, distance_mask
 from waterflood_app.models.crmp import CRMP
 from waterflood_app.models.uq import parameter_spread, select_members
 from waterflood_app.models.verify import verify
@@ -113,7 +113,7 @@ def fit_rolling(
         wgrid = grid.window(a, b)
         split = train_blind_split(wgrid.n_steps, cfg)
         model = CRMP(cfg)
-        res = model.fit(FitData(wgrid, split), seed=seed, n_starts=3)
+        res = model.fit(FitData(wgrid, split, allowed=distance_mask(wgrid, cfg)), seed=seed, n_starts=3)
         rep = verify(
             wgrid, res.prediction, res.params, split, variant, res.n_params, res.sse_train, cfg, ConditionLog()
         )

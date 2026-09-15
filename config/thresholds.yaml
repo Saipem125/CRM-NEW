@@ -50,7 +50,7 @@ solver: # §9 in-house CRM solver
   tau_min_dt_multiple: 1.0 # τ ≥ Δt_min × this
   tau_max_days: 3650
   sparsity_lambda: 0.0 # L1 penalty on f_ij, in units of (rate²) × f
-  distance_cutoff_factor: null # null → no distance mask; else × median I–P distance
+  distance_cutoff_factor: null # influence radius: null → every pair may connect; else pairs farther than this × the median nearest injector–producer distance are fixed at f_ij = 0 in every fit (each producer keeps its nearest injector)
   maxiter: 400
   ftol: 1.0e-10
   joint_refine_if_sum_f_exceeds: 1.0 # per-injector Σ_j f_ij bound

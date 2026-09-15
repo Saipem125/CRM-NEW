@@ -63,6 +63,31 @@ Why it is still LOW, and why the plan is screening only:
 What would change it is unchanged: producer flowing pressure, daily injection and well-test rates, and
 a deliberate rate change on the 34 / 18 / 41 / 02 injectors while ALFA-09, 08, 27, 29, 33 are watched.
 
+## Influence radius (2020 window)
+
+`solver.distance_cutoff_factor` × the median nearest injector–producer distance (303 m on this block),
+every producer keeping its nearest injector:
+
+| factor | cutoff | allowed pairs | winner | blind R² | CRMP R² | Σf < 1 injectors |
+|---|---|---|---|---|---|---|
+| off | – | 91 | CRMP | 0.71 | 0.71 | none |
+| 1.5 | 454 m | 24 | aquifer | 0.78 | 0.65 | ALFA-34 0.0, ALFA-12 0.0, ALFA-41 0.1 |
+| 2.0 | 605 m | 32 | aquifer | 0.79 | 0.68 | ALFA-34 0.0, ALFA-12 0.2, ALFA-41 0.2 |
+| 2.2 | 666 m | 39 | aquifer | 0.74 | 0.71 | ALFA-12 0.2, ALFA-41 0.3, ALFA-46 0.3 |
+| 2.5 | 756 m | 43 | aquifer | 0.74 | 0.72 | same |
+| 3.0 | 908 m | 60 | aquifer | 0.68 | 0.64 | ALFA-41 0.35, ALFA-02 0.4 |
+
+The radius does improve the blind test, but not by sharpening CRMP: CRMP itself gets no better, and the
+gain comes from the aquifer variant, which is free to absorb whatever the masked injectors can no
+longer explain. At 454–605 m the model says ALFA-34's water reaches no producer at all (its only
+in-radius neighbours are shut in) and drops the ALFA-34 → ALFA-09 link (623 m) that every other
+configuration and both CRMP and CRMIP found. The honest reading is that the block's injection is
+under-explained within 600 m — either the water travels farther than the spacing suggests or part of
+it leaves the block — and the mask converts that into aquifer support. A radius of about 700 m (factor
+2.2–2.5) keeps the consistent pairs, removes the > 900 m ones (ALFA-02 → ALFA-01, ALFA-12 → ALFA-48)
+and scores 0.74; that is the setting to carry forward, with the Σf shortfall on ALFA-12, ALFA-41 and
+ALFA-46 as an open question for the field team (out-of-block or out-of-zone injection).
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
@@ -76,7 +101,10 @@ a deliberate rate change on the 34 / 18 / 41 / 02 injectors while ALFA-09, 08, 2
    look-back are held at zero (`optimize.allow_restart_idle_injectors: false`), the per-injector cap
    is 2 × the mean of the injectors in use, and the recommendation names them. Reopening a well is a
    scenario decision.
-3. The rate doubling and the missing operating-days column are data-preparation findings; the loader
+3. **The influence radius was not applied to the fits.** `solver.distance_cutoff_factor` only
+   partitioned sectors; the tournament never received the mask. It is now carried on the fit data into
+   every CRMP / CRMIP / aquifer fit and the rolling windows (tested).
+4. The rate doubling and the missing operating-days column are data-preparation findings; the loader
    convention (calendar-day rates + `days_on`) is unchanged and the rates were corrected before loading.
 
 Tested in `tests/test_surveillance.py` (`test_closed_producer_has_no_forecast_and_idle_injector_is_not_restarted`);

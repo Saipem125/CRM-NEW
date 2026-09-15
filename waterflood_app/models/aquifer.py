@@ -49,6 +49,13 @@ def influx_series(we0: float, k1: float, k2: float, imbalance: FArray, dt: FArra
     return np.maximum(we, 0.0)
 
 
+def _augmented_mask(data: FitData) -> np.ndarray | None:
+    """The influence-radius mask with a row for the aquifer pseudo-injector, which may reach every producer."""
+    if data.allowed is None:
+        return None
+    return np.vstack([data.allowed, np.ones((1, data.allowed.shape[1]), dtype=bool)])
+
+
 def augmented_grid(grid: Grid, we: FArray) -> Grid:
     """The sector grid with the aquifer influx appended as an extra injector column."""
     return replace(
@@ -124,7 +131,9 @@ class CRMPA(CRMModel):
         def sse_of(z: FArray) -> float:
             we0, k1, k2 = np.exp(z)
             we = influx_series(we0, k1, k2, imbalance, grid.dt_days)
-            res = fit_field(FitData(augmented_grid(grid, we), data.split, data.weights), "crmp", inner, seed)
+            res = fit_field(
+                FitData(augmented_grid(grid, we), data.split, data.weights, _augmented_mask(data)), "crmp", inner, seed
+            )
             rows = res.params.sum_f_per_injector[:-1]  # physical injectors only
             a_sum = float(res.params.sum_f_per_injector[-1])  # aquifer allocation Σ_j a_j
             # closure Σ_j a_j = 1 (all influx is produced somewhere) breaks the Ẇ_e × a_j scale degeneracy
@@ -153,7 +162,7 @@ class CRMPA(CRMModel):
         if n_starts is not None:
             final.n_starts = n_starts
         aug = augmented_grid(grid, we)
-        fit = fit_field(FitData(aug, data.split, data.weights), "crmp", final, seed)
+        fit = fit_field(FitData(aug, data.split, data.weights, _augmented_mask(data)), "crmp", final, seed)
         p = fit.params
         alloc = p.f[-1]
         params = ModelParams(

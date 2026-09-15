@@ -29,7 +29,7 @@ from waterflood_app.ingest.welltype import (
 )
 from waterflood_app.messaging.conditions import ConditionLog
 from waterflood_app.models.aquifer import static_pressure_on_grid
-from waterflood_app.models.base import FitData
+from waterflood_app.models.base import FitData, distance_mask
 from waterflood_app.models.change_detect import Shift, detect_shifts
 from waterflood_app.models.crmt import CRMT
 from waterflood_app.models.fractional_flow import PowerLawOilCut, cumulative_basis, fit_power_law
@@ -243,7 +243,7 @@ def _fit_sector(
     """Gates → tournament → oil cut for one (window, sector); runs in a worker process for large fields."""
     slog = ConditionLog()
     split = train_blind_split(sgrid.n_steps, cfg)
-    data = FitData(sgrid, split)
+    data = FitData(sgrid, split, allowed=distance_mask(sgrid, cfg))
     # quick CRMT for the τ estimate (§8 gate) — cheap, 2 starts
     tau_est: float | None = None
     try:

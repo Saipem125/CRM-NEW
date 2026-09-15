@@ -172,6 +172,30 @@ def test_closed_producer_has_no_forecast_and_idle_injector_is_not_restarted() ->
     assert np.any(rec2.result.forecasts_base[0].liq_res[:, jp] > 0.0)
 
 
+def test_influence_radius_masks_far_pairs_in_every_fit() -> None:
+    """solver.distance_cutoff_factor is an influence radius: pairs beyond it are fixed at f_ij = 0 in the
+    tournament fits (CRMP and CRMIP), every producer keeps its nearest injector, the aquifer row is free."""
+    from waterflood_app.models.base import distance_mask
+
+    cfg = CFG.with_overrides({"rolling": {"mode": "never"}, "solver": {"distance_cutoff_factor": 1.2}})
+    loaded = _loaded("streak_5x4")
+    run = run_engine(loaded, cfg, PVT(), seed=0, variants=["crmp", "crmip", "aquifer"])
+    s = run.latest()[0]
+    g = s.grid
+    mask = distance_mask(g, cfg)
+    assert mask is not None and mask.shape == (g.n_inj, g.n_prod)
+    assert 0 < int((~mask).sum()) < mask.size, "the factor must switch off some pairs but not all"
+    assert bool(np.all(mask[np.argmin(g.distances(), axis=0), np.arange(g.n_prod)]))  # nearest injector kept
+    for e in s.tournament.entries:
+        if e.variant in ("crmp", "crmip", "aquifer"):
+            f = np.asarray(e.fit.params.f)[: g.n_inj]
+            assert np.all(f[~mask] == 0.0), e.variant
+            assert np.any(f[mask] > 0.0), e.variant
+    off = run_engine(loaded, CFG.with_overrides({"rolling": {"mode": "never"}}), PVT(), seed=0, variants=["crmp"])
+    f_off = np.asarray(off.latest()[0].tournament.winner.fit.params.f)  # type: ignore[union-attr]
+    assert np.any(f_off[~mask] > 0.0)  # without the radius, far pairs are free to connect
+
+
 def test_field_tank_winner_recommends_no_reallocation() -> None:
     """A CRMT winner cannot distinguish injectors: the plan is hold-current, gain 0, no actions (ALFA finding)."""
     from waterflood_app.optimize.run import optimize_sector

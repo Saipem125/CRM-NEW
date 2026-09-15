@@ -544,6 +544,8 @@ def fit_field(
     t0 = time.perf_counter()
     grid = data.grid
     ni, npd = grid.n_inj, grid.n_prod
+    if allowed is None and data.allowed is not None and data.allowed.shape == (ni, npd):
+        allowed = data.allowed  # influence radius carried on the fit data (solver.distance_cutoff_factor)
     has_j = grid.bhp is not None
     n_train = data.split.n_train
     scales = np.array(
