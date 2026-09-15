@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import numpy as np
 import polars as pl
 import pytest
@@ -194,6 +196,29 @@ def test_influence_radius_masks_far_pairs_in_every_fit() -> None:
     off = run_engine(loaded, CFG.with_overrides({"rolling": {"mode": "never"}}), PVT(), seed=0, variants=["crmp"])
     f_off = np.asarray(off.latest()[0].tournament.winner.fit.params.f)  # type: ignore[union-attr]
     assert np.any(f_off[~mask] > 0.0)  # without the radius, far pairs are free to connect
+
+
+def test_restart_transient_weights() -> None:
+    """solver.restart_transient_months / pre_shutin_months switch the fit weight off around shut-ins."""
+    from waterflood_app.models.base import fit_weights
+
+    cfg = CFG.with_overrides({"rolling": {"mode": "never"}})
+    run = run_engine(_loaded_with_closed_wells("P-1", None, months=6), cfg, PVT(), seed=0, variants=["crmt"])
+    g = run.latest()[0].grid
+    jp = g.producers.index("P-1")
+    w0 = fit_weights(g, cfg)
+    assert np.array_equal(w0, g.prod_mask.astype(float))  # defaults: the mask only
+    w1 = fit_weights(g, cfg.with_overrides({"solver": {"pre_shutin_months": 2, "restart_transient_months": 1}}))
+    off = int(np.flatnonzero(~g.prod_mask[:, jp])[0])  # first shut-in step of P-1
+    assert w1[off - 2 : off, jp].sum() == 0.0 and w1[off - 3, jp] == 1.0
+    others = [j for j in range(g.n_prod) if j != jp]
+    assert np.array_equal(w1[:, others], w0[:, others])
+    # a restart in the middle of the history: the first month back is dropped, the second kept
+    m = g.prod_mask.copy()
+    m[20:24, jp] = False
+    g2 = replace(g, days_on_prod=np.where(m, g.days_on_prod, 0.0))
+    w2 = fit_weights(g2, cfg.with_overrides({"solver": {"restart_transient_months": 1}}))
+    assert w2[24, jp] == 0.0 and w2[25, jp] == 1.0 and w2[19, jp] == 1.0
 
 
 def test_field_tank_winner_recommends_no_reallocation() -> None:

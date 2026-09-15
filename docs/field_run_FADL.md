@@ -88,6 +88,30 @@ it leaves the block — and the mask converts that into aquifer support. A radiu
 and scores 0.74; that is the setting to carry forward, with the Σf shortfall on ALFA-12, ALFA-41 and
 ALFA-46 as an open question for the field team (out-of-block or out-of-zone injection).
 
+## Operational transients (2020 window)
+
+The user's hypothesis: shut-ins and restarts are not represented and drag the match. Split of the
+CRMP training error by month type confirms part of it — the first month back on stream carries a
+median error of 35 % against 11 % for an ordinary month (16 months, 8 % of the fit error). The larger
+finding is in the data: the producer "days in month" column equals the calendar days in all 2 640
+producing months, so shut-ins shorter than a month are invisible and read as rate drops (the injector
+column is a real operating-day count). Two fit-weight settings were added, `solver.restart_transient_months`
+and `solver.pre_shutin_months` (default 0):
+
+| after / before | radius | winner | blind R² | CRMP R² | ALFA-09 blind error | ALFA-33 blind error |
+|---|---|---|---|---|---|---|
+| 0 / 0 | – | CRMP | 0.71 | 0.71 | 28 % | 31 % |
+| 1 / 0 | – | aquifer | 0.75 | 0.65 | 23 % | 28 % |
+| **1 / 1** | – | **CRMP** | **0.78** | **0.78** | **9 %** | 32 % |
+| 2 / 1 | – | CRMP | 0.72 | 0.72 | 27 % | 26 % |
+| 1 / 1 | 756 m | aquifer | 0.72 | 0.69 | – | – |
+
+Dropping one month on each side of every shut-in is the setting to carry: CRMP stays the winner with
+Σf = 1 for every injector, the blind score rises to 0.78 and ALFA-09's held-out error falls from 28 % to
+9 %. The other main producers keep their 25–30 % under-prediction in the held-out year, which contains
+no restart or partial month for any of them — that drift is not an operations artefact. Combining the
+transient weights with the radius loses the gain (the aquifer term takes over again).
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried

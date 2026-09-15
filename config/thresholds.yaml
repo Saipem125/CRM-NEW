@@ -50,6 +50,8 @@ solver: # §9 in-house CRM solver
   tau_min_dt_multiple: 1.0 # τ ≥ Δt_min × this
   tau_max_days: 3650
   sparsity_lambda: 0.0 # L1 penalty on f_ij, in units of (rate²) × f
+  restart_transient_months: 0 # fit weight 0 for the first k flowing months after a producer comes back on stream
+  pre_shutin_months: 0 # fit weight 0 for the last k flowing months before a producer shut-in
   distance_cutoff_factor: null # influence radius: null → every pair may connect; else pairs farther than this × the median nearest injector–producer distance are fixed at f_ij = 0 in every fit (each producer keeps its nearest injector)
   maxiter: 400
   ftol: 1.0e-10

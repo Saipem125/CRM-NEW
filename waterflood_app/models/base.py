@@ -35,6 +35,30 @@ def distance_mask(grid: Grid, cfg: Any) -> npt.NDArray[np.bool_] | None:
     return np.asarray(allowed, dtype=bool)
 
 
+def fit_weights(grid: Grid, cfg: Any) -> FArray:
+    """(M, Np) fit weights: the producing-day mask, with operational transients switched off.
+
+    ``solver.restart_transient_months`` zeroes the first k flowing steps after a producer comes back
+    on stream (flush / build-up the CRM cannot represent); ``solver.pre_shutin_months`` zeroes the
+    last k flowing steps before a shut-in (ramp-down). Both default to 0 (mask only).
+    """
+    w = grid.prod_mask.astype(np.float64)
+    k_after = int(cfg.get("solver.restart_transient_months", 0) or 0)
+    k_before = int(cfg.get("solver.pre_shutin_months", 0) or 0)
+    if k_after <= 0 and k_before <= 0:
+        return w
+    on = grid.prod_mask.astype(int)
+    m = grid.n_steps
+    for j in range(grid.n_prod):
+        col = on[:, j]
+        for i in range(1, m):
+            if col[i] == 1 and col[i - 1] == 0:  # restart at step i
+                w[i : min(m, i + k_after), j] = 0.0
+            if col[i] == 0 and col[i - 1] == 1:  # shut-in at step i
+                w[max(0, i - k_before) : i, j] = 0.0
+    return w
+
+
 @dataclass
 class FitData:
     """One sector × one window, with its train/blind split and the producing-day weights."""
