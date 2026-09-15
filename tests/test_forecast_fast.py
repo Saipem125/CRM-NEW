@@ -26,6 +26,8 @@ def _grid(rng: np.random.Generator, with_bhp: bool, late_start: int = 0) -> Grid
     if late_start:  # P-1 comes on stream after `late_start` months: no production, no producing days before
         liq[:late_start, 1] = 0.0
         days_on[:late_start, 1] = 0.0
+        liq[30:36, 2] = 0.0  # and P-2 is shut in for six months in the middle of the history
+        days_on[30:36, 2] = 0.0
     return Grid(
         dates=dates,
         time_days=np.cumsum(dt) - dt[0],
@@ -85,6 +87,8 @@ def test_fast_continuation_matches_full_resimulation(
         tau = rng.uniform(40, 300, size=npd)
         J = rng.uniform(0.01, 0.05, size=npd) if with_bhp else None
     params = ModelParams(f, tau, J, rng.uniform(0.5, 1.5, size=npd), rng.uniform(100, 800, size=npd))
+    if late_start:  # shut-in redistribution as fitted: closed producers' shares go to the open ones
+        params.extra["shut_in_redistribution"] = True
     model = ForecastModel(variant, params, {}, g, np.ones(npd))
     h = 18
     _, dt = month_steps(g.dates[-1], h)
@@ -102,3 +106,9 @@ def test_fast_continuation_matches_full_resimulation(
         hist = predict_field(g, params, variant)
         assert np.all(hist[:late_start, 1] == 0.0) and np.all(hist[late_start:, 1] > 0.0)
         assert np.all(hist[:, 0] > 0.0)
+        # a shut-in producer is simulated at zero while closed and its share reaches the open producers:
+        # the open wells get more water during the closure than without redistribution
+        assert np.all(hist[30:36, 2] == 0.0) and hist[36, 2] > 0.0
+        plain = ModelParams(f, tau, J, params.gain_p, params.tau_p)
+        hist0 = predict_field(g, plain, variant)
+        assert hist[31:36, [0, 1, 3]].sum() > hist0[31:36, [0, 1, 3]].sum()

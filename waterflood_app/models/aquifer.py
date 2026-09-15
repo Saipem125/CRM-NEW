@@ -171,7 +171,7 @@ class CRMPA(CRMModel):
             J=p.J,
             gain_p=p.gain_p,
             tau_p=p.tau_p,
-            extra={"aquifer_allocation": alloc, "influx": we, "we0": we0, "k1": k1, "k2": k2},
+            extra={**p.extra, "aquifer_allocation": alloc, "influx": we, "we0": we0, "k1": k1, "k2": k2},
         )
         ct_v_r = ct_v_aq = j_aq = None
         resolvable = False

@@ -67,6 +67,7 @@ class ProducerData:
     dist: FArray | None = None  # (Ni,) distances for the distance penalty
     allowed: BArray | None = None  # (Ni,) injectors allowed to connect (distance mask)
     start: int = 0  # grid step of the first producing month: arrays are sliced from here, q̂ = 0 before
+    open: BArray | None = None  # (M,) producing steps; None → always open. Closed: state frozen, q̂ = 0
 
 
 @dataclass
@@ -82,6 +83,11 @@ class SolverSettings:
     joint_sum_bound: float = 1.0
     free_primary: bool = False
     varpro_only: bool = False  # skip the gradient polish (fast inner loops)
+    # A closed producer's share of each injector goes to the open producers and its simulated rate is
+    # zero (state frozen); the allocation is re-fitted with the redistributed injection a few times.
+    shut_in_redistribution: bool = True
+    shut_in_iterations: int = 2
+    shut_in_max_multiplier: float = 3.0  # an open producer takes at most this × its normal share
 
     @classmethod
     def from_config(cls, cfg: Config, dt_min: float) -> SolverSettings:
@@ -96,6 +102,9 @@ class SolverSettings:
             n_jobs=int(s["n_jobs"]),
             joint_sum_bound=float(s["joint_refine_if_sum_f_exceeds"]),
             free_primary=bool(s.get("free_primary", False)),
+            shut_in_redistribution=bool(s.get("shut_in_redistribution", True)),
+            shut_in_iterations=int(s.get("shut_in_iterations", 2)),
+            shut_in_max_multiplier=float(s.get("shut_in_max_multiplier", 3.0)),
         )
 
 
@@ -127,7 +136,13 @@ def crmp_forward(
     c = np.zeros((m, ni))  # ∂x/∂f_i
     dx_dtau = np.zeros(m)
     dx_dJ = np.zeros(m)
+    openm = d.open
     for n in range(1, m):
+        if openm is not None and not openm[n]:  # shut in: the drainage state is frozen
+            x[n] = x[n - 1]
+            if need_grad:
+                c[n], dx_dtau[n], dx_dJ[n] = c[n - 1], dx_dtau[n - 1], dx_dJ[n - 1]
+            continue
         en = e[n]
         src = S[n] + bhp_src[n]
         x[n] = x[n - 1] * en + (1.0 - en) * src
@@ -142,6 +157,8 @@ def crmp_forward(
     decay = np.exp(-d.t / tau_p)
     prim = g_p * d.q0 * decay
     qhat = prim + x
+    if openm is not None:
+        qhat = np.where(openm, qhat, 0.0)
     if not need_grad:
         return qhat, None
     dprim_dtaup = prim * d.t / tau_p**2
@@ -152,15 +169,17 @@ def crmp_forward(
         jac[:, ni] = dx_dtau + dprim_dtaup
         if has_j:
             jac[:, ni + 1] = dx_dJ
-        return qhat, jac
-    k = ni + 3 + (1 if has_j else 0)
-    jac = np.zeros((m, k))
-    jac[:, :ni] = c
-    jac[:, ni] = dx_dtau
-    jac[:, ni + 1] = d.q0 * decay
-    jac[:, ni + 2] = dprim_dtaup
-    if has_j:
-        jac[:, ni + 3] = dx_dJ
+    else:
+        k = ni + 3 + (1 if has_j else 0)
+        jac = np.zeros((m, k))
+        jac[:, :ni] = c
+        jac[:, ni] = dx_dtau
+        jac[:, ni + 1] = d.q0 * decay
+        jac[:, ni + 2] = dprim_dtaup
+        if has_j:
+            jac[:, ni + 3] = dx_dJ
+    if openm is not None:
+        jac[~openm] = 0.0
     return qhat, jac
 
 
@@ -178,7 +197,13 @@ def crmip_forward(theta: FArray, d: ProducerData, need_grad: bool = True) -> tup
     c = np.zeros((m, ni))
     dx_dtau = np.zeros((m, ni))
     dx_dJ = np.zeros((m, ni))
+    openm = d.open
     for n in range(1, m):
+        if openm is not None and not openm[n]:  # shut in: the pair states are frozen
+            x[n] = x[n - 1]
+            if need_grad:
+                c[n], dx_dtau[n], dx_dJ[n] = c[n - 1], dx_dtau[n - 1], dx_dJ[n - 1]
+            continue
         en = e[n]
         src = f * d.inj[n] - J * tau * dp[n]
         x[n] = x[n - 1] * en + (1.0 - en) * src
@@ -191,6 +216,8 @@ def crmip_forward(theta: FArray, d: ProducerData, need_grad: bool = True) -> tup
     decay = np.exp(-d.t / tau_p)
     prim = g_p * d.q0 * decay
     qhat = prim + x.sum(axis=1)
+    if openm is not None:
+        qhat = np.where(openm, qhat, 0.0)
     if not need_grad:
         return qhat, None
     k = 2 * ni + 2 + (ni if has_j else 0)
@@ -201,6 +228,8 @@ def crmip_forward(theta: FArray, d: ProducerData, need_grad: bool = True) -> tup
     jac[:, 2 * ni + 1] = prim * d.t / tau_p**2
     if has_j:
         jac[:, 2 * ni + 2 :] = dx_dJ
+    if openm is not None:
+        jac[~openm] = 0.0
     return qhat, jac
 
 
@@ -403,7 +432,9 @@ def varpro_crmp(d: ProducerData, s: SolverSettings, n_refine: int = 3) -> list[t
 # --------------------------------------------------------------------------------------
 # Per-producer fit
 # --------------------------------------------------------------------------------------
-def fit_producer(d: ProducerData, variant: str, s: SolverSettings, seed: int) -> tuple[list[FArray], list[float]]:
+def fit_producer(
+    d: ProducerData, variant: str, s: SolverSettings, seed: int, extra_starts: list[FArray] | None = None
+) -> tuple[list[FArray], list[float]]:
     """VarPro + multi-start bounded L-BFGS-B fit of one producer. Returns solutions and SSEs (ascending)."""
     ni = d.inj.shape[1]
     has_j = d.dpdt is not None
@@ -417,6 +448,8 @@ def fit_producer(d: ProducerData, variant: str, s: SolverSettings, seed: int) ->
         # no producing training month (well starts in the blind window or never): nothing to fit
         return [lo.copy()], [0.0]
     starts = _starts(d, variant, s, rng)
+    if extra_starts:
+        starts = [np.asarray(x, dtype=np.float64) for x in extra_starts] + starts
     vp = varpro_crmp(d, s)
     if s.varpro_only and variant != "crmip":
         return [np.clip(th, lo, hi) for _, th in vp], [v for v, _ in vp]
@@ -457,9 +490,34 @@ def fit_producer(d: ProducerData, variant: str, s: SolverSettings, seed: int) ->
 # --------------------------------------------------------------------------------------
 # Field-level driver
 # --------------------------------------------------------------------------------------
+def shut_in_redistribution(f: FArray, open_mask: BArray, max_multiplier: float = 3.0) -> FArray:
+    """(M, Ni) multiplier on each injector's rate so that a closed producer's share goes to the open ones.
+
+    g[n, i] = Σ_j f_ij / Σ_{j open at n} f_ij; the effective allocation to an open producer k at step n
+    is f_ik · g[n, i], which keeps the injector's total Σ_j f_ij unchanged while producers are closed.
+    Capped at ``max_multiplier``: an open well can take only so much more than its normal share (its
+    productivity is not in a constant-BHP CRM), the rest is not produced. 1 when none of the
+    injector's producers is open.
+    """
+    f = np.asarray(f, dtype=np.float64)
+    tot = f.sum(axis=1)  # (Ni,)
+    open_sum = np.asarray(open_mask, dtype=np.float64) @ f.T  # (M, Ni)
+    g = np.where(open_sum > 1e-12, tot[None, :] / np.maximum(open_sum, 1e-12), 1.0)
+    return np.asarray(np.minimum(g, max(1.0, float(max_multiplier))), dtype=np.float64)
+
+
 def producer_data(
-    grid: Grid, j: int, n_train: int, weights: FArray, scale: float, allowed: BArray | None = None
+    grid: Grid,
+    j: int,
+    n_train: int,
+    weights: FArray,
+    scale: float,
+    allowed: BArray | None = None,
+    g: FArray | None = None,
+    freeze: bool = False,
 ) -> ProducerData:
+    """Per-producer data; ``g`` is the (M, Ni) shut-in redistribution multiplier, ``freeze`` marks
+    the producer's closed steps so the forward model freezes its state and outputs zero there."""
     dpdt = None
     if grid.bhp is not None:
         dp = np.zeros(grid.n_steps)
@@ -473,8 +531,9 @@ def producer_data(
     # the well's history): the recursion begins there from zero and the primary term decays from the
     # well's initial potential. Before it the prediction is zero.
     start, q0 = producer_start(grid, j)
+    inj = grid.inj[start:] if g is None else grid.inj[start:] * g[start:]
     return ProducerData(
-        inj=grid.inj[start:] / scale,
+        inj=inj / scale,
         q=grid.liq[start:, j] / scale,
         w=weights[start:, j],
         t=grid.time_days[start:] - (grid.time_days[start] if start < grid.n_steps else 0.0),
@@ -485,6 +544,7 @@ def producer_data(
         dist=dist,
         allowed=allowed,
         start=start,
+        open=np.asarray(grid.prod_mask[start:, j], dtype=bool) if freeze else None,
     )
 
 
@@ -544,8 +604,11 @@ def predict_field(grid: Grid, params: ModelParams, variant: str) -> FArray:
     out = np.zeros((grid.n_steps, grid.n_prod))
     has_j = params.J is not None and grid.bhp is not None
     forward = make_forward(variant, tied=False)
+    shut_in = bool(params.extra.get("shut_in_redistribution", False))
+    cap = float(params.extra.get("shut_in_max_multiplier", 3.0))
+    g = shut_in_redistribution(np.asarray(params.f)[: grid.n_inj], grid.prod_mask, cap) if shut_in else None
     for j in range(grid.n_prod):
-        d = producer_data(grid, j, grid.n_steps, np.ones((grid.n_steps, grid.n_prod)), 1.0)
+        d = producer_data(grid, j, grid.n_steps, np.ones((grid.n_steps, grid.n_prod)), 1.0, g=g, freeze=shut_in)
         if not has_j:
             d = replace(d, dpdt=None)
         qhat, _ = forward(_free_theta(params, j, variant, has_j), d, False)
@@ -585,15 +648,8 @@ def fit_field(
             for j in range(npd)
         ]
     )
-    pdata = [
-        producer_data(grid, j, n_train, data.w, scales[j], None if allowed is None else allowed[:, j])
-        for j in range(npd)
-    ]
     seeds = [seed_from_hash(f"{seed}", f"prod{j}") for j in range(npd)]
-    jobs = Parallel(n_jobs=settings.n_jobs if npd > 4 else 1, prefer="processes")(
-        delayed(fit_producer)(pdata[j], variant, settings, seeds[j]) for j in range(npd)
-    )
-    best_theta = [sols[0] for sols, _ in jobs]
+    shut_in = bool(settings.shut_in_redistribution)
 
     def assemble(thetas: list[FArray]) -> ModelParams:
         f = np.zeros((ni, npd))
@@ -613,9 +669,40 @@ def fit_field(
                 if J is not None and Jj is not None:
                     J[j] = Jj[0]
             g[j], tp[j] = gj, tpj
-        return ModelParams(f=f, tau=tau, J=J, gain_p=g, tau_p=tp)
+        return ModelParams(
+            f=f,
+            tau=tau,
+            J=J,
+            gain_p=g,
+            tau_p=tp,
+            extra={"shut_in_redistribution": shut_in, "shut_in_max_multiplier": settings.shut_in_max_multiplier},
+        )
 
-    params = assemble(best_theta)
+    # Shut-in redistribution couples the producers through g (it depends on every producer's f), so the
+    # per-producer fits are repeated with the multiplier from the previous round (warm-started).
+    gmul: FArray | None = None
+    warm: list[FArray] | None = None
+    for _round in range(max(1, settings.shut_in_iterations) if shut_in else 1):
+        pdata = [
+            producer_data(
+                grid, j, n_train, data.w, scales[j], None if allowed is None else allowed[:, j], g=gmul, freeze=shut_in
+            )
+            for j in range(npd)
+        ]
+        jobs = Parallel(n_jobs=settings.n_jobs if npd > 4 else 1, prefer="processes")(
+            delayed(fit_producer)(pdata[j], variant, settings, seeds[j], None if warm is None else [warm[j]])
+            for j in range(npd)
+        )
+        best_theta = [sols[0] for sols, _ in jobs]
+        params = assemble(best_theta)
+        if not shut_in:
+            break
+        g_new = shut_in_redistribution(params.f, grid.prod_mask, settings.shut_in_max_multiplier)
+        warm = best_theta
+        converged = gmul is not None and float(np.abs(g_new - gmul).max()) < 1e-3
+        gmul = g_new
+        if converged:
+            break
     notes: list[str] = []
     if (params.sum_f_per_injector > settings.joint_sum_bound + 1e-9).any():
         params = _joint_refine(pdata, best_theta, variant, settings, ni, npd, assemble)

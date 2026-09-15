@@ -156,6 +156,31 @@ ALFA-09 1.27 and ALFA-39 1.06 (support beyond injection), ALFA-01 0.6. **Recomme
 for this block:** `solver.restart_transient_months: 1`, `solver.pre_shutin_months: 1`,
 `solver.distance_cutoff_factor: 2.5`. The 666 m radius gives the same result.
 
+## Shut-in redistribution (user's proposal)
+
+"If the simulated rate switches to zero when the well is at zero, the offset injector's water is
+distributed over the other wells." Implemented as a model change (`solver.shut_in_redistribution`,
+see DECISIONS): closed producers at zero with frozen state, their share of each injector to that
+injector's open producers, capped at 3 × a well's normal share, allocation re-fitted with the
+redistributed injection. Same window and settings as above (well start, transients 1 / 1, 756 m):
+
+| model | train R² | blind R² | ALFA-08 | ALFA-09 | ALFA-27 | ALFA-33 | ALFA-28 | ALFA-29 |
+|---|---|---|---|---|---|---|---|---|
+| before (aquifer) | 0.93 | 0.76 | 25 % | 23 % | 18 % | 28 % | 51 % | 32 % |
+| uncapped, CRMP | 0.90 | 0.79 | 2 % | 7 % | 25 % | 30 % | 800 % | 19 % |
+| **capped × 3, CRMP** | 0.91 | **0.84** | 3 % | 6 % | 25 % | 30 % | 67 % | 22 % |
+| capped, CRMIP | 0.92 | 0.81 | 7 % | 9 % | 23 % | 33 % | 41 % | 28 % |
+| capped, aquifer | 0.93 | 0.55 | 11 % | 18 % | 25 % | 3 % | 96 % | 111 % |
+
+The 2024 rise of ALFA-08 and ALFA-09 that every earlier configuration missed is the water freed by
+ALFA-01, ALFA-04 and ALFA-33 closing; with it accounted for, CRMP reaches 0.84 — one point below the
+MEDIUM threshold — and CRMIP 0.81 with the same map (10 of CRMP's 12 strong pairs, mean difference
+0.035): ALFA-46 → ALFA-01, ALFA-34 → ALFA-09, ALFA-18 → ALFA-08, ALFA-41 / ALFA-45 → ALFA-29,
+ALFA-02 → ALFA-09 / ALFA-39. CRMIP's one disagreement is ALFA-12 → ALFA-33 (0.93 against 0.25), the
+injector whose water CRMP cannot place (Σf 0.5). ALFA-33 itself is still 23–30 % under in its 2024
+comeback, ALFA-28 and ALFA-48 remain the erratic small wells. The aquifer variant no longer helps:
+once the shut-ins are handled the constant-influx term has nothing left to explain.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried

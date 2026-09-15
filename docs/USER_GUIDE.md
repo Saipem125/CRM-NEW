@@ -31,6 +31,13 @@ month booked against one or two days becomes an enormous rate, and the model rea
 behaviour. `days_on` is used only to tell shut-in months from producing ones. Drop the current, incomplete
 month before loading: the optimizer's "hold current" base is the last month's rates.
 
+**Shut-ins inside the history.** A producer's simulated rate is zero in the months it is closed, and
+its share of each injector's water goes to that injector's open producers (up to three times their
+normal share) while it is closed. Months right around a shut-in can be left out of the fit with
+`solver.restart_transient_months` and `solver.pre_shutin_months` (one each is a good start on
+monthly data); `solver.distance_cutoff_factor` limits which injector–producer pairs may connect
+(2.5 × the median nearest-neighbour distance is a good start).
+
 **Wells closed at the end of history.** A producer with no producing day in the last three months is
 treated as closed: it gets no forecast liquid and no share of the expected oil. An injector with no
 injection in the last three months is held at zero by the plan; the recommendation lists both. To

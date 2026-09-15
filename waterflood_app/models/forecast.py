@@ -17,7 +17,7 @@ import numpy.typing as npt
 
 from waterflood_app.models.base import ModelParams
 from waterflood_app.models.fractional_flow import PowerLawOilCut, cumulative_basis
-from waterflood_app.models.solver import predict_field, producer_start
+from waterflood_app.models.solver import predict_field, producer_start, shut_in_redistribution
 from waterflood_app.prep.grid import Grid
 
 FArray = npt.NDArray[np.float64]
@@ -125,23 +125,35 @@ class ForecastModel:
         start = np.array([s for s, _ in sq])
         q0 = np.array([q for _, q in sq])
         t0 = np.array([float(g.time_days[s]) if s < m else float(g.time_days[-1]) for s in start])
+        # shut-in redistribution (as fitted): closed producers' shares go to the open ones, their state
+        # is frozen while closed (predict_field does the same through producer_data)
+        shut_in = bool(p.extra.get("shut_in_redistribution", False))
+        cap = float(p.extra.get("shut_in_max_multiplier", 3.0))
+        mask = g.prod_mask
+        inj_eff = g.inj * shut_in_redistribution(np.asarray(p.f), mask, cap) if shut_in else g.inj
         if self.variant == "crmip":
             tau = np.asarray(p.tau, dtype=np.float64)  # (Ni, Np)
             J = np.asarray(p.J, dtype=np.float64) if self._uses_j() else np.zeros_like(tau)
             e = np.exp(-g.dt_days[:, None, None] / tau[None, :, :])  # (M, Ni, Np)
             x = np.zeros_like(tau)
             for n in range(1, m):
-                src = p.f * g.inj[n][:, None] - J * tau * dpdt[n][None, :]
-                x = np.where((n > start)[None, :], x * e[n] + (1.0 - e[n]) * src, 0.0)
+                src = p.f * inj_eff[n][:, None] - J * tau * dpdt[n][None, :]
+                x_new = x * e[n] + (1.0 - e[n]) * src
+                if shut_in:
+                    x_new = np.where(mask[n][None, :], x_new, x)
+                x = np.where((n > start)[None, :], x_new, 0.0)
         else:
             tau = np.asarray(p.tau, dtype=np.float64).reshape(-1)  # (Np,)
             J = np.asarray(p.J, dtype=np.float64).reshape(-1) if self._uses_j() else np.zeros(g.n_prod)
             e = np.exp(-g.dt_days[:, None] / tau[None, :])  # (M, Np)
-            S = g.inj @ p.f + (-J * tau)[None, :] * dpdt
+            S = inj_eff @ p.f + (-J * tau)[None, :] * dpdt
             x = np.zeros(g.n_prod)
             for n in range(1, m):
-                x = np.where(n > start, x * e[n] + (1.0 - e[n]) * S[n], 0.0)
-        self._state = {"x": x, "tau": tau, "J": J, "q0": q0, "t0": t0}
+                x_new = x * e[n] + (1.0 - e[n]) * S[n]
+                if shut_in:
+                    x_new = np.where(mask[n], x_new, x)
+                x = np.where(n > start, x_new, 0.0)
+        self._state = {"x": x, "tau": tau, "J": J, "q0": q0, "t0": t0, "shut_in": shut_in, "cap": cap}
         return self._state
 
     def _continue(self, inj_plan: FArray, dt_days: FArray, bhp_future: FArray | None) -> FArray:
@@ -156,19 +168,25 @@ class ForecastModel:
             dpdt = np.diff(np.vstack([g.bhp[-1][None, :], bhp_future]), axis=0) / dt_days[:, None]
         tau, J = st["tau"], st["J"]
         out = np.zeros((h, g.n_prod))
+        # over the horizon the producers closed at the end of history stay closed: their share goes to
+        # the open ones (same rule as the fit) and their state stays frozen
+        open_f = np.ones((h, g.n_prod), dtype=bool)
+        if self.active is not None and len(self.active) == g.n_prod:
+            open_f[:] = np.asarray(self.active, dtype=bool)[None, :]
+        inj_eff = inj_plan * shut_in_redistribution(np.asarray(p.f), open_f, st["cap"]) if st["shut_in"] else inj_plan
         if self.variant == "crmip":
             x = st["x"].copy()
             e = np.exp(-dt_days[:, None, None] / tau[None, :, :])
             for n in range(h):
-                src = p.f * inj_plan[n][:, None] - J * tau * dpdt[n][None, :]
-                x = x * e[n] + (1.0 - e[n]) * src
+                src = p.f * inj_eff[n][:, None] - J * tau * dpdt[n][None, :]
+                x = np.where(open_f[n][None, :], x * e[n] + (1.0 - e[n]) * src, x)
                 out[n] = x.sum(axis=0)
         else:
             x = st["x"].copy()
             e = np.exp(-dt_days[:, None] / tau[None, :])
-            S = inj_plan @ p.f + (-J * tau)[None, :] * dpdt
+            S = inj_eff @ p.f + (-J * tau)[None, :] * dpdt
             for n in range(h):
-                x = x * e[n] + (1.0 - e[n]) * S[n]
+                x = np.where(open_f[n], x * e[n] + (1.0 - e[n]) * S[n], x)
                 out[n] = x
         t_rel = t_future[:, None] - st["t0"][None, :]
         prim = p.gain_p[None, :] * st["q0"][None, :] * np.exp(-t_rel / p.tau_p[None, :])
