@@ -10,7 +10,7 @@ import numpy as np
 
 from waterflood_app.config import Config
 from waterflood_app.engine import SectorRun
-from waterflood_app.models.forecast import ForecastModel, fan, surface_ratio
+from waterflood_app.models.forecast import ForecastModel, active_producers, fan, surface_ratio
 from waterflood_app.models.uq import select_members
 from waterflood_app.optimize.action_list import ActionItem, build_action_list
 from waterflood_app.optimize.constraints import PlanConstraints
@@ -36,6 +36,11 @@ def forecast_models(run: SectorRun, cfg: Config, max_members: int = 12) -> tuple
         e = run.tournament.winner
         models.append(ForecastModel(e.variant, e.fit.params, run.oil_cut, run.grid, ratio))
         weights.append(1.0)
+    if not bool(cfg.get("optimize.forecast_shut_in_producers", False)):
+        # producers closed at the end of history do not flow in the forecast (first field data)
+        act = active_producers(run.grid, int(cfg.get("optimize.idle_lookback_months", 3)))
+        for m in models:
+            m.active = act
     # §10: the forecast uses the latest window blended with the full-history fit by blind score
     roll = run.rolling
     if roll is not None and roll.blended is not None and roll.windows and run.tournament.winner is not None:
@@ -115,10 +120,22 @@ def optimize_sector(
     econ = economics or Economics.from_config(cfg)
     obj = objective if isinstance(objective, Objective) else make_objective(objective, econ, target_oil)
     current = models[0].current_injection(int(cfg.get("optimize.current_months", 1)))
-    cons = constraints or PlanConstraints.from_config(current, cfg)
+    cons = constraints or PlanConstraints.for_grid(run.grid, current, cfg)
     res = optimize_plan(
         models, obj, cons, post, cfg, weights=weights, horizon_months=horizon_months, seed=seed, current=current
     )
+    if cons.notes:
+        res = replace(res, notes=[*res.notes, *cons.notes])
+    if models[0].active is not None and not np.all(models[0].active):
+        closed = [w for w, a in zip(run.grid.producers, models[0].active, strict=True) if not a]
+        res = replace(
+            res,
+            notes=[
+                *res.notes,
+                "closed at end of history, no forecast liquid (optimize.forecast_shut_in_producers): "
+                + ", ".join(run.grid.well_of_entity.get(w, w) for w in closed),
+            ],
+        )
     if run.tournament.winner is not None and run.tournament.winner.variant == "crmt":
         # A field tank cannot tell injectors apart: any split of the same water gives the same forecast
         # apart from oil-cut nonlinearity, so a "reallocation gain" would be an artefact (first field data).

@@ -31,6 +31,12 @@ month booked against one or two days becomes an enormous rate, and the model rea
 behaviour. `days_on` is used only to tell shut-in months from producing ones. Drop the current, incomplete
 month before loading: the optimizer's "hold current" base is the last month's rates.
 
+**Wells closed at the end of history.** A producer with no producing day in the last three months is
+treated as closed: it gets no forecast liquid and no share of the expected oil. An injector with no
+injection in the last three months is held at zero by the plan; the recommendation lists both. To
+evaluate reopening a well use a scenario, or set `optimize.forecast_shut_in_producers` /
+`optimize.allow_restart_idle_injectors` in the project thresholds.
+
 Data are snapshotted on every load and referenced by content hash, so a result can always be traced
 back to exactly the numbers it was built from.
 

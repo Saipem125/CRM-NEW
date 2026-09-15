@@ -121,6 +121,57 @@ def test_cusum_alert_from_a_real_shift() -> None:
     assert any(c.code.value == "CUSUM_SHIFT" for c in s.conditions)
 
 
+def _loaded_with_closed_wells(producer: str | None, injector: str | None, months: int = 6) -> LoadedData:
+    """streak_5x4 with a producer and/or an injector shut in (rate 0, days_on 0) over the last ``months``."""
+    case = suite.load_case("streak_5x4")
+    rates = case.rates.rename({"well_id": "well"})
+    cut = sorted(rates["date"].unique().to_list())[-months]
+    closed = [w for w in (producer, injector) if w]
+    late = pl.col("well").is_in(closed) & (pl.col("date") >= cut)
+    rates = rates.with_columns(
+        [pl.when(late).then(0.0).otherwise(pl.col(c)).alias(c) for c in ("q_oil", "q_water", "q_inj", "days_on")]
+    )
+    return LoadedData(
+        rates=rates.with_columns(pl.lit(None, dtype=pl.Float64).alias("q_gas")),
+        coords=case.coords.rename({"well_id": "well"}),
+        category=case.category.rename({"well_id": "well"}),
+        events=None,
+        pressure=None,
+    )
+
+
+def test_closed_producer_has_no_forecast_and_idle_injector_is_not_restarted() -> None:
+    """Wells closed at the end of history (first field data): a shut-in producer contributes no forecast
+    oil, an idle injector is held at zero by the plan instead of being "restarted" as a set-point change."""
+    from waterflood_app.models.forecast import active_producers, idle_injectors
+    from waterflood_app.optimize.constraints import PlanConstraints
+    from waterflood_app.optimize.run import optimize_sector
+
+    cfg = CFG.with_overrides({"rolling": {"mode": "never"}})
+    run = run_engine(_loaded_with_closed_wells("P-1", "I-1"), cfg, PVT(), seed=0, variants=["crmp"])
+    s = run.latest()[0]
+    g = s.grid
+    jp, ii = g.producers.index("P-1"), g.injectors.index("I-1")
+    assert active_producers(g)[jp] == 0.0 and active_producers(g).sum() == g.n_prod - 1
+    assert idle_injectors(g)[ii] and idle_injectors(g).sum() == 1
+    rec = optimize_sector(s, cfg, "oil", "balanced", seed=0)
+    res = rec.result
+    for f in res.forecasts_base + res.forecasts_plan:
+        assert np.all(f.oil[:, jp] == 0.0) and np.all(f.liq_res[:, jp] == 0.0)
+        assert np.any(f.oil[:, [j for j in range(g.n_prod) if j != jp]] > 0.0)
+    assert np.all(res.base.x[..., ii] == 0.0) and np.all(res.plan.x[..., ii] == 0.0)
+    assert all(a.well != "I-1" for a in rec.actions)
+    assert any("idle at end of history" in n and "I-1" in n for n in res.notes)
+    assert any("closed at end of history" in n and "P-1" in n for n in res.notes)
+    # the switches restore the previous behaviour
+    allow = cfg.with_overrides({"optimize": {"allow_restart_idle_injectors": True}})
+    cons = PlanConstraints.for_grid(g, res.base.x, allow)
+    assert cons.inj_max[ii] > 0.0 and not cons.notes
+    flow = cfg.with_overrides({"optimize": {"forecast_shut_in_producers": True}})
+    rec2 = optimize_sector(s, flow, "oil", "balanced", seed=0)
+    assert np.any(rec2.result.forecasts_base[0].liq_res[:, jp] > 0.0)
+
+
 def test_field_tank_winner_recommends_no_reallocation() -> None:
     """A CRMT winner cannot distinguish injectors: the plan is hold-current, gain 0, no actions (ALFA finding)."""
     from waterflood_app.optimize.run import optimize_sector

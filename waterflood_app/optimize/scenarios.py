@@ -128,7 +128,7 @@ class ScenarioManager:
 
     def reallocation(self, constraints: PlanConstraints | None = None) -> Scenario:
         self.base()
-        cons = constraints or PlanConstraints.from_config(self.current, self.cfg)
+        cons = constraints or PlanConstraints.for_grid(self.models[0].grid, self.current, self.cfg)
         res = optimize_plan(
             self.models,
             self.objective,
@@ -155,7 +155,7 @@ class ScenarioManager:
         out: list[Scenario] = []
         total = float(self.current.sum())
         for fr in fractions:
-            cons = PlanConstraints.from_config(self.current, self.cfg, total_water=total * fr)
+            cons = PlanConstraints.for_grid(self.models[0].grid, self.current, self.cfg, total_water=total * fr)
             res = optimize_plan(
                 self.models,
                 self.objective,
@@ -221,7 +221,7 @@ class ScenarioManager:
                 xy_inj=np.vstack([g.xy_inj, np.asarray(xy)[None, :]]),
                 raw={},
             )
-            models.append(ForecastModel(m.variant, p, m.oilcut, g2, m.surface_ratio, label=m.label))
+            models.append(ForecastModel(m.variant, p, m.oilcut, g2, m.surface_ratio, label=m.label, active=m.active))
         x = np.concatenate([self.current, [rate]])
         v, fd = self._evaluate(models, x)
         return self._record(
@@ -261,7 +261,17 @@ class ScenarioManager:
                 raw={},
             )
             oc = {k: v for k, v in m.oilcut.items() if k != producer}
-            models.append(ForecastModel(m.variant, p, oc, g2, m.surface_ratio[keep], label=m.label))
+            models.append(
+                ForecastModel(
+                    m.variant,
+                    p,
+                    oc,
+                    g2,
+                    m.surface_ratio[keep],
+                    label=m.label,
+                    active=None if m.active is None else m.active[keep],
+                )
+            )
         x = np.concatenate([self.current, [rate]])
         v, fd = self._evaluate(models, x)
         return self._record(

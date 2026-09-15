@@ -21,6 +21,7 @@ from waterflood_app.models.solver import predict_field
 from waterflood_app.prep.grid import Grid
 
 FArray = npt.NDArray[np.float64]
+BArray = npt.NDArray[np.bool_]
 
 
 @dataclass
@@ -79,6 +80,10 @@ class ForecastModel:
     grid: Grid  # history (sector grid)
     surface_ratio: FArray  # (Np,) surface liquid / reservoir liquid
     label: str = "p50"
+    # (Np,) producers that are open at the end of history; None → every producer flows in the forecast.
+    # A producer shut in over the last months of history has no forecast liquid (first field data: a
+    # quarter of the "hold current" oil came from wells that had been closed for years).
+    active: FArray | None = None
     _state: dict[str, Any] | None = field(default=None, init=False, repr=False, compare=False)
 
     @property
@@ -194,6 +199,8 @@ class ForecastModel:
     def _finish(self, inj_plan: FArray, dt_days: FArray, liq: FArray) -> Forecast:
         g = self.grid
         h = inj_plan.shape[0]
+        if self.active is not None and len(self.active) == g.n_prod:
+            liq = liq * np.asarray(self.active, dtype=np.float64)[None, :]
         support = inj_plan @ self.params.f
         cwi0 = self.historical_cwi_end()
         cwi = np.zeros((h, g.n_prod))
@@ -206,6 +213,19 @@ class ForecastModel:
             oil[:, j] = liq[:, j] * self.surface_ratio[j] * fo
         water = liq * self.surface_ratio[None, :] - oil
         return Forecast(dt_days, inj_plan, liq, oil, np.maximum(water, 0.0), cwi, list(g.injectors), list(g.producers))
+
+
+def active_producers(grid: Grid, lookback_steps: int = 3) -> FArray:
+    """(Np,) 1.0 for producers with at least one producing day in the last ``lookback_steps`` steps."""
+    k = max(1, min(int(lookback_steps), grid.n_steps))
+    return np.asarray((grid.days_on_prod[-k:] > 0).any(axis=0), dtype=np.float64)
+
+
+def idle_injectors(grid: Grid, lookback_steps: int = 3) -> BArray:
+    """(Ni,) True for injectors with no injection over the last ``lookback_steps`` steps."""
+    k = max(1, min(int(lookback_steps), grid.n_steps))
+    on = (grid.days_on_inj[-k:] > 0) & (grid.inj[-k:] > 0)
+    return np.asarray(~on.any(axis=0), dtype=bool)
 
 
 def surface_ratio(grid: Grid) -> FArray:
