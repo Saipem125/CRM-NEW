@@ -492,9 +492,9 @@ def producer_start(grid: Grid, j: int, potential_months: int = 3) -> tuple[int, 
     """(first producing step, initial potential q(0)) of producer ``j``.
 
     A well on stream from the window's first step keeps q(0) = q[0]. A late starter's first month is
-    usually partial, so its q(0) is the largest rate of its first ``potential_months`` producing
-    months — the initial potential the primary term decays from. Deterministic from the grid alone,
-    so the fit, ``predict_field`` and the forecast continuation agree.
+    usually partial and the next one often a flush, so its q(0) is the median rate of its first
+    ``potential_months`` producing months — the initial potential the primary term decays from.
+    Deterministic from the grid alone, so the fit, ``predict_field`` and the forecast continuation agree.
     """
     on = grid.prod_mask[:, j]
     if not on.any():
@@ -502,7 +502,7 @@ def producer_start(grid: Grid, j: int, potential_months: int = 3) -> tuple[int, 
     start = int(np.argmax(on))
     if start == 0:
         return 0, float(grid.liq[0, j])
-    return start, float(np.max(grid.liq[start : start + potential_months, j]))
+    return start, float(np.median(grid.liq[start : start + potential_months, j]))
 
 
 def _unpack(

@@ -131,6 +131,20 @@ Field score within noise of the previous rule; ALFA-08's held-out error falls fr
 ALFA-09's rises from 9 % to 22 % (its 2021 opening at plateau rate was previously "explained" by
 thirteen months of support accumulated before the well existed). The well-start rule is the physical
 one and is now the only behaviour; the aquifer variant (0.74) and CRMIP (0.71) sit just behind CRMP.
+(The initial potential is the median of the first three producing months: the maximum picked up the
+restart flush, e.g. ALFA-09's 950 bbl/d second month against a 750–800 plateau.)
+
+**The pair map is not identifiable on monthly data.** At the same blind score the two start rules
+give different allocations: window start puts ALFA-34 → ALFA-09 (0.65) and ALFA-18 → ALFA-08 (0.72)
+on top; well start sends ALFA-34 → ALFA-01 (0.71, 1 233 m) and ALFA-18 → ALFA-33 (0.73), drops
+ALFA-09's total allocation from 1.4 to 0.4 and gives ALFA-01 (shut in since late 2024) 1.9. The
+mechanism is the tied primary term: a late starter now decays from its initial potential with the
+same τ as its injection response, and with τ free up to 3 650 d (ALFA-09: 2 134 d, ALFA-01: 1 448 d)
+that term substitutes for injection. Capping τ at 730 d does not help — CRMP falls to 0.62 with τ
+pinned at the bound for six producers and the same map. Pairs strong under every formulation and in
+both CRMP and CRMIP, the only ones to put weight on: ALFA-41 → ALFA-29 / ALFA-39, ALFA-45 → ALFA-29,
+ALFA-02 → ALFA-09 / ALFA-08, ALFA-12 → ALFA-29, ALFA-46 → ALFA-01. The ALFA-34 and ALFA-18 links flip
+between formulations and need a rate-change test to settle.
 
 ## What broke in the app, and was fixed
 
