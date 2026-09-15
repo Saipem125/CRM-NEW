@@ -221,6 +221,35 @@ def test_restart_transient_weights() -> None:
     assert w2[24, jp] == 0.0 and w2[25, jp] == 1.0 and w2[19, jp] == 1.0
 
 
+def test_late_starter_is_simulated_from_its_first_producing_month() -> None:
+    """A producer that comes on stream inside the window has no simulated rate before that month, and
+    the bundle's model series (what the history-match plot draws) is zero there too."""
+    case = suite.load_case("streak_5x4")
+    rates = case.rates.rename({"well_id": "well"})
+    cut = sorted(rates["date"].unique().to_list())[18]
+    late = (pl.col("well") == "P-2") & (pl.col("date") < cut)
+    rates = rates.with_columns(
+        [pl.when(late).then(0.0).otherwise(pl.col(c)).alias(c) for c in ("q_oil", "q_water", "days_on")]
+    )
+    loaded = LoadedData(
+        rates=rates.with_columns(pl.lit(None, dtype=pl.Float64).alias("q_gas")),
+        coords=case.coords.rename({"well_id": "well"}),
+        category=case.category.rename({"well_id": "well"}),
+        events=None,
+        pressure=None,
+    )
+    cfg = CFG.with_overrides({"rolling": {"mode": "never"}})
+    run = run_engine(loaded, cfg, PVT(), seed=0, variants=["crmp"])
+    s = run.latest()[0]
+    j = s.grid.producers.index("P-2")
+    pred = np.asarray(s.tournament.winner.fit.prediction)  # type: ignore[union-attr]
+    assert np.all(pred[:18, j] == 0.0) and np.all(pred[18:, j] > 0.0)
+    assert np.all(pred[:, [k for k in range(s.grid.n_prod) if k != j]] > 0.0)
+    b = build_bundle(run, {}, cfg, "p", {"unit_system": "field"})
+    series = next(p for p in b["sectors"][0]["producers"] if p["well"] == "P-2")["model"]
+    assert max(series[:18]) == 0.0 and min(series[18:]) > 0.0
+
+
 def test_field_tank_winner_recommends_no_reallocation() -> None:
     """A CRMT winner cannot distinguish injectors: the plan is hold-current, gain 0, no actions (ALFA finding)."""
     from waterflood_app.optimize.run import optimize_sector

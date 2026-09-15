@@ -112,6 +112,26 @@ Dropping one month on each side of every shut-in is the setting to carry: CRMP s
 no restart or partial month for any of them — that drift is not an operations artefact. Combining the
 transient weights with the radius loses the gain (the aquifer term takes over again).
 
+## Simulation start per well (2020 window)
+
+The user's second point: the simulated rate should start when the well starts. Five of the thirteen
+producers come on stream inside the 2020 window (ALFA-29 at month 2, ALFA-04 / ALFA-09 at 13–14,
+ALFA-08 at 14, ALFA-48 at 31). The per-producer recursion used to run from the window's first step
+for every well, so a late starter opened with a fully developed injection response, no primary term,
+and a drawn model rate through its pre-production months. Each producer is now simulated from its
+first producing month: zero before, state zero at that step, primary decay from the well's initial
+potential (the largest rate of its first three producing months — the first month is usually partial).
+
+| start rule | winner | blind R² | ALFA-08 | ALFA-09 | ALFA-27 | ALFA-33 |
+|---|---|---|---|---|---|---|
+| window start (old), transients 1 / 1 | CRMP | 0.78 | 29 % | 9 % | 41 % | 32 % |
+| well start, transients 1 / 1 | CRMP | 0.76 | 10 % | 22 % | 42 % | 27 % |
+
+Field score within noise of the previous rule; ALFA-08's held-out error falls from 29 % to 10 % and
+ALFA-09's rises from 9 % to 22 % (its 2021 opening at plateau rate was previously "explained" by
+thirteen months of support accumulated before the well existed). The well-start rule is the physical
+one and is now the only behaviour; the aquifer variant (0.74) and CRMIP (0.71) sit just behind CRMP.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
@@ -128,7 +148,10 @@ transient weights with the radius loses the gain (the aquifer term takes over ag
 3. **The influence radius was not applied to the fits.** `solver.distance_cutoff_factor` only
    partitioned sectors; the tournament never received the mask. It is now carried on the fit data into
    every CRMP / CRMIP / aquifer fit and the rolling windows (tested).
-4. The rate doubling and the missing operating-days column are data-preparation findings; the loader
+4. **Wells were simulated before they existed** (see above): per-producer start step in the solver,
+   reproduced exactly by the forecast continuation; wells with no producing training month return
+   f = 0 instead of an arbitrary fit.
+5. The rate doubling and the missing operating-days column are data-preparation findings; the loader
    convention (calendar-day rates + `days_on`) is unchanged and the rates were corrected before loading.
 
 Tested in `tests/test_surveillance.py` (`test_closed_producer_has_no_forecast_and_idle_injector_is_not_restarted`);

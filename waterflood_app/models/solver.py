@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 import numpy.typing as npt
@@ -62,10 +62,11 @@ class ProducerData:
     t: FArray  # (M,) days
     dt: FArray  # (M,) days
     dpdt: FArray | None  # (M,) Δp_n / Δt_n (pressure per day), None → constant BHP
-    q0: float  # scaled q(0)
+    q0: float  # scaled q at the producer's first producing step
     n_train: int
     dist: FArray | None = None  # (Ni,) distances for the distance penalty
     allowed: BArray | None = None  # (Ni,) injectors allowed to connect (distance mask)
+    start: int = 0  # grid step of the first producing month: arrays are sliced from here, q̂ = 0 before
 
 
 @dataclass
@@ -412,6 +413,9 @@ def fit_producer(d: ProducerData, variant: str, s: SolverSettings, seed: int) ->
     bounds = _bounds(d, variant, s)
     lo = np.array([b[0] for b in bounds])
     hi = np.array([b[1] for b in bounds])
+    if d.n_train < 2 or float(d.w[: d.n_train].sum()) <= 0.0:
+        # no producing training month (well starts in the blind window or never): nothing to fit
+        return [lo.copy()], [0.0]
     starts = _starts(d, variant, s, rng)
     vp = varpro_crmp(d, s)
     if s.varpro_only and variant != "crmip":
@@ -465,18 +469,40 @@ def producer_data(
     d = grid.distances()
     if d is not None:
         dist = d[:, j]
+    # The simulation starts at the well's first producing month (pre-production months are not part of
+    # the well's history): the recursion begins there from zero and the primary term decays from the
+    # well's initial potential. Before it the prediction is zero.
+    start, q0 = producer_start(grid, j)
     return ProducerData(
-        inj=grid.inj / scale,
-        q=grid.liq[:, j] / scale,
-        w=weights[:, j],
-        t=grid.time_days,
-        dt=grid.dt_days,
-        dpdt=dpdt,
-        q0=float(grid.liq[0, j] / scale),
-        n_train=n_train,
+        inj=grid.inj[start:] / scale,
+        q=grid.liq[start:, j] / scale,
+        w=weights[start:, j],
+        t=grid.time_days[start:] - (grid.time_days[start] if start < grid.n_steps else 0.0),
+        dt=grid.dt_days[start:],
+        dpdt=None if dpdt is None else dpdt[start:],
+        q0=q0 / scale,
+        n_train=max(n_train - start, 0),
         dist=dist,
         allowed=allowed,
+        start=start,
     )
+
+
+def producer_start(grid: Grid, j: int, potential_months: int = 3) -> tuple[int, float]:
+    """(first producing step, initial potential q(0)) of producer ``j``.
+
+    A well on stream from the window's first step keeps q(0) = q[0]. A late starter's first month is
+    usually partial, so its q(0) is the largest rate of its first ``potential_months`` producing
+    months — the initial potential the primary term decays from. Deterministic from the grid alone,
+    so the fit, ``predict_field`` and the forecast continuation agree.
+    """
+    on = grid.prod_mask[:, j]
+    if not on.any():
+        return grid.n_steps, 0.0
+    start = int(np.argmax(on))
+    if start == 0:
+        return 0, float(grid.liq[0, j])
+    return start, float(np.max(grid.liq[start : start + potential_months, j]))
 
 
 def _unpack(
@@ -521,9 +547,9 @@ def predict_field(grid: Grid, params: ModelParams, variant: str) -> FArray:
     for j in range(grid.n_prod):
         d = producer_data(grid, j, grid.n_steps, np.ones((grid.n_steps, grid.n_prod)), 1.0)
         if not has_j:
-            d = ProducerData(d.inj, d.q, d.w, d.t, d.dt, None, d.q0, d.n_train, d.dist)
+            d = replace(d, dpdt=None)
         qhat, _ = forward(_free_theta(params, j, variant, has_j), d, False)
-        out[:, j] = qhat
+        out[d.start :, j] = qhat
     return out
 
 

@@ -13,7 +13,7 @@ from waterflood_app.models.solver import predict_field
 from waterflood_app.prep.grid import Grid
 
 
-def _grid(rng: np.random.Generator, with_bhp: bool) -> Grid:
+def _grid(rng: np.random.Generator, with_bhp: bool, late_start: int = 0) -> Grid:
     from datetime import date
 
     m, ni, npd = 60, 3, 4
@@ -22,6 +22,10 @@ def _grid(rng: np.random.Generator, with_bhp: bool) -> Grid:
     inj = rng.uniform(300, 900, size=(m, ni))
     liq = rng.uniform(200, 600, size=(m, npd))
     bhp = rng.uniform(9000, 11000, size=(m, npd)) if with_bhp else None
+    days_on = np.tile(dt[:, None], (1, npd))
+    if late_start:  # P-1 comes on stream after `late_start` months: no production, no producing days before
+        liq[:late_start, 1] = 0.0
+        days_on[:late_start, 1] = 0.0
     return Grid(
         dates=dates,
         time_days=np.cumsum(dt) - dt[0],
@@ -32,7 +36,7 @@ def _grid(rng: np.random.Generator, with_bhp: bool) -> Grid:
         liq=liq,
         oil=liq * 0.2,
         water=liq * 0.8,
-        days_on_prod=np.tile(dt[:, None], (1, npd)),
+        days_on_prod=days_on,
         days_on_inj=np.tile(dt[:, None], (1, ni)),
         bhp=bhp,
     )
@@ -66,9 +70,12 @@ def _slow(model: ForecastModel, plan: np.ndarray, dt: np.ndarray, bhp_future: np
 @pytest.mark.parametrize("variant", ["crmp", "crmip"])
 @pytest.mark.parametrize("with_bhp", [False, True])
 @pytest.mark.parametrize("future_bhp", [False, True])
-def test_fast_continuation_matches_full_resimulation(variant: str, with_bhp: bool, future_bhp: bool) -> None:
+@pytest.mark.parametrize("late_start", [0, 15])
+def test_fast_continuation_matches_full_resimulation(
+    variant: str, with_bhp: bool, future_bhp: bool, late_start: int
+) -> None:
     rng = np.random.default_rng(7)
-    g = _grid(rng, with_bhp)
+    g = _grid(rng, with_bhp, late_start)
     ni, npd = g.n_inj, g.n_prod
     f = rng.uniform(0.05, 0.4, size=(ni, npd))
     if variant == "crmip":
@@ -91,3 +98,7 @@ def test_fast_continuation_matches_full_resimulation(variant: str, with_bhp: boo
     assert np.allclose(model._continue(plan2, dt, bhp_f), _slow(model, plan2, dt, bhp_f), rtol=1e-10, atol=1e-8)
     fc = model.simulate(plan, dt, bhp_f)
     assert fc.liq_res.shape == (h, npd) and np.all(fc.liq_res >= 0)
+    if late_start:  # the simulation of a late starter is zero before its first producing month
+        hist = predict_field(g, params, variant)
+        assert np.all(hist[:late_start, 1] == 0.0) and np.all(hist[late_start:, 1] > 0.0)
+        assert np.all(hist[:, 0] > 0.0)

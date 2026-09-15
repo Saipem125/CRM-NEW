@@ -17,7 +17,7 @@ import numpy.typing as npt
 
 from waterflood_app.models.base import ModelParams
 from waterflood_app.models.fractional_flow import PowerLawOilCut, cumulative_basis
-from waterflood_app.models.solver import predict_field
+from waterflood_app.models.solver import predict_field, producer_start
 from waterflood_app.prep.grid import Grid
 
 FArray = npt.NDArray[np.float64]
@@ -119,6 +119,12 @@ class ForecastModel:
         if self._uses_j():
             assert g.bhp is not None
             dpdt[1:] = np.diff(g.bhp, axis=0) / g.dt_days[1:, None]
+        # each producer's simulation starts at its first producing month (predict_field slices there):
+        # the state is zero up to and including that step, the primary term decays from that month's rate
+        sq = [producer_start(g, j) for j in range(g.n_prod)]
+        start = np.array([s for s, _ in sq])
+        q0 = np.array([q for _, q in sq])
+        t0 = np.array([float(g.time_days[s]) if s < m else float(g.time_days[-1]) for s in start])
         if self.variant == "crmip":
             tau = np.asarray(p.tau, dtype=np.float64)  # (Ni, Np)
             J = np.asarray(p.J, dtype=np.float64) if self._uses_j() else np.zeros_like(tau)
@@ -126,7 +132,7 @@ class ForecastModel:
             x = np.zeros_like(tau)
             for n in range(1, m):
                 src = p.f * g.inj[n][:, None] - J * tau * dpdt[n][None, :]
-                x = x * e[n] + (1.0 - e[n]) * src
+                x = np.where((n > start)[None, :], x * e[n] + (1.0 - e[n]) * src, 0.0)
         else:
             tau = np.asarray(p.tau, dtype=np.float64).reshape(-1)  # (Np,)
             J = np.asarray(p.J, dtype=np.float64).reshape(-1) if self._uses_j() else np.zeros(g.n_prod)
@@ -134,8 +140,8 @@ class ForecastModel:
             S = g.inj @ p.f + (-J * tau)[None, :] * dpdt
             x = np.zeros(g.n_prod)
             for n in range(1, m):
-                x = x * e[n] + (1.0 - e[n]) * S[n]
-        self._state = {"x": x, "tau": tau, "J": J, "q0": g.liq[0].astype(np.float64)}
+                x = np.where(n > start, x * e[n] + (1.0 - e[n]) * S[n], 0.0)
+        self._state = {"x": x, "tau": tau, "J": J, "q0": q0, "t0": t0}
         return self._state
 
     def _continue(self, inj_plan: FArray, dt_days: FArray, bhp_future: FArray | None) -> FArray:
@@ -164,7 +170,8 @@ class ForecastModel:
             for n in range(h):
                 x = x * e[n] + (1.0 - e[n]) * S[n]
                 out[n] = x
-        prim = p.gain_p[None, :] * st["q0"][None, :] * np.exp(-t_future[:, None] / p.tau_p[None, :])
+        t_rel = t_future[:, None] - st["t0"][None, :]
+        prim = p.gain_p[None, :] * st["q0"][None, :] * np.exp(-t_rel / p.tau_p[None, :])
         return np.asarray(prim + out, dtype=np.float64)
 
     def simulate(self, inj_plan: FArray, dt_days: FArray, bhp_future: FArray | None = None) -> Forecast:
