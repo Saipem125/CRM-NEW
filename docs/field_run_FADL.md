@@ -146,6 +146,16 @@ both CRMP and CRMIP, the only ones to put weight on: ALFA-41 → ALFA-29 / ALFA-
 ALFA-02 → ALFA-09 / ALFA-08, ALFA-12 → ALFA-29, ALFA-46 → ALFA-01. The ALFA-34 and ALFA-18 links flip
 between formulations and need a rate-change test to settle.
 
+**The influence radius resolves the flip.** With the well-start formulation the long-distance links
+are the artefact, and a 756 m radius (factor 2.5) removes them: the aquifer variant wins at blind R²
+0.76 (CRMP 0.68) with a constant influx (k₁ = k₂ = 0) and a nearest-neighbour map — ALFA-18 → ALFA-08
+(0.70, 280 m), ALFA-34 → ALFA-09 (0.63, 623 m), ALFA-02 → ALFA-09 (0.55), ALFA-41 → ALFA-39 (0.65),
+ALFA-46 → ALFA-01 (0.60), ALFA-45 → ALFA-29 / ALFA-48 / ALFA-27. That is the window-start map's
+short-arrow picture recovered under the physical formulation, at the same score. Σf per producer
+ALFA-09 1.27 and ALFA-39 1.06 (support beyond injection), ALFA-01 0.6. **Recommended project settings
+for this block:** `solver.restart_transient_months: 1`, `solver.pre_shutin_months: 1`,
+`solver.distance_cutoff_factor: 2.5`. The 666 m radius gives the same result.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
