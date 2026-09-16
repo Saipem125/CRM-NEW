@@ -220,11 +220,31 @@ anchored to the last three producing months (see DECISIONS). With the anchor:
 
 Restarting ALFA-45 on top of current rates is worth ≈ 95 000 bbl over two years in both models, 0.20
 bbl of oil per barrel injected, and the gain lands on ALFA-27 (+76 000 / +84 000 bbl), the well with the
-oil cut to pay for it — not on ALFA-29 as the un-anchored forecast said. The same-water plans also
-change: ALFA-18 is now kept (ALFA-08's oil cut is 0.19, not 0.05), ALFA-34 and ALFA-46 go to zero in
-CRMP (02 / 18 / 41 at the cap), while CRMIP keeps ALFA-46 at the cap and cuts ALFA-41 — the same
-ALFA-34 / ALFA-46 question. Restarting is an operations decision (`optimize.allow_restart_idle_injectors`);
-ALFA-45 ran at a median 513 bbl/d over 54 of the window's 61 months and was closed in 2024-09.
+oil cut to pay for it — not on ALFA-29 as the un-anchored forecast said. Restarting is an operations
+decision (`optimize.allow_restart_idle_injectors`); ALFA-45 ran at a median 513 bbl/d over 54 of the
+window's 61 months and was closed in 2024-09.
+
+**WOR curve on the last 24 months (user's request).** The anchor fixed the level but not the trend:
+the history oil model still ran at 41 bbl/d on ALFA-27 against 163 observed. Fitting the curve on each
+producer's last 24 producing months (`optimize.oil_cut_fit_months`) — and fixing a slope-clip defect
+it exposed, see DECISIONS — gives the history oil match below (median error over the last 12 months)
+and makes the two models' plans converge:
+
+| well | observed oil, last 12 m | whole-window fit | 24-month fit | error before → after |
+|---|---|---|---|---|
+| ALFA-27 | 163 bbl/d | 41 | 105 | 75 % → 37 % |
+| ALFA-09 | 108 | 135 | 104 | 24 % → 24 % |
+| ALFA-08 | 48 | 17 | 34 | 71 % → 41 % |
+| ALFA-33 | 43 | 0 | 33 | 100 % → 23 % |
+| ALFA-29 | 15 | 70 | 21 | 472 % → 43 % |
+| field | 407 | 285 | 323 | |
+
+Final plans (oil objective, 24 months, robust, anchored oil cut, 24-month WOR fit): **both models**
+raise ALFA-18 and ALFA-41 to the cap and ALFA-02 to 666–748, shut ALFA-34 and ALFA-12, and take
+ALFA-46 to 0–81 bbl/d; plan oil +82 000 bbl (CRMP) / +50 000 bbl (CRMIP) over hold-current. With
+ALFA-45 allowed, both models give the same plan — ALFA-45 641, ALFA-18 641, ALFA-41 641, ALFA-02 320,
+the rest off — worth +132 000 / +114 000 bbl at the same water; ALFA-45 on top of current rates with
+extra water is +110 000 / +103 000 bbl, almost all on ALFA-27.
 
 ## What broke in the app, and was fixed
 

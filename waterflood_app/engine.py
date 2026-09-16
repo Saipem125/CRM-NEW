@@ -280,7 +280,7 @@ def _fit_sector(
         static_pressure=sp,
         relperm=relperm,
     )
-    oil_cut, oil_pred = _fit_oil_cut(sgrid, tres, split.n_train)
+    oil_cut, oil_pred = _fit_oil_cut(sgrid, tres, split.n_train, int(cfg.get("optimize.oil_cut_fit_months", 0) or 0))
     rolling, shifts = _rolling_refit(sgrid, tres, cfg, seed, slog)
     return SectorRun(wi, sector, sgrid, prof, gates, tres, oil_cut, oil_pred, slog, rolling, shifts), slog
 
@@ -341,9 +341,14 @@ def _quick_sum_f(data: FitData, cfg: Config, seed: int) -> tuple[dict[str, float
 
 
 def _fit_oil_cut(
-    grid: Grid, tres: TournamentResult, n_train: int
+    grid: Grid, tres: TournamentResult, n_train: int, fit_months: int = 0
 ) -> tuple[dict[str, PowerLawOilCut], np.ndarray | None]:
-    """Power-law WOR–CWI per producer on the winner's allocated-water basis (Atlas CRMP §2)."""
+    """Power-law WOR–CWI per producer on the winner's allocated-water basis (Atlas CRMP §2).
+
+    ``fit_months`` > 0 fits each producer's curve on its last ``fit_months`` producing steps of the
+    whole history (the forecast starts from there); 0 fits on the training steps (second field data:
+    oil cuts that moved 30 % → 2 % over a window cannot be followed by one whole-window power law).
+    """
     if tres.winner is None or tres.prediction is None:
         return {}, None
     p = tres.winner.fit.params
@@ -355,11 +360,16 @@ def _fit_oil_cut(
     train[:n_train] = True
     for j, w in enumerate(grid.producers):
         cwi = cumulative_basis(tres.prediction[:, j], support[:, j], grid.dt_days, "allocated_water")
+        if fit_months > 0:
+            fit_mask = np.zeros(grid.n_steps, dtype=bool)
+            fit_mask[np.flatnonzero(mask[:, j])[-int(fit_months) :]] = True
+        else:
+            fit_mask = mask[:, j] & train
         fit = fit_power_law(
             cwi,
             grid.oil[:, j],
             grid.oil[:, j] + grid.water[:, j],
-            mask[:, j] & train,
+            fit_mask,
             "allocated_water",
         )
         fits[w] = fit

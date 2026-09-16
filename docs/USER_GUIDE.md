@@ -40,7 +40,8 @@ monthly data); `solver.distance_cutoff_factor` limits which injector–producer 
 
 **Forecast oil cut.** The forecast starts each producer at the oil cut it actually produced over its
 last three producing months and lets the fitted water-oil-ratio curve carry the trend from there
-(`optimize.anchor_oil_cut_months`; 0 uses the fitted curve alone).
+(`optimize.anchor_oil_cut_months`; 0 uses the fitted curve alone). The curve itself is fitted on
+each well's last 24 producing months (`optimize.oil_cut_fit_months`; 0 fits on the training steps).
 
 **Wells closed at the end of history.** A producer with no producing day in the last three months is
 treated as closed: it gets no forecast liquid and no share of the expected oil. An injector with no

@@ -58,10 +58,19 @@ def _loglinear(cwi: FArray, fo: FArray, ok: npt.NDArray[np.bool_], offset: float
     x = np.log(offset + cwi[ok])
     A = np.column_stack([np.ones_like(x), x])
     coef, *_ = np.linalg.lstsq(A, y, rcond=None)
-    pred = A @ coef
+    beta = float(coef[1])
+    if not 0.0 <= beta <= 50.0:
+        # WOR cannot fall with cumulative water (β ≥ 0) and a runaway slope is meaningless: fix β at the
+        # bound and re-estimate ln α for it — clipping β alone leaves an intercept fitted for the other
+        # slope, which put whole producers at zero oil (second field data)
+        beta = 0.0 if beta < 0.0 else 50.0
+        ln_alpha = float(np.mean(y - beta * x))
+    else:
+        ln_alpha = float(coef[0])
+    pred = ln_alpha + beta * x
     return (
-        float(np.exp(min(float(coef[0]), 700.0))),  # ln α capped: exp overflow on degenerate wells
-        float(np.clip(coef[1], -50.0, 50.0)),
+        float(np.exp(min(ln_alpha, 700.0))),  # ln α capped: exp overflow on degenerate wells
+        beta,
         float(((y - pred) ** 2).sum()),
         float(((y - y.mean()) ** 2).sum()) or 1.0,
     )
