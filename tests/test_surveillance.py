@@ -187,7 +187,9 @@ def test_influence_radius_masks_far_pairs_in_every_fit() -> None:
     mask = distance_mask(g, cfg)
     assert mask is not None and mask.shape == (g.n_inj, g.n_prod)
     assert 0 < int((~mask).sum()) < mask.size, "the factor must switch off some pairs but not all"
-    assert bool(np.all(mask[np.argmin(g.distances(), axis=0), np.arange(g.n_prod)]))  # nearest injector kept
+    dist = g.distances()
+    assert dist is not None
+    assert bool(np.all(mask[np.argmin(dist, axis=0), np.arange(g.n_prod)]))  # nearest injector kept
     for e in s.tournament.entries:
         if e.variant in ("crmp", "crmip", "aquifer"):
             f = np.asarray(e.fit.params.f)[: g.n_inj]

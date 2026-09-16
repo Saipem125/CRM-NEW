@@ -181,6 +181,34 @@ injector whose water CRMP cannot place (Σf 0.5). ALFA-33 itself is still 23–3
 comeback, ALFA-28 and ALFA-48 remain the erratic small wells. The aquifer variant no longer helps:
 once the shut-ins are handled the constant-influx term has nothing left to explain.
 
+## Optimisation plans on the final configuration (oil objective, 24 months, robust posture)
+
+Total water held at 2 243 bbl/d, per-injector cap 2 × the mean of the injectors in use, idle
+injectors held at zero unless allowed to restart.
+
+| injector | today | CRMP | CRMIP | CRMP, ALFA-45 allowed | CRMIP, ALFA-45 allowed |
+|---|---|---|---|---|---|
+| ALFA-02 | 545 | 748 | 748 | 641 | 641 |
+| ALFA-41 | 565 | 748 | 748 | 641 | 512 |
+| ALFA-34 | 230 | 748 | 0 | 320 | 0 |
+| ALFA-46 | 436 | 0 | 748 | 0 | 450 |
+| ALFA-18 | 228 | 0 | 0 | 0 | 0 |
+| ALFA-12 | 239 | 0 | 0 | 0 | 0 |
+| ALFA-45 | 0 | 0 | 0 | 641 | 641 |
+| plan oil vs hold-current, P50 | | +43 000 bbl | +22 000 bbl | +71 000 bbl | +67 000 bbl |
+| field oil at month 24, P50 | | 331 bbl/d | 319 bbl/d | 354 bbl/d | 358 bbl/d |
+
+Both models agree on raising ALFA-02 and ALFA-41 to the cap and shutting ALFA-18 (feeds low-oil-cut
+ALFA-08) and ALFA-12 (water unplaced); they disagree on ALFA-34 versus ALFA-46 — the same pair the
+maps disagree on — and that is the injector to step first, watching ALFA-09. Nearly all the gain is
+ALFA-09 (+35 000 / +21 000 bbl). ALFA-45, shut in since 2024-09, has the highest marginal value in
+both models (feeds ALFA-29 / ALFA-27 / ALFA-48 at short range); allowing it to restart is worth more
+than the reallocation and makes the two plans converge (354 vs 358 bbl/d), at the cost of ALFA-09
+losing 20–25 000 bbl as the eastern injectors are cut back to pay for it. Restarting is an operations
+decision (`optimize.allow_restart_idle_injectors`). Caution on the absolute level: hold-current opens
+≈ 35 % below the last observed month (ALFA-27 / ALFA-33 under-prediction carried into the forecast);
+the plan's advantage over hold-current (≈ 60–75 bbl/d sustained) is the number to use.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
