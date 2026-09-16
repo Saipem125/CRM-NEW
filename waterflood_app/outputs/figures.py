@@ -621,21 +621,37 @@ def connectivity_matrix(s: dict[str, Any], width: int = 620) -> Fig:
     return fig
 
 
-def forecast_fan(s: dict[str, Any], units: dict[str, str], width: int = 620, height: int = 300) -> Fig:
-    """Field oil rate: history (dim), blind window shaded, P10–P90 band (accent 18 %), P50, base dashed."""
+def forecast_fan(
+    s: dict[str, Any], units: dict[str, str], width: int = 620, height: int = 300, quantity: str = "oil"
+) -> Fig:
+    """Field oil (or surface liquid) rate: history (dim), blind window shaded, P10–P90 band, P50, base dashed.
+
+    ``quantity`` "oil" reads ``forecast.field_plan`` / ``field_base``; "liquid" reads the ``*_liquid`` series
+    (surface oil + water) when the bundle carries them.
+    """
     fig = Fig(width, height, title="Forecast fan")
     fc = s.get("forecast")
     dates = list(s.get("dates") or [])
-    hist = [sum(float(p["oil"][t] or 0.0) for p in s["producers"]) for t in range(len(dates))] if dates else []
-    if not fc or not hist:
+    liquid = quantity == "liquid"
+
+    def _hist_val(p: dict[str, Any], t: int) -> float:
+        if liquid:
+            return float(p["oil"][t] or 0.0) + float((p.get("water") or [0.0] * len(dates))[t] or 0.0)
+        return float(p["oil"][t] or 0.0)
+
+    hist = [sum(_hist_val(p, t) for p in s["producers"]) for t in range(len(dates))] if dates else []
+    key_plan, key_base = ("field_plan_liquid", "field_base_liquid") if liquid else ("field_plan", "field_base")
+    if not fc or not hist or key_plan not in fc:
         fig.text(width / 2, height / 2, "No forecast for this sector.", 12, DIM, "middle")
         return fig
 
     def _ser(xs: Any) -> list[float]:  # JSON nulls (NaN forecasts of a broken well) → NaN, drawn as gaps
         return [float("nan") if v is None else float(v) for v in xs]
 
-    fp = {k: _ser(v) for k, v in fc["field_plan"].items()}
-    fb = {k: _ser(v) for k, v in fc["field_base"].items()}
+    fp = {k: _ser(v) for k, v in fc[key_plan].items()}
+    fb = {k: _ser(v) for k, v in fc[key_base].items()}
+    label = "field liquid rate" if liquid else "field oil rate"
+    ttl = "Field liquid rate (oil + water): history and forecast" if liquid else "Field oil rate: history and forecast"
     hist = [float("nan") if v is None else float(v) for v in hist]
     # show the last five years of history so the forecast band stays readable
     keep = min(len(hist), max(60, 3 * len(fc["dates"])))
@@ -645,9 +661,7 @@ def forecast_fan(s: dict[str, Any], units: dict[str, str], width: int = 620, hei
     vals = hist + list(fp["p10"]) + list(fp["p90"]) + list(fb["p50"])
     ax = Axes(fig, 60, 30, width - 80, height - 90, (0.0, float(n_h + n_f - 1)), _lim(vals))
     ticks = _date_ticks(dates + list(fc["dates"]), 7)
-    ax.frame(
-        "month", f"field oil rate [{units.get('rate', 'bbl/d')}]", ticks, title="Field oil rate: history and forecast"
-    )
+    ax.frame("month", f"{label} [{units.get('rate', 'bbl/d')}]", ticks, title=ttl)
     b0 = int(s.get("blind_start_index", n_h)) - b0_shift
     if 0 < b0 < n_h:
         fig.rect(ax.px(b0), ax.y0, ax.px(n_h - 1) - ax.px(b0), ax.h, fill=VIOLET, opacity=0.12)

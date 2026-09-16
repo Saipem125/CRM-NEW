@@ -163,6 +163,8 @@ def sector_bundle(
         dates_f = [d.isoformat() for d in fdates]
         plan_oil = np.stack([f.oil for f in r.forecasts_plan])
         base_oil = np.stack([f.oil for f in r.forecasts_base])
+        plan_liq = np.stack([f.liq_surface for f in r.forecasts_plan])
+        base_liq = np.stack([f.liq_surface for f in r.forecasts_base])
         fc = {
             "dates": dates_f,
             "plan": {
@@ -184,6 +186,17 @@ def sector_bundle(
                 "p10": d.r(np.percentile(base_oil.sum(axis=2), 10, axis=0)),
                 "p50": d.r(np.percentile(base_oil.sum(axis=2), 50, axis=0)),
                 "p90": d.r(np.percentile(base_oil.sum(axis=2), 90, axis=0)),
+            },
+            # surface liquid (oil + water) for the liquid view of the fan
+            "field_plan_liquid": {
+                "p10": d.r(np.percentile(plan_liq.sum(axis=2), 10, axis=0)),
+                "p50": d.r(np.percentile(plan_liq.sum(axis=2), 50, axis=0)),
+                "p90": d.r(np.percentile(plan_liq.sum(axis=2), 90, axis=0)),
+            },
+            "field_base_liquid": {
+                "p10": d.r(np.percentile(base_liq.sum(axis=2), 10, axis=0)),
+                "p50": d.r(np.percentile(base_liq.sum(axis=2), 50, axis=0)),
+                "p90": d.r(np.percentile(base_liq.sum(axis=2), 90, axis=0)),
             },
             "plan_rates": d.r(r.plan.x[0]),
             "base_rates": d.r(r.base.x[0]),
