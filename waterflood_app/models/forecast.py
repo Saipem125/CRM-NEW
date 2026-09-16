@@ -84,6 +84,9 @@ class ForecastModel:
     # A producer shut in over the last months of history has no forecast liquid (first field data: a
     # quarter of the "hold current" oil came from wells that had been closed for years).
     active: FArray | None = None
+    # (Np,) observed oil cut over the last producing months; the fitted WOR curve is rescaled to pass
+    # through it at the end of history (level from the data, trend from the fit). NaN → no anchor.
+    oil_cut_anchor: FArray | None = None
     _state: dict[str, Any] | None = field(default=None, init=False, repr=False, compare=False)
 
     @property
@@ -230,14 +233,38 @@ class ForecastModel:
         cwi0 = self.historical_cwi_end()
         cwi = np.zeros((h, g.n_prod))
         oil = np.zeros((h, g.n_prod))
+        anchor = self.oil_cut_anchor
+        if anchor is not None and len(anchor) != g.n_prod:
+            anchor = None
         for j, w in enumerate(g.producers):
             fit = self.oilcut.get(w)
             basis = fit.basis if fit is not None else "allocated_water"
             cwi[:, j] = cumulative_basis(liq[:, j], support[:, j], dt_days, basis, offset=float(cwi0[j]))
-            fo = fit.oil_cut(cwi[:, j]) if fit is not None else np.full(h, 0.5)
+            a = float(anchor[j]) if anchor is not None else float("nan")
+            if fit is None:
+                fo = np.full(h, a if np.isfinite(a) else 0.5)
+            else:
+                fo = fit.oil_cut(cwi[:, j])
+                if np.isfinite(a):
+                    fo_end = float(fit.oil_cut(np.array([float(cwi0[j])]))[0])
+                    # rescale the curve to the observed level at the end of history; a curve that has
+                    # already collapsed (or saturated) carries no usable trend → hold the observed level
+                    fo = np.clip(fo * (a / fo_end), 0.0, 1.0) if 1e-3 < fo_end < 0.999 else np.full(h, a)
             oil[:, j] = liq[:, j] * self.surface_ratio[j] * fo
         water = liq * self.surface_ratio[None, :] - oil
         return Forecast(dt_days, inj_plan, liq, oil, np.maximum(water, 0.0), cwi, list(g.injectors), list(g.producers))
+
+
+def recent_oil_cut(grid: Grid, months: int = 3) -> FArray:
+    """(Np,) observed oil cut over each producer's last ``months`` producing steps (NaN when none)."""
+    out = np.full(grid.n_prod, np.nan)
+    for j in range(grid.n_prod):
+        idx = np.flatnonzero(grid.prod_mask[:, j])[-max(1, int(months)) :]
+        if idx.size:
+            liq = float(grid.oil[idx, j].sum() + grid.water[idx, j].sum())
+            if liq > 0:
+                out[j] = float(grid.oil[idx, j].sum() / liq)
+    return out
 
 
 def active_producers(grid: Grid, lookback_steps: int = 3) -> FArray:

@@ -203,11 +203,28 @@ ALFA-08) and ALFA-12 (water unplaced); they disagree on ALFA-34 versus ALFA-46 �
 maps disagree on — and that is the injector to step first, watching ALFA-09. Nearly all the gain is
 ALFA-09 (+35 000 / +21 000 bbl). ALFA-45, shut in since 2024-09, has the highest marginal value in
 both models (feeds ALFA-29 / ALFA-27 / ALFA-48 at short range); allowing it to restart is worth more
-than the reallocation and makes the two plans converge (354 vs 358 bbl/d), at the cost of ALFA-09
-losing 20–25 000 bbl as the eastern injectors are cut back to pay for it. Restarting is an operations
-decision (`optimize.allow_restart_idle_injectors`). Caution on the absolute level: hold-current opens
-≈ 35 % below the last observed month (ALFA-27 / ALFA-33 under-prediction carried into the forecast);
-the plan's advantage over hold-current (≈ 60–75 bbl/d sustained) is the number to use.
+than the reallocation and makes the two plans converge (354 vs 358 bbl/d).
+
+**These plans were built on a wrong oil cut** (found while quantifying the ALFA-45 restart): the
+whole-window WOR power law gave ALFA-27 — the largest oil producer, observed oil cut 0.43 — a forecast
+oil cut of 0.09, ALFA-29 (observed 0.02) 0.13 and ALFA-33 (0.05) 0.00, which is why the forecast
+opened 35 % below the last month and why the gain was booked to ALFA-29. The forecast oil cut is now
+anchored to the last three producing months (see DECISIONS). With the anchor:
+
+| scenario (24 months, oil cut anchored) | water bbl/d | CRMP oil m1 → m24 | CRMP cum | CRMIP oil m1 → m24 | CRMIP cum |
+|---|---|---|---|---|---|
+| hold current | 2 243 | 395 → 345 | 266 600 | 333 → 306 | 234 100 |
+| hold + ALFA-45 at 641 (extra water) | 2 884 | 434 → 479 | 362 000 (+95 500) | 437 → 424 | 329 800 (+95 700) |
+| optimised plan, same water | 2 243 | 428 → 416 | 325 400 (+58 800) | 343 → 343 | 257 500 (+23 400) |
+| optimised plan with ALFA-45, same water | 2 243 | 443 → 456 | 359 300 (+92 700) | 440 → 387 | 318 100 (+84 000) |
+
+Restarting ALFA-45 on top of current rates is worth ≈ 95 000 bbl over two years in both models, 0.20
+bbl of oil per barrel injected, and the gain lands on ALFA-27 (+76 000 / +84 000 bbl), the well with the
+oil cut to pay for it — not on ALFA-29 as the un-anchored forecast said. The same-water plans also
+change: ALFA-18 is now kept (ALFA-08's oil cut is 0.19, not 0.05), ALFA-34 and ALFA-46 go to zero in
+CRMP (02 / 18 / 41 at the cap), while CRMIP keeps ALFA-46 at the cap and cuts ALFA-41 — the same
+ALFA-34 / ALFA-46 question. Restarting is an operations decision (`optimize.allow_restart_idle_injectors`);
+ALFA-45 ran at a median 513 bbl/d over 54 of the window's 61 months and was closed in 2024-09.
 
 ## What broke in the app, and was fixed
 

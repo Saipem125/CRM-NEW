@@ -38,6 +38,10 @@ normal share) while it is closed. Months right around a shut-in can be left out 
 monthly data); `solver.distance_cutoff_factor` limits which injector–producer pairs may connect
 (2.5 × the median nearest-neighbour distance is a good start).
 
+**Forecast oil cut.** The forecast starts each producer at the oil cut it actually produced over its
+last three producing months and lets the fitted water-oil-ratio curve carry the trend from there
+(`optimize.anchor_oil_cut_months`; 0 uses the fitted curve alone).
+
 **Wells closed at the end of history.** A producer with no producing day in the last three months is
 treated as closed: it gets no forecast liquid and no share of the expected oil. An injector with no
 injection in the last three months is held at zero by the plan; the recommendation lists both. To

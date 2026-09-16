@@ -115,6 +115,7 @@ optimize: # §12–§14
   vrr_band: null # VRR band per pattern, e.g. [0.8, 1.2]; null → not applied
   current_months: 1 # months averaged for the "hold current" base (1 = last set-point)
   idle_lookback_months: 3 # a well with no producing / injecting day in the last N steps is closed at end of history
+  anchor_oil_cut_months: 3 # forecast oil cut starts from the observed oil cut of the last N producing months (0 → fitted curve only)
   forecast_shut_in_producers: false # false → producers closed at end of history have no forecast liquid
   allow_restart_idle_injectors: false # false → injectors closed at end of history are held at zero in the plan
   relax_violated_at_base: true # a constraint the base already violates is relaxed to the base level (noted)

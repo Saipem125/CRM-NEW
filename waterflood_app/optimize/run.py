@@ -10,7 +10,7 @@ import numpy as np
 
 from waterflood_app.config import Config
 from waterflood_app.engine import SectorRun
-from waterflood_app.models.forecast import ForecastModel, active_producers, fan, surface_ratio
+from waterflood_app.models.forecast import ForecastModel, active_producers, fan, recent_oil_cut, surface_ratio
 from waterflood_app.models.uq import select_members
 from waterflood_app.optimize.action_list import ActionItem, build_action_list
 from waterflood_app.optimize.constraints import PlanConstraints
@@ -41,6 +41,13 @@ def forecast_models(run: SectorRun, cfg: Config, max_members: int = 12) -> tuple
         act = active_producers(run.grid, int(cfg.get("optimize.idle_lookback_months", 3)))
         for m in models:
             m.active = act
+    k_anchor = int(cfg.get("optimize.anchor_oil_cut_months", 3) or 0)
+    if k_anchor > 0:
+        # the WOR curve's level comes from the last producing months, its trend from the fit (second field
+        # data: a whole-window power law put the largest oil producer at a fifth of its observed oil cut)
+        anchor = recent_oil_cut(run.grid, k_anchor)
+        for m in models:
+            m.oil_cut_anchor = anchor
     # §10: the forecast uses the latest window blended with the full-history fit by blind score
     roll = run.rolling
     if roll is not None and roll.blended is not None and roll.windows and run.tournament.winner is not None:

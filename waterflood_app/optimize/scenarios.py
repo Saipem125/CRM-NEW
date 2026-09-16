@@ -221,7 +221,18 @@ class ScenarioManager:
                 xy_inj=np.vstack([g.xy_inj, np.asarray(xy)[None, :]]),
                 raw={},
             )
-            models.append(ForecastModel(m.variant, p, m.oilcut, g2, m.surface_ratio, label=m.label, active=m.active))
+            models.append(
+                ForecastModel(
+                    m.variant,
+                    p,
+                    m.oilcut,
+                    g2,
+                    m.surface_ratio,
+                    label=m.label,
+                    active=m.active,
+                    oil_cut_anchor=m.oil_cut_anchor,
+                )
+            )
         x = np.concatenate([self.current, [rate]])
         v, fd = self._evaluate(models, x)
         return self._record(
@@ -270,6 +281,7 @@ class ScenarioManager:
                     m.surface_ratio[keep],
                     label=m.label,
                     active=None if m.active is None else m.active[keep],
+                    oil_cut_anchor=None if m.oil_cut_anchor is None else m.oil_cut_anchor[keep],
                 )
             )
         x = np.concatenate([self.current, [rate]])

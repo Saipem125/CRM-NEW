@@ -252,6 +252,34 @@ def test_late_starter_is_simulated_from_its_first_producing_month() -> None:
     assert max(series[:18]) == 0.0 and min(series[18:]) > 0.0
 
 
+def test_forecast_oil_cut_is_anchored_to_the_last_producing_months() -> None:
+    """The forecast's month-1 oil cut equals the observed oil cut of the last producing months (level from
+    the data, trend from the fitted WOR curve); with the anchor off it is the fitted curve alone."""
+    from waterflood_app.models.forecast import month_steps, recent_oil_cut
+    from waterflood_app.optimize.solvers import expand_plan
+
+    cfg = CFG.with_overrides({"rolling": {"mode": "never"}})
+    run = run_engine(_loaded("streak_5x4"), cfg, PVT(), seed=0, variants=["crmp"])
+    s = run.latest()[0]
+    g = s.grid
+    anchor = recent_oil_cut(g, 3)
+    assert anchor.shape == (g.n_prod,) and np.all((anchor > 0) & (anchor < 1))
+    models, _ = forecast_models(s, cfg)
+    assert models[0].oil_cut_anchor is not None
+    _, dt = month_steps(g.dates[-1], 3)
+    plan = expand_plan(np.tile(models[0].current_injection(1), (1, 1)), 3)
+    fc = models[0].simulate(plan, dt)
+    fo1 = fc.oil[0] / np.maximum(fc.liq_surface[0], 1e-9)
+    assert np.allclose(fo1, anchor, atol=0.02), (fo1, anchor)
+    off, _ = forecast_models(s, cfg.with_overrides({"optimize": {"anchor_oil_cut_months": 0}}))
+    assert off[0].oil_cut_anchor is None
+    fc0 = off[0].simulate(plan, dt)
+    fo0 = fc0.oil[0] / np.maximum(fc0.liq_surface[0], 1e-9)
+    # on the noise-free fixture the fitted curve already passes through the observed level: anchoring
+    # must not distort a good fit
+    assert np.all(np.isfinite(fo0)) and np.allclose(fo0, fo1, atol=0.02)
+
+
 def test_field_tank_winner_recommends_no_reallocation() -> None:
     """A CRMT winner cannot distinguish injectors: the plan is hold-current, gain 0, no actions (ALFA finding)."""
     from waterflood_app.optimize.run import optimize_sector
