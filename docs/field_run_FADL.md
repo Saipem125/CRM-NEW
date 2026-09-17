@@ -246,6 +246,26 @@ ALFA-45 allowed, both models give the same plan — ALFA-45 641, ALFA-18 641, AL
 the rest off — worth +132 000 / +114 000 bbl at the same water; ALFA-45 on top of current rates with
 extra water is +110 000 / +103 000 bbl, almost all on ALFA-27.
 
+## Pywaterflood engine on the same block (like-for-like baseline)
+
+The app's `engine="pywaterflood"` path (library CRMP / CRMIP, training window, constant BHP, no
+shut-in handling, "up-to-one" gains per pair) was run on the same 2020–2025 window and split as the
+enhanced configuration (`scratchpad/run_pywaterflood_baseline.py`, results in
+`results_pywaterflood_x2/`):
+
+| engine / model | blind R² | train R² | Σf per injector |
+|---|---|---|---|
+| Pywaterflood CRMP | 0.47 | 0.85 | up to 4.3 (ALFA-18) |
+| Pywaterflood CRMIP | 0.62 | 0.86 | up to 4.3 |
+| enhanced CRMP | 0.84 | 0.91 | ≤ 1 |
+| enhanced CRMIP | 0.83 | 0.93 | ≤ 1 |
+
+The library's per-pair "up-to-one" constraint lets an injector's water be allocated several times
+over, which is what produces its every-injector-to-every-producer map; five of the enhanced map's
+twelve strong pairs survive in it. This is the comparison the MOC deck now shows instead of the old
+18-run study. (The direct-CSV loader in that script feeds rates without unit conversion, so its
+figure axes are 6.29 × the display units; R², fractions and maps are unaffected.)
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
