@@ -266,6 +266,59 @@ twelve strong pairs survive in it. This is the comparison the MOC deck now shows
 18-run study. (The direct-CSV loader in that script feeds rates without unit conversion, so its
 figure axes are 6.29 × the display units; R², fractions and maps are unaffected.)
 
+## Out-of-sample validation against Feb-2025 → Jun-2026 (2026-09-18)
+
+The field team supplied `New CRM/Recent prod-inj data` (monthly rates Jan-2025 → Jul-2026, 13 injector and 19
+producer names). Jan-2025 matches the corrected inputs exactly, so the file is at the true scale in the same units;
+Jul-2026 is a partial month and was dropped, leaving 17 months. The six new injector names and four new producer
+names carry zeros throughout (not yet on stream); ALFA-45 shows only trace injection (14–37 bbl/d in three months),
+so the recommended restart was not made. Injection was otherwise held at the Jan-2025 allocation (mean total
+2 137 bbl/d vs 2 243) until May-2026, when ALFA-41 was cut to ≈ 290 and ALFA-02 raised to 600–655 bbl/d. The plan was
+not implemented, so only the base model can be validated, not the plan value.
+
+Method (`validate_oos.py` in the scratchpad, outputs in `Data/FADL Main Block/validation_oos/`): the models fitted
+through Jan-2025 (`recent_all`, ensemble medians, oil cut anchored as in the report) are driven by the **actual**
+injection of the 17 months and compared with the observed producer rates on open well-months. Pooled R² is the
+app's blind-test statistic; "field R²" is on monthly field totals. The pywaterflood engine was refitted on the same
+inputs (plain CRMP/CRMIP, 12 s) and driven the same way.
+
+| model (fitted to Jan-2025) | pooled R² liquid | pooled R² oil | field R² liquid | field oil bbl/d obs / pred | cum. oil 17 m obs / pred |
+|---|---|---|---|---|---|
+| enhanced CRMP, as forecast (ALFA-29 open) | 0.60 | 0.52 | −0.24 | 468 / 330 | 242 k / 171 k (−29 %) |
+| enhanced CRMP + known ALFA-29 shut-in | **0.64** | 0.43 | **0.61** | 468 / 421 | 242 k / 217 k (−10 %) |
+| enhanced CRMIP | 0.46 | 0.26 | −1.5 | 468 / 273 | 242 k / 141 k (−42 %) |
+| aquifer CRMPA / CRMT | −1.0 / −0.6 | | | 97 / 177 | 50 k / 92 k |
+| pywaterflood CRMP / CRMIP | −0.28 / −0.24 | −0.08 / −0.11 | −9.9 | 209 / 209 | 108 k (−55 %) |
+| report base case (hold-current, CRMP) | | | | 347 | 179 k (−26 %) |
+
+Per well, enhanced CRMP with the known shut-in (liquid bias over open months): ALFA-27 0 %, ALFA-08 −11 %,
+ALFA-28 −12 %, ALFA-33 −29 %, ALFA-09 +55 %. Library CRMP: −38 % to −72 % on every well.
+
+Findings:
+
+- **The liquid response is validated; the oil cut is not.** With the ALFA-29 shut-in applied (an operation the
+  forecast could not know, but the fitted redistribution rule handles it), field liquid tracks within 5–10 % from
+  Jun-2025 to Feb-2026 and drifts to −12 % by mid-2026 as observed liquid rises at constant injection. The field
+  oil cut rose from 0.17 to 0.25 from Oct-2025 (ALFA-08 0.2 → 0.45 at unchanged liquid, ALFA-33 0.04 → 0.12,
+  ALFA-28 0.50 → 0.55), which no rate-driven WOR curve can anticipate; the anchored oil cut stays at 0.19. Oil is
+  under-predicted by ≈ 10 % to Sep-2025 and by 25–30 % after. The rise looks like a completion or allocation
+  change on ALFA-08 — the events file for 2025 is needed.
+- **Pair-level allocation is confirmed as the weak point** (identifiability section above). The model keeps
+  ALFA-09 at ≈ 950 bbl/d after its Mar–Apr-2025 shut-in while it came back at 750–800, and gives ALFA-33 too
+  little; ALFA-27 is exact. ALFA-09 is probably lift-limited after the restart.
+- **The P10–P90 band is too narrow.** Observed field oil fell inside it in 0 % of months (6 % for CRMIP). The
+  ensemble spreads only the connectivity fit; oil-cut uncertainty and operational uncertainty are not in it, so the
+  report's band overstates confidence. This is a method item: add WOR-curve and shut-in scenarios to the ensemble.
+- **The ranking holds out of sample.** Enhanced CRMP > CRMIP > library on every statistic; the library's 0.47 blind
+  R² in the study translates to a 55 % under-prediction of both liquid and oil over the following 17 months, and
+  the enhanced CRMP's 0.84 to −10 % on cumulative oil once the shut-in is known.
+- **The recommended plan was not run**, so its value (+82 000 bbl / 24 months) remains a model statement. The
+  May–Jun-2026 change (ALFA-41 down, ALFA-02 up) is half of the plan's direction; ALFA-27/33 liquid did not fall
+  when ALFA-41 was cut, consistent with the map's ALFA-41 support going to ALFA-29 (closed) rather than to them.
+
+Next: extend the window to Jun-2026 and refit (17 more months, one more shut-in/restart cycle on ALFA-09, the
+ALFA-41/02 swap as an injection signal), and obtain the 2025 events file before interpreting the oil-cut rise.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
