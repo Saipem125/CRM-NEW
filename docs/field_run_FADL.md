@@ -319,6 +319,36 @@ Findings:
 Next: extend the window to Jun-2026 and refit (17 more months, one more shut-in/restart cycle on ALFA-09, the
 ALFA-41/02 swap as an injection signal), and obtain the 2025 events file before interpreting the oil-cut rise.
 
+## Feature ablation on the final code (2026-09-19)
+
+The build-up chart in the deck followed the order the features were developed, and its middle bars mixed models
+(0.74 for the well start was the aquifer variant, CRMP scored 0.76; at the 756 m radius the aquifer variant won at
+0.76 while CRMP fell to 0.68). To replace it, CRMP was re-fitted for every on/off combination of the three
+switchable features (`ablation_fadl.py` in the scratchpad, `Data/FADL Main Block/ablation/ablation.json`; the
+per-well start is permanent in the code and is in every run; same window, data, split and seed).
+
+| transient months 1/1 | 756 m radius | shut-in redistribution | blind R² | train R² |
+|---|---|---|---|---|
+| – | – | – | 0.72 | 0.94 |
+| on | – | – | 0.75 | 0.92 |
+| – | on | – | 0.70 | 0.92 |
+| – | – | on | 0.84 | 0.93 |
+| on | on | – | 0.72 | 0.92 |
+| on | – | on | 0.84 | 0.93 |
+| – | on | on | 0.77 | 0.92 |
+| on | on | on | 0.84 | 0.91 |
+
+- The shut-in redistribution carries the score: +0.09 to +0.12 wherever it is switched on, and 0.84 on its own.
+- The radius never raises the score (−0.03 to −0.07, and −0.003 in the full configuration). It is kept for the map:
+  without it the fit is as good and the allocation goes long-distance (identifiability section).
+- The transient months are worth +0.03 without redistribution and matter again once the radius is on
+  (0.77 → 0.84); with redistribution alone they change nothing.
+- Seeds 1–4 of the full configuration: 0.838, 0.838, 0.839, 0.844 — differences under 0.01 are noise.
+
+The deck (draft 5, slide 8) now shows the cumulative re-fits in the order baseline 0.72 → + transient months 0.75
+→ + shut-in redistribution 0.84 → + 756 m radius 0.84, each bar an actual run, with the caption that the radius is
+kept for identifiability and not for the score.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
