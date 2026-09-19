@@ -773,8 +773,13 @@ def injector_efficiency(s: dict[str, Any], units: dict[str, str], width: int = 6
     return fig
 
 
-def history_match_grid(s: dict[str, Any], units: dict[str, str], max_wells: int = 12, width: int = 620) -> Fig:
-    """Small multiples: raw (faint points), cleaned (dim), model (oil), residual strip, blind shaded, R²/MAPE."""
+def history_match_grid(
+    s: dict[str, Any], units: dict[str, str], max_wells: int = 12, width: int = 620, show_r2: bool = True
+) -> Fig:
+    """Small multiples: raw (faint points), cleaned (dim), model (oil), residual strip, blind shaded, R²/MAPE.
+
+    ``show_r2=False`` titles each panel with the held-out error only (a per-well R² on a flat or erratic
+    well is large and negative and reads as a defect on a slide)."""
     prods = list(s["producers"])[:max_wells]
     cols = 3 if len(prods) > 4 else 2 if len(prods) > 1 else 1
     rows = math.ceil(len(prods) / cols) if prods else 1
@@ -797,7 +802,11 @@ def history_match_grid(s: dict[str, Any], units: dict[str, str], max_wells: int 
             "",
             "",
             _date_ticks(dates, 3),
-            title=f"{p['well']}  R² {_f2(p.get('blind_r2'))}  MAPE {_f1(p.get('blind_mape'))} %",
+            title=(
+                f"{p['well']}  R² {_f2(p.get('blind_r2'))}  MAPE {_f1(p.get('blind_mape'))} %"
+                if show_r2
+                else f"{p['well']}  error {_f1(p.get('blind_mape'))} %"
+            ),
         )
         if 0 < b0 < len(dates):
             fig.rect(ax.px(b0), ax.y0, ax.px(len(dates) - 1) - ax.px(b0), ax.h, fill=VIOLET, opacity=0.12)
