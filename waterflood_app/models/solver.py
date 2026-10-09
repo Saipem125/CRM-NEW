@@ -719,12 +719,13 @@ def fit_field(
         for k in range(n_members)
     ]
     if notes:
-        # The members come from the per-producer fits and can allocate an injector's water several times over;
-        # the winner has been jointly refined to the bound. Forecasts and plans draw on the members, so project
-        # each one onto the same bound (scale an injector's row down to it) and lead with the refined winner.
-        ensemble = [_project_to_bound(m, settings.joint_sum_bound) for m in ensemble]
-        ensemble.insert(0, params.copy())
-        starts_sse.insert(0, min(starts_sse) if starts_sse else sse)
+        # The members come from the per-producer fits and can allocate an injector's water several times over,
+        # while the winner has been jointly refined to the bound. Forecasts and plans draw on the members, so keep
+        # only those that already satisfy the bound (scaling a member's rows would leave it inconsistent with the
+        # data it was fitted to) and lead with the refined winner.
+        keep = [k for k, m in enumerate(ensemble) if m.sum_f_per_injector.max() <= settings.joint_sum_bound + 1e-6]
+        ensemble = [params.copy(), *(ensemble[k] for k in keep)]
+        starts_sse = [sse, *(starts_sse[k] for k in keep)]
     k_params = n_params_for(variant, ni, npd, has_j, settings.free_primary)
     return FitResult(
         params=params,
@@ -736,15 +737,6 @@ def fit_field(
         starts_sse=starts_sse,
         notes=notes,
     )
-
-
-def _project_to_bound(m: ModelParams, bound: float) -> ModelParams:
-    """Scale every injector row of f whose sum exceeds ``bound`` down to it (projection onto Σ_j f_ij ≤ bound)."""
-    out = m.copy()
-    row = out.f.sum(axis=1, keepdims=True)
-    scale = np.where(row > bound, bound / np.maximum(row, 1e-12), 1.0)
-    out.f = out.f * scale
-    return out
 
 
 def _joint_refine(
