@@ -214,3 +214,25 @@ def test_power_law_oil_cut_fit_and_koval() -> None:
 
 def test_aicc_prefers_parsimony_at_equal_fit() -> None:
     assert aicc(100, 5, 10.0) < aicc(100, 20, 10.0)
+
+
+def test_ensemble_members_respect_injector_bound_after_joint_refinement() -> None:
+    """Forecasts draw on the ensemble; when the winner was jointly refined to Σ_j f_ij ≤ 1 the members must be too
+    (second field data: raw members allocated one injector's water 1.6 times over and the optimiser exploited it)."""
+    from waterflood_app.models.solver import _project_to_bound
+
+    _, g = _grid("aquifer_6x9")
+    data = FitData(g, train_blind_split(g.n_steps, CFG))
+    res = CRMP(CFG, "inhouse").fit(data, seed=0)
+    bound = float(CFG["solver.joint_refine_if_sum_f_exceeds"])
+    assert res.params.sum_f_per_injector.max() <= bound + 1e-6
+    if any("joint refinement" in n for n in res.notes):
+        assert np.allclose(res.ensemble[0].f, res.params.f)
+        assert len(res.ensemble) == len(res.starts_sse)
+    for m in res.ensemble:
+        assert m.sum_f_per_injector.max() <= bound + 1e-6, m.sum_f_per_injector
+    raw = res.params.copy()
+    raw.f = raw.f * 3.0
+    proj = _project_to_bound(raw, bound)
+    assert proj.sum_f_per_injector.max() <= bound + 1e-9
+    assert np.allclose(proj.f[raw.f.sum(axis=1) <= bound], raw.f[raw.f.sum(axis=1) <= bound])
