@@ -349,6 +349,33 @@ The deck (draft 5, slide 8) now shows the cumulative re-fits in the order baseli
 → + shut-in redistribution 0.84 → + 756 m radius 0.84, each bar an actual run, with the caption that the radius is
 kept for identifiability and not for the score.
 
+## Correction: forecast ensemble was not bounded (2026-10-09 / 2026-10-19)
+
+Found while optimising the C6 daily data: `fit_field` assembled the forecast ensemble from the per-producer multi-start
+solutions and never passed it through the joint refinement that bounds each injector at Σ_j f_ij ≤ 1. On this block the
+members allocated an injector's water up to 2.2× (CRMP) and 2.6× (CRMIP) while the tournament winner was bounded, and
+every plan, forecast and the out-of-sample validation above drew on those members. Fixed in commits 730887e and
+6e1d995: members that break the bound are dropped and the refined winner leads the list (tests/test_models.py).
+
+Corrected numbers on the presentation basis (`masked_figs_v2`, `validation_oos_v2`):
+
+| item | before (unbounded members) | corrected (bounded) |
+|---|---|---|
+| CRMP plan, same water, 24 months | +31 % | **+45 %** (allocation unchanged: 02/18/41 at the cap, 12/34/46 off) |
+| CRMIP plan | +17 % | +31 % |
+| ALFA-45 restart | +45 % (0.20 bbl/bbl) | **+30 %** (0.13 bbl/bbl; CRMIP +57 %, 0.22) |
+| plan liquid, month 1 | +17 % | +10 % |
+| validation, cum. oil vs actual, known shut-in | −10 % | **−25 %** |
+| validation, field liquid pooled R² | 0.64 | 0.57 |
+| per well (known shut-in) | ALFA-27 0 %, ALFA-33 −29 % | ALFA-27 −15 %, ALFA-33 −44 %; ALFA-08/09/28 within 12 % |
+
+Interpretation: the unbounded members tracked the east side (ALFA-27, ALFA-33) better than the bounded winner does.
+A model that is allowed to allocate more water than an injector supplies is standing in for support that is not
+injection — the aquifer signature already noted on the map (Σf per producer above 1 on the east side). The bounded
+model is now what the deck shows (draft 10, slides 13–15), and the discrepancy is reported as the finding it is.
+Next: let the east-side injectors exceed the bound where the aquifer signature is confirmed, or carry the aquifer
+variant for that side, when the window is extended to Jun-2026.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
