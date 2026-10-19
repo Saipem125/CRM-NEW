@@ -83,7 +83,6 @@ def sector_bundle(
     d = d or Display()
     g = s.grid
     w = s.tournament.winner
-    n_train = int(w.report.n_train_points / max(g.n_prod, 1)) if w is not None and g.n_prod else int(0.8 * g.n_steps)
     split_idx = round(g.n_steps * (1 - float(cfg["split.blind_fraction"])))
     dates = [d.isoformat() for d in g.dates]
     producers: list[dict[str, Any]] = []
@@ -209,7 +208,7 @@ def sector_bundle(
         "key": s.key,
         "window_index": s.window_index,
         "dates": dates,
-        "blind_start_index": min(split_idx, n_train) if n_train else split_idx,
+        "blind_start_index": split_idx,  # the train/blind split in steps (n_train_points counts well-months, not steps)
         "injectors": injectors,
         "producers": producers,
         "well_types": {e: well_types.get(g.well_of_entity.get(e, e), "") for e in g.injectors + g.producers},

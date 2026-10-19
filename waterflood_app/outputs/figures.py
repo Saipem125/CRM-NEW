@@ -459,6 +459,11 @@ def _date_ticks(dates: list[str], n: int = 6) -> list[tuple[float, str]]:
     return [(float(i), dates[i][:7]) for i in range(0, len(dates), step)]
 
 
+def _year_ticks(dates: list[str]) -> list[tuple[float, str]]:
+    """One short tick per January (year label only) — fits narrow small-multiple panels without clipping."""
+    return [(float(i), d[:4]) for i, d in enumerate(dates) if d[5:7] == "01" and i > 0]
+
+
 def _lim(vals: list[float], pad: float = 0.08, zero: bool = True) -> tuple[float, float]:
     v = [x for x in vals if x is not None and math.isfinite(x)]
     if not v:
@@ -567,7 +572,7 @@ def well_map(
             ("injector", WATER, "tri"),
             ("producer", OIL, "dot"),
             ("mixed", VIOLET, "dot"),
-            ("f_ij (width ∝ f, opacity ∝ confidence)", WATER, "line"),
+            ("f_ij (width = f, opacity = confidence)", WATER, "line"),
         ],
     )
     return fig
@@ -801,7 +806,7 @@ def history_match_grid(
         ax.frame(
             "",
             "",
-            _date_ticks(dates, 3),
+            _year_ticks(dates),
             title=(
                 f"{p['well']}  R² {_f2(p.get('blind_r2'))}  MAPE {_f1(p.get('blind_mape'))} %"
                 if show_r2
