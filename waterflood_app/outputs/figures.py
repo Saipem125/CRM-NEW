@@ -830,8 +830,8 @@ def history_match_grid(
         fig.line(x0, ry0 + rh / 2, x0 + w, ry0 + rh / 2, GRID, 0.8)
         fig.polyline([(ax.px(t), ry0 + rh / 2 - v / rmax * rh / 2) for t, v in enumerate(res)], DANGER, 1)
         fig.text(x0 + w, ry0 + rh - 4, "residual", 7.5, FAINT, "end")
-        for t, lab in _year_ticks(dates):  # year labels below the residual strip, where nothing covers them
-            fig.text(ax.px(t), ry0 + rh + 11, lab, 8, DIM, "middle")
+        for tx, lab in _year_ticks(dates):  # year labels below the residual strip, where nothing covers them
+            fig.text(ax.px(tx), ry0 + rh + 11, lab, 8, DIM, "middle")
     fig.text(
         20,
         height - 8,

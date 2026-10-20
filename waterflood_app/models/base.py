@@ -41,8 +41,14 @@ def fit_weights(grid: Grid, cfg: Any) -> FArray:
     ``solver.restart_transient_months`` zeroes the first k flowing steps after a producer comes back
     on stream (flush / build-up the CRM cannot represent); ``solver.pre_shutin_months`` zeroes the
     last k flowing steps before a shut-in (ramp-down). Both default to 0 (mask only).
+    ``solver.recency_half_life_months`` (0 = off) down-weights older steps geometrically so recent behaviour
+    steers the parameters without being the only evidence (second field data: step changes after restarts).
     """
     w = grid.prod_mask.astype(np.float64)
+    half_life = float(cfg.get("solver.recency_half_life_months", 0) or 0)
+    if half_life > 0:  # recency weighting: the last step weighs 1, a step h steps earlier weighs 0.5^(h / half_life)
+        age = np.arange(grid.n_steps - 1, -1, -1, dtype=np.float64)
+        w = w * (0.5 ** (age / half_life))[:, None]
     k_after = int(cfg.get("solver.restart_transient_months", 0) or 0)
     k_before = int(cfg.get("solver.pre_shutin_months", 0) or 0)
     if k_after <= 0 and k_before <= 0:

@@ -230,3 +230,17 @@ def test_ensemble_members_respect_injector_bound_after_joint_refinement() -> Non
         assert np.allclose(res.ensemble[0].f, res.params.f)
     for m in res.ensemble:
         assert m.sum_f_per_injector.max() <= bound + 1e-6, m.sum_f_per_injector
+
+
+def test_recency_weights_decay_geometrically() -> None:
+    """``solver.recency_half_life_months``: last step weighs 1, a step h months earlier weighs 0.5^(h/half-life)."""
+    from waterflood_app.models.base import fit_weights
+
+    _, g = _grid("streak_5x4")
+    w0 = fit_weights(g, CFG)
+    w = fit_weights(g, CFG.with_overrides({"solver": {"recency_half_life_months": 12}}))
+    assert w.shape == w0.shape
+    assert np.allclose(w[-1], w0[-1])
+    on = w0[-13] > 0
+    assert np.allclose(w[-13][on], 0.5 * w0[-13][on])
+    assert (w <= w0 + 1e-12).all()
