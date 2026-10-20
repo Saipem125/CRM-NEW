@@ -451,6 +451,26 @@ at month 6 on field liquid, 7–14 % per well. Added to the app as `ForecastMode
 counterpart of the oil-cut anchor. Horizon: with the anchor a 6-month forecast is usable; by month 6 the offset grows
 again at about 2 % a month, which is the drift the rolling re-fit is meant to absorb.
 
+## Level anchor applied to the plans and the forecast-mode validation; deck draft 13 (2026-10-20)
+
+`optimize.anchor_liquid_months: 3` on the recency-weighted Jan-2025 fit (`masked_figs_v5`, `validation_oos_v4*`):
+
+| item | draft 12 (no level anchor) | draft 13 (anchored) |
+|---|---|---|
+| forecast-mode validation, field liquid over 17 months | −26 % | **−13 %** (within 8 % for the first nine months) |
+| forecast-mode validation, oil | −34 % | −29 % |
+| pooled liquid R², forecast mode | 0.52 | 0.78 |
+| library CRMP, same test and anchor | −55 % liquid (no anchor) | −28 % liquid, −35 % oil |
+| CRMP plan, same water | +37 % | **+33 %**, allocation unchanged (02/18/41 at the cap) |
+| ALFA-45 restart | +22 % (0.11 bbl/bbl, +13 % liquid) | +22 % (0.11 bbl/bbl, +11 % liquid) |
+| hold-current oil, month 1 vs last observed | −16 % | −10 % (oil cut of the last month above its 3-month average) |
+
+Anchor factors at Jan-2025 (CRMP): ALFA-08 0.96, ALFA-09 1.12, ALFA-27 1.07, ALFA-33 1.50, ALFA-28 0.69, ALFA-29 0.78.
+CRMIP: plan +27 % with ALFA-46 in place of ALFA-41, restart +103 % — its anchors reach the clip (ALFA-27 2.0), the
+less stable model as before. Oil remains further off than liquid because the oil cut rose in Oct-2025.
+Horizon statement for the deck: six to nine months, refreshed monthly, for absolute forecasts; scenario differences
+over 24 months.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
