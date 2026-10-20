@@ -406,6 +406,28 @@ scratchpad; outputs `results_ext*`). Recommended settings throughout (transients
   half-life sweep is the robustness check; the next check is the out-of-sample validation redone with the weighted
   fit (fit to Jan-2025 with the half-life, forecast the 17 months), which is what the deck would need.
 
+## Recency-weighted configuration on the Jan-2025 window and deck draft 12 (2026-10-20)
+
+Refit of the 2020-01 → 2025-01 window with `solver.recency_half_life_months: 24` (`results_rec24` true scale,
+`results_rec24_x2` deck basis; identical scores): CRMP blind R² **0.88** (0.84 before), aquifer 0.86, CRMIP 0.76
+(0.83 before), CRMT 0.35; badge LOW (5 gate warnings). Map keeps every agreed pair and now places ALFA-12 → ALFA-33
+(0.65); Σf per producer ALFA-01 1.5, ALFA-09 1.2 remain above one. Plans (deck basis, `masked_figs_v4`): same
+allocation (02/18/41 at the cap, 12/34/46 off), CRMP +37 % (CRMIP +29 %), ALFA-45 restart +22 % at 0.11 bbl/bbl with
++13 % liquid; hold-current opens 16 % below the last observed month.
+
+Validation with the weighted fit, two tests on the 16–17 months after the study:
+- blind test on the extended window (prediction knows the actual on/off states): pooled R² 0.83 vs 0.57 equal
+  weights; cumulative held-out liquid 85 % vs 80 % of actual; field-total R² still negative for both (the field
+  liquid rose while both models stay flat).
+- forecast mode (`validation_oos_v3*`, Jan-2025 fit continued with the actual injection, only ALFA-29's closure
+  known): liquid −26 %, oil −34 % — worse than the equal-weight fit (−21 % / −25 %); ALFA-27 −32 %, ALFA-33 −43 %.
+
+So recency weighting improves the blind test and not the forecast; the gap between the two tests is knowledge of
+operations (shut-ins and restarts), not the model. Draft 12 of the deck adopts the weighted configuration
+(slides 6, 8–10, 12–15) and shows both tests on slide 14 with that reading. The ensemble-spread card on slide 10
+was replaced because the bounded ensemble now keeps only the winner (spread 0 by construction, a side effect of
+the 2026-10-09 fix worth a follow-up: re-run the multi-starts under the bound instead of dropping them).
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
