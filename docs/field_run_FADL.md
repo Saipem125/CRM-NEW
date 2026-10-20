@@ -376,6 +376,36 @@ model is now what the deck shows (draft 10, slides 13–15), and the discrepancy
 Next: let the east-side injectors exceed the bound where the aquifer signature is confirmed, or carry the aquifer
 variant for that side, when the window is extended to Jun-2026.
 
+## Extended window, three-year window and recency weighting (2026-10-20)
+
+Inputs: the corrected 2020-01 → 2025-01 package merged with the Feb-2025 → Jun-2026 file (`run_fadl_ext.py` in the
+scratchpad; outputs `results_ext*`). Recommended settings throughout (transients 1/1, 756 m radius, redistribution).
+
+| run | window | held out | CRMP | CRMIP | aquifer | CRMP per-well held-out error |
+|---|---|---|---|---|---|---|
+| `ext2026` | 2020-01 → 2026-06 | Mar-2025 → Jun-2026 (16 m) | 0.57 | 0.65 | 0.14 | 08 46 %, 09 35 %, 27 12 %, 33 35 % |
+| `ext_3y` | 2023-07 → 2026-06 | Dec-2025 → Jun-2026 (7 m) | 0.70 | 0.64 | 0.78 | 08 36 %, 09 6 %, 27 22 %, 33 36 % |
+| `ext_recency12` | 2020-01 → 2026-06, half-life 12 m | 16 m | 0.82 | 0.63 | 0.80 | 08 14 %, 09 4 %, 27 27 %, 33 24 % |
+| **`ext_recency24`** | 2020-01 → 2026-06, half-life 24 m | 16 m | **0.83** | 0.71 | 0.85 | 08 16 %, 09 14 %, 27 10 %, 33 27 % |
+| `ext_recency36` | 2020-01 → 2026-06, half-life 36 m | 16 m | 0.78 | 0.58 | 0.56 | 08 17 %, 09 19 %, 27 9 %, 33 31 % |
+
+- The unweighted extended window scores 0.57 on the 16 months that contain the 2025–26 behaviour, the same as the
+  out-of-sample validation gave (0.57 pooled), so the two tests agree.
+- The tank-aquifer variant does not explain the two unexplained wells: on the unweighted window it is fourth (0.14)
+  with its influx allocated to ALFA-01 (closed); with recency weighting it scores 0.80–0.85 but its influx still goes
+  60 % to ALFA-01 and its score swings from 0.85 to 0.56 between half-lives 24 and 36. Not a stable finding.
+- A three-year window helps relative to the unweighted full window but is judged on seven flat months, with nine
+  producers and 72 parameters on 36 steps, near the identifiability floor. Not recommended.
+- **Recency weighting** (`solver.recency_half_life_months`, added 2026-10-20, default 0, commit 528c3aa): the last
+  step weighs 1, a step h months earlier 0.5^(h/half-life); the whole history still fixes the connectivity, the
+  recent years steer τ and the allocation. CRMP goes from 0.57 to 0.78–0.83 on the same 16 months and is stable
+  across half-lives 12–36; 24 months is the recommended value for this block. The map keeps the agreed strong pairs
+  (ALFA-18 → 08, ALFA-34 → 09, ALFA-02 → 09/39, ALFA-41 → 27, ALFA-46 → 01) with ALFA-12 and ALFA-45 placed more
+  fully than before.
+- Caveat: recency weighting emphasises the months nearest the split, which flatters any single split. The
+  half-life sweep is the robustness check; the next check is the out-of-sample validation redone with the weighted
+  fit (fit to Jan-2025 with the half-life, forecast the 17 months), which is what the deck would need.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
