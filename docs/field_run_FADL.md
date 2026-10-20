@@ -471,6 +471,29 @@ less stable model as before. Oil remains further off than liquid because the oil
 Horizon statement for the deck: six to nine months, refreshed monthly, for absolute forecasts; scenario differences
 over 24 months.
 
+## Live case: trained to Dec-2025, blind-tested Jan → Jun-2026, plan from Jun-2026; deck draft 14 (2026-10-20)
+
+`run_fadl_ext.py live[_x2] <scale> 2020-01-01 halflife=24 blind=0.077` (hold-out = last 6 of 78 months), recency 24,
+transients 1/1, radius 2.5, redistribution; `results_live*`, plans in `masked_figs_v6` with the level anchor.
+
+- Tournament: CRMP wins the composite (blind R² 0.66, per-well median error 8 %); CRMIP 0.72 / 25 %; aquifer 0.72;
+  CRMT negative. A six-month, nearly flat hold-out has little variance, so the R² is low by construction — quote the
+  per-well errors and the field ratio.
+- Held out Jan → Jun-2026 per well: ALFA-08 8 %, ALFA-09 7 %, ALFA-28 5 %, ALFA-27 19 %, ALFA-33 43 %. Field liquid
+  78 % of observed (86 % over the last twelve training months: the fit cannot follow a rise at constant injection).
+- **Accidental step test, Feb-2026:** total injection 4 485 → 2 171 → 4 834 (deck units, −52 % for one month).
+  Field liquid −10 % observed, −7 % model. ALFA-08 −10 % / −12 %, ALFA-33 −9 % / −9 %, ALFA-09 −13 % / −7 %,
+  ALFA-28 −10 % / −1 %, ALFA-27 −8 % / 0 % — the map is right on ALFA-08/33, misallocates ALFA-27's support.
+- Map (CRMP, live): ALFA-18 → 08 0.58, ALFA-34 → 09 0.77, ALFA-41 → 27 0.83, ALFA-46 → 33 0.68, ALFA-02 → 39/09,
+  ALFA-45 → 01 (closed) 0.47 / 48 0.33 — ALFA-45 idle since Sep-2024 is unidentifiable under recency weighting.
+- **Plan from Jun-2026** (base = the Jun-2026 allocation: 02 32 %, 46 20 %, 18/41 13 %, 12/34 11 %): CRMP puts
+  02/18/34 at the cap (29 % each), 46 at 14 %, 12 and 41 off → **+12 %** cumulative oil over 24 months at the same
+  water, liquid unchanged, water cut 0.80 → 0.79; CRMIP +13 % with 02/34/41 at the cap and ALFA-45 at 14 %.
+  Robust core across every fit since Jan-2025: ALFA-02 and ALFA-18 up, ALFA-12 off; ALFA-41 vs ALFA-34 flips.
+  ALFA-45 restart: +0 % CRMP / +8 % CRMIP — not identifiable from recent data; do not quote. The Jan-2025 plan
+  (+33 %) was partly implemented by the field itself (02 up, 41 cut in May–Jun 2026), hence the smaller remaining gain.
+- Deck draft 14: slides 2, 4, 6, 13, 14, 15 and scripts (15.9 min); the earlier validation tests moved to the notes.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
