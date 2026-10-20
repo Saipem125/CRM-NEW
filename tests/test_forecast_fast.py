@@ -112,3 +112,29 @@ def test_fast_continuation_matches_full_resimulation(
         plain = ModelParams(f, tau, J, params.gain_p, params.tau_p)
         hist0 = predict_field(g, plain, variant)
         assert hist[31:36, [0, 1, 3]].sum() > hist0[31:36, [0, 1, 3]].sum()
+
+
+def test_level_anchor_scales_forecast_liquid() -> None:
+    """``level_anchor`` multiplies each producer's forecast liquid (and so its oil) by a fixed per-well factor."""
+    from waterflood_app.models.forecast import recent_level_ratio
+
+    rng = np.random.default_rng(3)
+    g = _grid(rng, False)
+    ni, npd = g.n_inj, g.n_prod
+    params = ModelParams(
+        rng.uniform(0.05, 0.4, size=(ni, npd)),
+        rng.uniform(40, 300, size=npd),
+        None,
+        rng.uniform(0.5, 1.5, size=npd),
+        rng.uniform(100, 800, size=npd),
+    )
+    model = ForecastModel("crmp", params, {}, g, np.ones(npd))
+    _, dt = month_steps(g.dates[-1], 6)
+    plan = np.tile(g.inj[-1], (6, 1))
+    base = model.simulate(plan, dt)
+    anchored = replace(model, level_anchor=np.full(g.n_prod, 1.25))
+    out = anchored.simulate(plan, dt)
+    assert np.allclose(out.oil + out.water, 1.25 * (base.oil + base.water))
+    ratio = recent_level_ratio(g, np.asarray(g.liq) * 0.8, 3)
+    assert np.allclose(ratio[g.prod_mask[-3:].sum(axis=0) >= 2], 1.25)
+    assert (recent_level_ratio(g, np.asarray(g.liq) * 0.1, 3) <= 2.0).all()

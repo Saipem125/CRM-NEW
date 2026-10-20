@@ -10,7 +10,14 @@ import numpy as np
 
 from waterflood_app.config import Config
 from waterflood_app.engine import SectorRun
-from waterflood_app.models.forecast import ForecastModel, active_producers, fan, recent_oil_cut, surface_ratio
+from waterflood_app.models.forecast import (
+    ForecastModel,
+    active_producers,
+    fan,
+    recent_level_ratio,
+    recent_oil_cut,
+    surface_ratio,
+)
 from waterflood_app.models.uq import select_members
 from waterflood_app.optimize.action_list import ActionItem, build_action_list
 from waterflood_app.optimize.constraints import PlanConstraints
@@ -41,6 +48,17 @@ def forecast_models(run: SectorRun, cfg: Config, max_members: int = 12) -> tuple
         act = active_producers(run.grid, int(cfg.get("optimize.idle_lookback_months", 3)))
         for m in models:
             m.active = act
+    k_level = int(cfg.get("optimize.anchor_liquid_months", 0) or 0)
+    if k_level > 0:  # forecast opens on the observed level of each producer, not on the fit
+        for entry, _w in run.tournament.ensemble:
+            lvl = recent_level_ratio(run.grid, np.asarray(entry.fit.prediction), k_level)
+            for m in models:
+                if m.variant == entry.variant:
+                    m.level_anchor = lvl
+        if run.tournament.winner is not None and not run.tournament.ensemble:
+            lvl = recent_level_ratio(run.grid, np.asarray(run.tournament.winner.fit.prediction), k_level)
+            for m in models:
+                m.level_anchor = lvl
     k_anchor = int(cfg.get("optimize.anchor_oil_cut_months", 3) or 0)
     if k_anchor > 0:
         # the WOR curve's level comes from the last producing months, its trend from the fit (second field

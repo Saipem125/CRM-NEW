@@ -87,6 +87,10 @@ class ForecastModel:
     # (Np,) observed oil cut over the last producing months; the fitted WOR curve is rescaled to pass
     # through it at the end of history (level from the data, trend from the fit). NaN → no anchor.
     oil_cut_anchor: FArray | None = None
+    # (Np,) level anchor: the forecast liquid of each producer is scaled by observed / fitted over its last producing
+    # months, so the forecast opens on the data rather than on the fit (rolling backtest, second field data: the fit
+    # sat 12–18 % below the last months and every 6-month forecast inherited that offset). None → off.
+    level_anchor: FArray | None = None
     _state: dict[str, Any] | None = field(default=None, init=False, repr=False, compare=False)
 
     @property
@@ -225,6 +229,8 @@ class ForecastModel:
         return self._finish(inj_plan, dt_days, liq)
 
     def _finish(self, inj_plan: FArray, dt_days: FArray, liq: FArray) -> Forecast:
+        if self.level_anchor is not None:
+            liq = liq * np.nan_to_num(np.asarray(self.level_anchor, dtype=np.float64), nan=1.0)[None, :]
         g = self.grid
         h = inj_plan.shape[0]
         if self.active is not None and len(self.active) == g.n_prod:
@@ -264,6 +270,20 @@ def recent_oil_cut(grid: Grid, months: int = 3) -> FArray:
             liq = float(grid.oil[idx, j].sum() + grid.water[idx, j].sum())
             if liq > 0:
                 out[j] = float(grid.oil[idx, j].sum() / liq)
+    return out
+
+
+def recent_level_ratio(grid: Grid, prediction: FArray, months: int = 3, lo: float = 0.5, hi: float = 2.0) -> FArray:
+    """(Np,) observed / fitted liquid over each producer's last ``months`` producing steps, clipped to [lo, hi];
+    1.0 where there is nothing to compare."""
+    out = np.ones(grid.n_prod)
+    for j in range(grid.n_prod):
+        idx = np.flatnonzero(grid.prod_mask[:, j])[-max(1, int(months)) :]
+        if idx.size >= 2:
+            fit = float(np.asarray(prediction)[idx, j].mean())
+            obs = float(grid.liq[idx, j].mean())
+            if fit > 0 and obs > 0:
+                out[j] = float(np.clip(obs / fit, lo, hi))
     return out
 
 

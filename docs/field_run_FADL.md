@@ -428,6 +428,29 @@ operations (shut-ins and restarts), not the model. Draft 12 of the deck adopts t
 was replaced because the bounded ensemble now keeps only the winner (spread 0 by construction, a side effect of
 the 2026-10-09 fix worth a follow-up: re-run the multi-starts under the bound instead of dropping them).
 
+## Rolling-origin backtest of 6-month forecasts and the level anchor (2026-10-20)
+
+`rolling_backtest.py` (scratchpad): from each month of 2025 the CRMP is fitted to the data up to that month (extended
+data, true scale, transients 1/1, 756 m radius, redistribution, half-life 24 or equal weights) and run as a forecast
+for 6 months with the actual injection and only the operations known at the origin. Twelve origins, scored on open
+producer-months. Outputs `Data/FADL Main Block/rolling_backtest_*`.
+
+| forecast ÷ actual field liquid, mean over 12 origins | month 1 | month 3 | month 6 | per-well median error, month 1 → 6 |
+|---|---|---|---|---|
+| equal weights | 0.81 | 0.77 | 0.72 | 30 % → 25 % |
+| recency 24 m | 0.84 | 0.80 | 0.76 | 26 % → 20 % |
+| **recency 24 m + level anchor** | **0.99** | **0.94** | **0.89** | **7 % → 14 %** |
+
+Finding: the forecast error was a level offset at the origin, not drift. Even with recency weighting the fitted model
+sits 12–18 % below the last observed months (origin Dec-2025: ALFA-09 0.81, ALFA-33 0.74, ALFA-28 0.63 of observed),
+because the field liquid rose at constant injection and a rate-driven fit cannot follow it; every forecast inherited
+that offset in its first month and stayed there. Scaling each producer's forecast by observed / fitted over its last
+three producing months (clipped 0.5–2) removes most of it: the 6-month forecast is then within 1 % at month 1 and 11 %
+at month 6 on field liquid, 7–14 % per well. Added to the app as `ForecastModel.level_anchor` /
+`recent_level_ratio` with `optimize.anchor_liquid_months` (default 0, off; 3 recommended on this block), the liquid
+counterpart of the oil-cut anchor. Horizon: with the anchor a 6-month forecast is usable; by month 6 the offset grows
+again at about 2 % a month, which is the drift the rolling re-fit is meant to absorb.
+
 ## What broke in the app, and was fixed
 
 1. **Producers closed at the end of history kept flowing in the forecast.** The continuation carried
